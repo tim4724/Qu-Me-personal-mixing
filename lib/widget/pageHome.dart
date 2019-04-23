@@ -40,7 +40,6 @@ class _PageHomeState extends State<PageHome> {
   }
 
   onWheelChanged(double delta) {
-    print("delta: $delta");
     setState(() {
       wheelActive = true;
     });
@@ -59,32 +58,35 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildBodyPortrait() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [buildGroup("Group 1"), buildGroup("Group 2")],
+    return Padding(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [buildGroup("Group 1"), buildGroup("Group 2")],
+            ),
           ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [buildGroup("Group 2"), buildGroup("Me")],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [buildGroup("Group 2"), buildGroup("Me")],
+            ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.all(8),
-          child: VerticalFader("Keys", "Mix 5/6", "Joschi",
-              Colors.deepPurple.withAlpha(128), true),
-        ),
-      ],
+          Padding(
+            padding: EdgeInsets.all(4),
+            child: VerticalFader("Keys", "Mix 5/6", "Joschi",
+                Colors.deepPurple.withAlpha(128), true),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(4),
     );
   }
 
   Widget buildBodyLandscape() {
-    return Row(
+    return Padding(child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         buildGroup("Group 1"),
@@ -92,7 +94,7 @@ class _PageHomeState extends State<PageHome> {
         buildGroup("Group 3"),
         buildGroup("Me"),
         Padding(
-          padding: EdgeInsets.all(8),
+          padding: EdgeInsets.all(4),
           child: Column(
             children: <Widget>[
               Expanded(
@@ -103,13 +105,14 @@ class _PageHomeState extends State<PageHome> {
           ),
         ),
       ],
+    ), padding: EdgeInsets.all(4),
     );
   }
 
   Widget buildGroup(String name) {
     return Expanded(
       child: Padding(
-        padding: EdgeInsets.all(8),
+        padding: EdgeInsets.all(4),
         child: GroupWheel(
             Colors.black.withAlpha(128), name, onWheelChanged, onWheelReleased),
       ),

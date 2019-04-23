@@ -98,7 +98,6 @@ class _GroupWheelState extends State<GroupWheel> {
           ..onTapUp = (pointer, details) => onTapUp();
       }),
     };
-
     return Container(
       width: 72,
       decoration: BoxDecoration(
@@ -106,24 +105,24 @@ class _GroupWheelState extends State<GroupWheel> {
         borderRadius: BorderRadius.all(Radius.circular(2)),
         border: Border.all(color: widget._accentColor, width: 1),
       ),
-      child: RawGestureDetector(
-        behavior: HitTestBehavior.opaque,
-        gestures: gestures,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _GroupLabel(widget._groupName, widget._accentColor),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _GroupLabel(widget._groupName, widget._accentColor),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: RawGestureDetector(
+                behavior: HitTestBehavior.opaque,
+                gestures: gestures,
                 child: CustomPaint(
                   painter: _Wheel(wheelDragDelta, shadowOverlay),
                   key: keyWheel,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -162,7 +161,15 @@ class _Wheel extends CustomPainter {
   const _Wheel(this.offset, this.shadowOverlay);
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Size maxSize) {
+    // Enforce a minimum aspect ratio.
+    // The wheel must be double the height, than the width.
+    var maxWidth = maxSize.height / 2;
+    if (maxSize.width > maxWidth) {
+      canvas.translate((maxSize.width - maxWidth) / 2, 0);
+    }
+    Size size = Size(min(maxSize.width, maxWidth), maxSize.height);
+
     canvas.translate(4, 2);
     drawWheel(canvas, size - Offset(8, 4));
     canvas.translate(-4, -2);
@@ -172,10 +179,6 @@ class _Wheel extends CustomPainter {
       var dstRect = Offset.zero & size;
       canvas.drawImageRect(shadowOverlay, srcRect, dstRect, Paint());
     }
-  }
-
-  Size sizeOf(ui.Image img) {
-    return Size(img.width.toDouble(), img.height.toDouble());
   }
 
   void drawWheel(Canvas canvas, Size size) {
@@ -213,5 +216,9 @@ class _Wheel extends CustomPainter {
   bool shouldRepaint(_Wheel oldDelegate) {
     return oldDelegate.offset != offset ||
         oldDelegate.shadowOverlay == null && shadowOverlay != null;
+  }
+
+  Size sizeOf(ui.Image img) {
+    return Size(img.width.toDouble(), img.height.toDouble());
   }
 }

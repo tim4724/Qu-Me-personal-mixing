@@ -98,21 +98,22 @@ class _HorizontalFaderState extends _FaderState {
         borderRadius: BorderRadius.all(Radius.circular(2)),
         border: Border.all(color: widget._accentColor, width: 1),
       ),
-      child: RawGestureDetector(
-        behavior: HitTestBehavior.opaque,
-        gestures: gestures,
-        child: Row(
-          children: [
-            label,
-            Expanded(
+      child: Row(
+        children: [
+          label,
+          Expanded(
+            child: RawGestureDetector(
+              behavior: HitTestBehavior.opaque,
+              gestures: gestures,
               child: Padding(
-                  padding: EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: _FaderSlider(value, active, widget._stereo,
-                      key: keyFaderSlider)),
-            )
-          ],
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-        ),
+                padding: EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: _FaderSlider(value, active, widget._stereo,
+                    key: keyFaderSlider),
+              ),
+            ),
+          ),
+        ],
+        crossAxisAlignment: CrossAxisAlignment.stretch,
       ),
     );
   }
@@ -144,13 +145,13 @@ class _VerticalFaderState extends _FaderState {
         borderRadius: BorderRadius.all(Radius.circular(2)),
         border: Border.all(color: widget._accentColor, width: 1),
       ),
-      child: RawGestureDetector(
-        behavior: HitTestBehavior.opaque,
-        gestures: gestures,
-        child: Column(
-          children: [
-            label,
-            Expanded(
+      child: Column(
+        children: [
+          label,
+          Expanded(
+            child: RawGestureDetector(
+              behavior: HitTestBehavior.opaque,
+              gestures: gestures,
               child: RotatedBox(
                 quarterTurns: 3,
                 child: Padding(
@@ -159,8 +160,8 @@ class _VerticalFaderState extends _FaderState {
                         key: keyFaderSlider)),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
