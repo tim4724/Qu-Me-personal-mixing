@@ -73,16 +73,42 @@ class _PageGroupState extends State<PageGroup> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView.builder(
-        itemCount: channelNames.length,
-        itemBuilder: (BuildContext context, int index) {
-          return Padding(
-            padding: EdgeInsets.all(2.0),
-            child: HorizontalFader(channelNames[index], channels[index],
-                userNames[index], colors[index], stereo[index]),
-          );
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return orientation == Orientation.landscape
+              ? buildBodyLandscape()
+              : buildBodyPortrait();
         },
       ),
+    );
+  }
+
+  Widget buildBodyLandscape() {
+    return ListView.builder(
+      itemCount: channelNames.length,
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (BuildContext context, int index) {
+        return Padding(
+          padding: EdgeInsets.all(2.0),
+          child: Align(
+            child: VerticalFader(channelNames[index], channels[index],
+                userNames[index], colors[index], stereo[index]),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildBodyPortrait() {
+    return ListView.builder(
+      itemCount: channelNames.length,
+      itemBuilder: (BuildContext context, int index) {
+        return Padding(
+          padding: EdgeInsets.all(2.0),
+          child: HorizontalFader(channelNames[index], channels[index],
+              userNames[index], colors[index], stereo[index]),
+        );
+      },
     );
   }
 }

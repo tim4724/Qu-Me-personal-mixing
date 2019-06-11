@@ -86,26 +86,22 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildBodyLandscape() {
-    return Padding(child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        buildGroup("Group 1"),
-        buildGroup("Group 2"),
-        buildGroup("Group 3"),
-        buildGroup("Me"),
-        Padding(
-          padding: EdgeInsets.all(4),
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                child: VerticalFader("Keys", "Mix 5/6", "Joschi",
-                    Colors.deepPurple.withAlpha(128), true),
-              ),
-            ],
+    return Padding(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          buildGroup("Group 1"),
+          buildGroup("Group 2"),
+          buildGroup("Group 3"),
+          buildGroup("Me"),
+          Padding(
+            padding: EdgeInsets.all(4),
+            child: VerticalFader("Keys", "Mix 5/6", "Joschi",
+                Colors.deepPurple.withAlpha(128), true),
           ),
-        ),
-      ],
-    ), padding: EdgeInsets.all(4),
+        ],
+      ),
+      padding: EdgeInsets.all(4),
     );
   }
 
