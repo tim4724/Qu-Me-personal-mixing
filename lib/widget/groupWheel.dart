@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
 import 'package:qu_me/widget/pageGroup.dart';
+import 'package:qu_me/io/network.dart' as network;
 
 typedef WheelSelected = Function();
 typedef WheelDragUpdate = Function(double delta);
@@ -54,11 +55,14 @@ class _GroupWheelState extends State<GroupWheel> {
     var wheelHeight = keyWheel.currentContext.size.height;
     widget.dragUpdateCallback(-delta / wheelHeight);
     setState(() => wheelDragDelta -= delta);
+    network.send(((wheelDragDelta / wheelHeight) * 100).toInt());
   }
 
   void onTapUp() {
     onPointerStop();
-    var currentTime = DateTime.now().millisecondsSinceEpoch;
+    var currentTime = DateTime
+        .now()
+        .millisecondsSinceEpoch;
     if (currentTime - lastTapTimestamp < 300) {
       Navigator.push(
         context,
@@ -82,7 +86,7 @@ class _GroupWheelState extends State<GroupWheel> {
     bool active = activePointers > 0;
     var gestures = {
       VerticalFaderDragRecognizer:
-          GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
+      GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
               () => VerticalFaderDragRecognizer(slop: 2.0), (recognizer) {
         recognizer
           ..onDragStart = ((offset) => onPointerStart())
@@ -90,7 +94,7 @@ class _GroupWheelState extends State<GroupWheel> {
           ..onDragStop = onPointerStop;
       }),
       MultiTapGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
+      GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
               () => MultiTapGestureRecognizer(), (recognizer) {
         recognizer
           ..onTapDown = ((pointer, details) => onPointerStart())
@@ -185,7 +189,8 @@ class _Wheel extends CustomPainter {
     const carveHeight = 3.0;
     const minCarveOffset = 7.0;
     const maxCarveOffset = 12.0;
-    var paint = Paint()..color = baseColor;
+    var paint = Paint()
+      ..color = baseColor;
 
     // clear the canvas area with the base grey color
     canvas.drawRect(Offset.zero & size, paint);

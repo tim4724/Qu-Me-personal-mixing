@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/gestures/dragFader.dart';
+import 'package:qu_me/io/network.dart' as network;
 
 enum LevelType { mono, stereo_left, stereo_right }
 
@@ -43,6 +45,7 @@ abstract class _FaderState extends State<Fader> {
   final Color backgroundActiveColor = Colors.black.withAlpha(150);
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
+  StreamSubscription subscription;
   int activePointers = 0;
   double value = 0;
 
@@ -55,16 +58,30 @@ abstract class _FaderState extends State<Fader> {
         ..onTapCancel = ((pointer) => onPointerStop())
         ..onTapUp = (pointer, details) => onPointerStop();
     });
+    subscription = network.stream.listen(onNetworkData);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
   }
 
   void onPointerStart() {
     setState(() => activePointers++);
   }
 
+  void onNetworkData(data) {
+    setState(() {
+      value = data / 100;
+    });
+  }
+
   void onDragUpdate(double delta) {
     var sliderSize = keyFaderSlider.currentContext.size;
     var newValue = value + delta / (sliderSize.width - 16);
     setState(() => value = newValue.clamp(0.0, 1.0));
+    // network.send((newValue * 100).toInt());
   }
 
   void onPointerStop() {
