@@ -65,7 +65,7 @@ class _PageHomeState extends State<PageHome> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup("Group 1"), buildGroup("Group 2")],
+              children: [buildGroup("Group 1"), buildGroup("Group 3")],
             ),
           ),
           Expanded(
@@ -76,7 +76,7 @@ class _PageHomeState extends State<PageHome> {
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader("Keys", "Mix 5/6", "Joschi",
+            child: VerticalFader(-1, "Keys", "Mix 5/6", "Joschi",
                 Colors.deepPurple.withAlpha(128), true),
           ),
         ],
@@ -96,7 +96,7 @@ class _PageHomeState extends State<PageHome> {
           buildGroup("Me"),
           Padding(
             padding: EdgeInsets.all(4),
-              child: VerticalFader("Keys", "Mix 5/6", "Joschi",
+              child: VerticalFader(-1, "Keys", "Mix 5/6", "Joschi",
                   Colors.deepPurple.withAlpha(128), true),
           ),
         ],

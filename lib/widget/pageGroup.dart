@@ -11,6 +11,17 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
+  static const ids = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+  ];
   static const channelNames = [
     "Kick",
     "Snare",
@@ -91,7 +102,7 @@ class _PageGroupState extends State<PageGroup> {
         return Padding(
           padding: EdgeInsets.all(2.0),
           child: Align(
-            child: VerticalFader(channelNames[index], channels[index],
+            child: VerticalFader(ids[index], channelNames[index], channels[index],
                 userNames[index], colors[index], stereo[index]),
           ),
         );
@@ -105,7 +116,7 @@ class _PageGroupState extends State<PageGroup> {
       itemBuilder: (BuildContext context, int index) {
         return Padding(
           padding: EdgeInsets.all(2.0),
-          child: HorizontalFader(channelNames[index], channels[index],
+          child: HorizontalFader(ids[index], channelNames[index], channels[index],
               userNames[index], colors[index], stereo[index]),
         );
       },

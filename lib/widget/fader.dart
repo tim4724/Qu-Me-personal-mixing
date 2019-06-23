@@ -10,31 +10,32 @@ import 'package:qu_me/io/network.dart' as network;
 enum LevelType { mono, stereo_left, stereo_right }
 
 abstract class Fader extends StatefulWidget {
+  final int id;
   final String _faderName;
   final String _channel;
   final String _userName;
   final Color _accentColor;
   final bool _stereo;
 
-  Fader(this._faderName, this._channel, this._userName, this._accentColor,
+  Fader(this.id, this._faderName, this._channel, this._userName, this._accentColor,
       this._stereo,
       {Key key})
       : super(key: key);
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(String faderName, String channel, String userName,
+  HorizontalFader(int id, String faderName, String channel, String userName,
       Color accentColor, bool stereo)
-      : super(faderName, channel, userName, accentColor, stereo);
+      : super(id, faderName, channel, userName, accentColor, stereo);
 
   @override
   State<StatefulWidget> createState() => _HorizontalFaderState();
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(String faderName, String channel, String userName,
+  VerticalFader(int id, String faderName, String channel, String userName,
       Color accentColor, bool stereo)
-      : super(faderName, channel, userName, accentColor, stereo);
+      : super(id, faderName, channel, userName, accentColor, stereo);
 
   @override
   State<StatefulWidget> createState() => _VerticalFaderState();
@@ -73,7 +74,7 @@ abstract class _FaderState extends State<Fader> {
 
   void onNetworkData(data) {
     setState(() {
-      value = data / 100;
+      value = data[0] / 100;
     });
   }
 
