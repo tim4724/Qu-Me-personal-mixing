@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/io/network.dart' as network;
+import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 
 class PageLogin extends StatefulWidget {
@@ -19,6 +20,9 @@ class _PageLoginState extends State<PageLogin> {
   @protected
   void initState() {
     super.initState();
+    quFind.findQuMixers().listen((data) {
+      print('received $data');
+    });
   }
 
   @override

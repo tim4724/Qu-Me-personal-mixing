@@ -47,8 +47,8 @@ abstract class _FaderState extends State<Fader> {
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
   StreamSubscription subscription;
-  int activePointers = 0;
-  double value = 0;
+  var activePointers = 0;
+  var value = 0.0;
 
   _FaderState() {
     gestures[MultiTapGestureRecognizer] =

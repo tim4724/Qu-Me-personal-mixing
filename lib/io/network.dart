@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:qu_me/io/demoServer.dart' as demoServer;
@@ -22,11 +23,12 @@ void _connect(InternetAddress address, Function onConnected, Function onError) {
     _socket = socket;
     onConnected();
     socket.listen(
-      (data) {
+          (data) {
         _streamController.add(data);
       },
       onDone: _onDone,
       onError: _onError,
+      cancelOnError: false,
     );
   }).catchError((a) {
     onError();
@@ -34,10 +36,14 @@ void _connect(InternetAddress address, Function onConnected, Function onError) {
 }
 
 void send(int i) {
-  _socket.add([i]);
+  _socket?.add([i]);
+  _socket?.flush()?.then((a) {
+    _streamController.add([i]);
+  });
 }
 
 void _onDone() {
+  print("Socket was closed");
   _socket?.destroy();
   _socket = null;
 }

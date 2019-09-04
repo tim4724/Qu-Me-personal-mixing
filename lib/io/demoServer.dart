@@ -3,7 +3,7 @@ import 'dart:io';
 ServerSocket _serverSocket;
 
 Future startDemoServer() async {
-  await _serverSocket?.close();
+  stopDemoSocket();
   return _startDemoServer();
 }
 
@@ -17,11 +17,12 @@ Future _startDemoServer() async {
 void handleClient(Socket client) {
   if (client.remoteAddress.isLoopback) {
     client.add([10]);
+  } else {
+    client.close();
   }
-  client.close();
 }
 
-void stopDemoSocket() {
-  _serverSocket?.close();
+void stopDemoSocket() async {
+  await _serverSocket?.close();
   _serverSocket = null;
 }
