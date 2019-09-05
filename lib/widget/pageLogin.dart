@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
@@ -15,13 +16,21 @@ class PageLogin extends StatefulWidget {
 }
 
 class _PageLoginState extends State<PageLogin> {
-  bool _loading = false;
+  var _loading = false;
+  var mixers = [
+    Mixer("Demo", InternetAddress.loopbackIPv4,
+        DateTime.now().add(Duration(days: 365)))
+  ];
 
   @protected
   void initState() {
     super.initState();
-    quFind.findQuMixers().listen((data) {
-      print('received $data');
+    // todo stop on stop
+    quFind.findQuMixers().listen((newMixer) {
+      setState(() {
+        mixers.removeWhere((m) => m.name == newMixer.name);
+        mixers.add(newMixer);
+      });
     });
   }
 
@@ -52,14 +61,10 @@ class _PageLoginState extends State<PageLogin> {
                     borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                   child: ListView.builder(
-                    itemCount: 2,
+                    itemCount: mixers.length,
                     padding: EdgeInsets.all(0),
-                    itemBuilder: (BuildContext context, int index) {
-                      return _MixerItem(
-                        "Demo " + index.toString(),
-                        InternetAddress.loopbackIPv4,
-                        onMixerSelected,
-                      );
+                    itemBuilder: (BuildContext context, int i) {
+                      return _MixerItem(mixers[i], onMixerSelected);
                     },
                   ),
                 ),
@@ -79,6 +84,7 @@ class _PageLoginState extends State<PageLogin> {
         context,
         MaterialPageRoute(builder: (context) => PageHome()),
       );
+      quFind.stop();
       setState(() => _loading = false);
     }, (e) {
       print(e);
@@ -90,11 +96,10 @@ class _PageLoginState extends State<PageLogin> {
 typedef _MixerSelectedCallback = Function(InternetAddress address);
 
 class _MixerItem extends StatelessWidget {
-  final String name;
-  final InternetAddress address;
+  final Mixer _mixer;
   final _MixerSelectedCallback selectedCallback;
 
-  const _MixerItem(this.name, this.address, this.selectedCallback, {Key key})
+  const _MixerItem(this._mixer, this.selectedCallback, {Key key})
       : super(key: key);
 
   @override
@@ -102,12 +107,12 @@ class _MixerItem extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: () {
-          selectedCallback(address);
+          selectedCallback(_mixer.address);
         },
         child: Container(
           padding: EdgeInsets.all(8),
           child: Text(
-            this.name,
+            _mixer.name,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),

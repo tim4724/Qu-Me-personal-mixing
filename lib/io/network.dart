@@ -19,7 +19,7 @@ void connect(InternetAddress address, Function onConnected, Function onError) {
 }
 
 void _connect(InternetAddress address, Function onConnected, Function onError) {
-  Socket.connect(address, 51325, timeout: Duration(seconds: 1)).then((socket) {
+  Socket.connect(address, 51326, timeout: Duration(seconds: 1)).then((socket) {
     _socket = socket;
     onConnected();
     socket.listen(
