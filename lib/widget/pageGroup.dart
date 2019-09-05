@@ -45,15 +45,15 @@ class _PageGroupState extends State<PageGroup> {
     false
   ];
   static const userNames = [
-    "Wenjun",
-    "Wenjun",
-    "Wenjunn",
-    "Ben",
-    "Moise",
-    "Hanna",
-    "Joschi",
-    "Joschi",
-    "Instrumente",
+    "Peter",
+    "Peter",
+    "Peter",
+    "Mark",
+    "Paul",
+    "Tony",
+    "Max",
+    "Max",
+    "Instruments",
   ];
   static const channels = [
     "Ch 1",

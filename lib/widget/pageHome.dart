@@ -76,7 +76,7 @@ class _PageHomeState extends State<PageHome> {
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(-1, "Keys", "Mix 5/6", "Joschi",
+            child: VerticalFader(-1, "Keys", "Mix 5/6", "Tony",
                 Colors.deepPurple.withAlpha(128), true),
           ),
         ],
@@ -96,7 +96,7 @@ class _PageHomeState extends State<PageHome> {
           buildGroup("Me"),
           Padding(
             padding: EdgeInsets.all(4),
-              child: VerticalFader(-1, "Keys", "Mix 5/6", "Joschi",
+              child: VerticalFader(-1, "Keys", "Mix 5/6", "Alex",
                   Colors.deepPurple.withAlpha(128), true),
           ),
         ],
