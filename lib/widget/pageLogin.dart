@@ -25,7 +25,7 @@ class _PageLoginState extends State<PageLogin> {
   @protected
   void initState() {
     super.initState();
-    // todo stop on stop
+    // todo stop on stop ;)
     quFind.findQuMixers().listen((newMixer) {
       setState(() {
         mixers.removeWhere((m) => m.name == newMixer.name);
@@ -77,9 +77,9 @@ class _PageLoginState extends State<PageLogin> {
     );
   }
 
-  void onMixerSelected(InternetAddress address) {
+  void onMixerSelected(Mixer mixer) {
     setState(() => _loading = true);
-    network.connect(address, () {
+    network.connect(mixer, (mixer) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => PageHome()),
@@ -93,7 +93,7 @@ class _PageLoginState extends State<PageLogin> {
   }
 }
 
-typedef _MixerSelectedCallback = Function(InternetAddress address);
+typedef _MixerSelectedCallback = Function(Mixer address);
 
 class _MixerItem extends StatelessWidget {
   final Mixer _mixer;
@@ -107,7 +107,7 @@ class _MixerItem extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: () {
-          selectedCallback(_mixer.address);
+          selectedCallback(_mixer);
         },
         child: Container(
           padding: EdgeInsets.all(8),

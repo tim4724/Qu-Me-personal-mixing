@@ -35,7 +35,7 @@ Stream<Mixer> findQuMixers() {
       onDone: () {
         t.cancel();
         streamController.close();
-        print("udp socket closed");
+        print("QU Find socket closed");
       },
       cancelOnError: false,
     );
