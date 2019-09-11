@@ -56,7 +56,6 @@ class _GroupWheelState extends State<GroupWheel> {
     widget.dragUpdateCallback(-delta / wheelHeight);
     var newWheelDragDelta = (wheelDragDelta - delta).clamp(0, wheelHeight);
     setState(() => wheelDragDelta = newWheelDragDelta);
-    network.send(((newWheelDragDelta / wheelHeight) * 100).toInt());
   }
 
   void onTapUp() {

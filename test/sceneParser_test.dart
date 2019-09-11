@@ -10,4 +10,9 @@ void main() {
     final scene = sceneParser.parse(data);
     print(scene);
   });
+
+  test("t", () {
+      var a = 0x04 | 0x08 << 8;
+      print(a);
+  });
 }

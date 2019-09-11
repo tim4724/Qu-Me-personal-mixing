@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:qu_me/core/PersonalMixingModel.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
 
 class PageGroup extends StatefulWidget {
@@ -11,72 +14,10 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
-  static const ids = [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-  ];
-  static const channelNames = [
-    "Kick",
-    "Snare",
-    "Drum",
-    "Git",
-    "Bass",
-    "Keys",
-    "Pads",
-    "Syn",
-    "Hall",
-  ];
-  static const stereo = [
-    false,
-    false,
-    true,
-    false,
-    false,
-    true,
-    true,
-    false,
-    false
-  ];
-  static const userNames = [
-    "Peter",
-    "Peter",
-    "Peter",
-    "Mark",
-    "Paul",
-    "Tony",
-    "Max",
-    "Max",
-    "Instruments",
-  ];
-  static const channels = [
-    "Ch 1",
-    "Ch 2",
-    "Ch 3/4",
-    "Ch 5",
-    "Ch 4",
-    "Ch ST1",
-    "Ch 11/12345",
-    "Ch 9",
-    "Fx2 Ret",
-  ];
-  final colors = [
-    Colors.black.withAlpha(128),
-    Colors.black.withAlpha(128),
-    Colors.black.withAlpha(128),
-    Colors.red.withAlpha(128),
-    Colors.orange.withAlpha(128),
-    Colors.deepPurple.withAlpha(128),
-    Colors.blue.withAlpha(128),
-    Colors.green.withAlpha(128),
-    Color.fromARGB(128, 0, 0, 200),
-  ];
+  @protected
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,29 +36,42 @@ class _PageGroupState extends State<PageGroup> {
   }
 
   Widget buildBodyLandscape() {
-    return ListView.builder(
-      itemCount: channelNames.length,
-      scrollDirection: Axis.horizontal,
-      itemBuilder: (BuildContext context, int index) {
-        return Padding(
-          padding: EdgeInsets.all(2.0),
-          child: Align(
-            child: VerticalFader(ids[index], channelNames[index], channels[index],
-                userNames[index], colors[index], stereo[index]),
-          ),
-        );
-      },
-    );
+    return Selector<MixingModel, List<Send>>(
+        selector: (_, model) => model.getForGroup(0),
+        builder: (_, sends, child) {
+          print("rebuild list");
+          return ListView.builder(
+            itemCount: sends.length,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (BuildContext context, int index) {
+              final send = sends[index];
+              return Padding(
+                padding: EdgeInsets.all(2.0),
+                child: Align(
+                  child: VerticalFader(send.id, send.name, "${send.id}", "",
+                      send.color, send.stereo),
+                ),
+              );
+            },
+          );
+        });
   }
 
   Widget buildBodyPortrait() {
-    return ListView.builder(
-      itemCount: channelNames.length,
-      itemBuilder: (BuildContext context, int index) {
-        return Padding(
-          padding: EdgeInsets.all(2.0),
-          child: HorizontalFader(ids[index], channelNames[index], channels[index],
-              userNames[index], colors[index], stereo[index]),
+    return Selector<MixingModel, List<Send>>(
+      selector: (_, model) {
+        return model.getForGroup(0);},
+      builder: (_, sends, child) {
+        return ListView.builder(
+          itemCount: sends.length,
+          itemBuilder: (BuildContext context, int index) {
+            final send = sends[index];
+            return Padding(
+              padding: EdgeInsets.all(2.0),
+              child: HorizontalFader(send.id, send.name, "${send.id}", "",
+                  send.color, send.stereo),
+            );
+          },
         );
       },
     );

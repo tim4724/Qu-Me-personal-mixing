@@ -3,35 +3,34 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
+import 'package:hex/hex.dart';
+import 'package:qu_me/core/FaderModel.dart';
+import 'package:qu_me/core/MixerConnectionModel.dart';
+import 'package:qu_me/core/PersonalMixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
-import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/demoServer.dart' as demoServer;
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 
 Socket _socket;
-final StreamController _streamController = StreamController();
-final Stream stream = _streamController.stream.asBroadcastStream();
 
-void connect(Mixer mixer, Function onConnected, Function onError) {
-  if (mixer.address.isLoopback) {
+void connect(String name, InternetAddress address, Function onError) {
+  MixerConnectionModel().onStartConnect(name, address);
+
+  if (address.isLoopback) {
     demoServer.startDemoServer().then((a) {
-      _connect(mixer, onConnected, onError);
+      _connect(address, onError);
     });
   } else {
-    _connect(mixer, onConnected, onError);
+    _connect(address, onError);
   }
 }
 
-void _connect(final Mixer mixer, Function onConnected, Function onError) async {
-  final checkInitDone = () {
-    if (onConnected != null && mixer.isReady()) {
-      onConnected(mixer);
-      onConnected = null;
-    }
-  };
+void _connect(InternetAddress address, Function onError) async {
+  final mixerModel = MixerConnectionModel();
+  final mixingModel = MixingModel();
+  final faderModel = FaderModel();
 
-  _socket?.destroy();
-  _socket = await Socket.connect(mixer.address, 51326);
+  _socket = await Socket.connect(address, 51326);
   _socket.setOption(SocketOption.tcpNoDelay, true);
 
   final byteStreamController = StreamController<int>();
@@ -46,6 +45,8 @@ void _connect(final Mixer mixer, Function onConnected, Function onError) async {
       _socket.destroy();
       heartbeat.stop();
       byteStreamController.close();
+      mixerModel.reset();
+      mixingModel.reset();
     },
     onError: _onError,
     cancelOnError: false,
@@ -58,13 +59,32 @@ void _connect(final Mixer mixer, Function onConnected, Function onError) async {
       await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 0);
 
   // request meters? or Request remote heartbeat port?
-  // is it really "requestMeters" ?
   // Group Id 0x00 -> "QU-You"?
   _socket.add(_buildSystemPacket(0x00, _fromUint16(heartbeatSocket.port)));
   // request mixer version
   _socket.add(_buildSystemPacket(0x04, [0x00, 0x00]));
   // request scene state
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
+
+  // Check default password (aka is no password set)
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("01040000090e6490")));
+
+  // Listen for Mix 4 Master Fader
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("0327")));
+  _socket.add(_buildSystemPacket(
+      0x04,
+      HEX.decode(
+          "130000000000000080000000000000000000000000000000000000000000000000000000")));
+
+  // Listen for Mix 4 Sends Faders
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("0427")));
+  _socket.add(_buildSystemPacket(
+      0x04,
+      HEX.decode(
+          "140000000100000000000000000000000000000000000000000000000000000000000000")));
+
+  // Check password "inear"
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -78,30 +98,71 @@ void _connect(final Mixer mixer, Function onConnected, Function onError) async {
         switch (groupId) {
           case 0x00:
             final dstPort = _getUint16(data);
-            heartbeat.start(heartbeatSocket, mixer.address, dstPort);
-            checkInitDone();
+            heartbeat.start(heartbeatSocket, _socket.remoteAddress, dstPort);
             break;
           case 0x01:
-            mixer.mixerType = data[0];
-            mixer.firmwarVersion =
-                "${data[1]}.${data[2]}-${_getUint16(data, 4)}";
-            checkInitDone();
+            mixerModel.onMixerVersion(
+                data[0], "${data[1]}.${data[2]}-${_getUint16(data, 4)}");
             break;
           case 0x06:
-            mixer.scene = sceneParser.parse(data);
-            checkInitDone();
+            mixingModel.onScene(sceneParser.parse(Uint8List.fromList(data)));
+            break;
+          case 0x02:
+            if (data[0] == 4 && data[1] == 0) {
+              print("password incorrect");
+            } else if (data[0] == 4 && data[1] == 1) {
+              print("password correct");
+            }
+            break;
+          case 0x07:
+            print("group id: $groupId; dataLen: $dataLen");
+            print("data: $data");
             break;
           default:
-            print("unknown packet group id: $groupId");
+            print("unknown packet group id: $groupId; dataLen: $dataLen");
+            print("data: $data");
             break;
         }
         break;
 
       case 0xF7:
-        // DSP packet (always 9 bytes)
-        final packet = await queue.take(9); // or take 8 ???
-        print("received dsp packet: $packet");
+        // DSP packet (always 9 bytes -> 8 data bytes)
+        final data = await queue.take(8);
+        final dspPacket = DspPacket(Uint8List.fromList(data));
+        print("$dspPacket");
+
+        if (dspPacket.targetGroup == 4 &&
+            (dspPacket.valueId == 0x0a || dspPacket.valueId == 0x07)) {
+          // valueId == 10 for send fader
+          // valueId == 7 for master fader
+          print("Fader value: ${dspPacket.value}");
+          final valueInDb =
+              (dspPacket.value / 256.0 - 128.0).clamp(-128.0, 10.0);
+          faderModel.onNewFaderValue(dspPacket.param1, valueInDb);
+        }
+
+        // Mix 4 Master Fader
+        // [3, 4, 7, 4, 42, 7, 192, 63]
+        // Mix 4 Channel 1 Fader
+        // [3, 4, 10, 12, 0, 3, 0, 0]
+        // Mix 4 Channel 2 Fader
+        // [3, 4, 10, 12, 1, 3, 170, 38]
+        // Mix 4 ST1 Fader
+        // [3, 4, 10, 12, 32, 3, 192, 63]
+        // Mix 4 FxRet 1 Fader
+        // [3, 4, 10, 12, 35, 3, 170, 84]
+
+        // Mix 1 Master Fader
+        // [3, 4, 7, 4, 39, 7, 187, 42]
+        // Mix 1 Channel 1 Fader
+        // [3, 4, 10, 12, 0, 0, 160, 75]
+        // Mix   ST1 Fader
+        // [3, 4, 10, 12, 32, 0, 162, 121]
+        // Mix 1 FX Ret 1 Fader
+        // [3, 4, 10, 12, 35, 0, 131, 119]
+
         break;
+
       default:
         print("unexpected type: $type");
     }
@@ -109,22 +170,67 @@ void _connect(final Mixer mixer, Function onConnected, Function onError) async {
 }
 
 Uint8List _buildSystemPacket(int groupId, List<int> value) {
-  return [0x7f, groupId, value.length, value.length >> 8]..addAll(value);
+  return Uint8List.fromList(
+      [0x7f, groupId, value.length, value.length >> 8]..addAll(value));
 }
 
-int _getUint16(Uint8List data, [int index = 0]) {
+int _getUint16(List<int> data, [int index = 0]) {
   return data[index] | data[index + 1] << 8;
 }
 
 Uint8List _fromUint16(int value) {
-  return Uint8List.fromList([value | value << 8]);
+  return Uint8List.fromList([value, value >> 8]);
 }
 
-void send(int i) {
-  _socket?.add([i]);
-  _socket?.flush()?.then((a) {
-    _streamController.add([i]);
-  });
+void faderChanged(int id, double valueInDb) {
+  final value = ((valueInDb + 128) * 256.0).toInt();
+  final valueId = id < 39 ? 0x0a : 0x07;
+  final param2 = id < 39 ? 0x00 : 0x07;
+  final packet = [
+    0x7F,
+    0x03,
+    0x08,
+    0x00,
+    0x04,
+    0x04,
+    valueId,
+    0x00,
+    id,
+    param2
+  ];
+  packet.addAll(_fromUint16(value));
+  _socket.add(packet);
+  print("Send Fader: $packet");
+}
+
+class DspPacket {
+  final Uint8List data;
+
+  DspPacket(this.data);
+
+  // knob, touch, ipad...
+  int get controlId => data[0];
+
+  // mix, peq, ...
+  int get targetGroup => data[1];
+
+  // fader, ...
+  int get valueId => data[2];
+
+  // ipad, mixer, ...
+  int get clientId => data[3];
+
+  int get param1 => data[4];
+
+  int get param2 => data[5];
+
+  int get value => _getUint16(data, 6);
+
+  @override
+  String toString() {
+    return 'DspPacket{controlId: $controlId, targetGroup: $targetGroup, '
+        'valueId: $valueId, clientId: $clientId, param1: $param1, param2: $param2, value $value}';
+  }
 }
 
 void _onError(e) {

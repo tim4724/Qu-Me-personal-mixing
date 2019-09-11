@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:qu_me/core/MixerConnectionModel.dart';
 import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 
 class PageHome extends StatefulWidget {
-  PageHome({Key key}) : super(key: key);
-  final String title = "QU ME";
+  PageHome({Key key}) : super(key: key) {}
+
+  final mixerModel = MixerConnectionModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -16,6 +19,11 @@ class _PageHomeState extends State<PageHome> {
   bool wheelActive = false;
   bool wheelSelected = false;
 
+  @protected
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
@@ -23,7 +31,9 @@ class _PageHomeState extends State<PageHome> {
       AnimatedOpacity(
         child: Scaffold(
           appBar: AppBar(
-            title: Text(widget.title),
+            title: Selector<MixerConnectionModel, String>(
+                selector: (_, model) => model.name,
+                builder: (_, name, child) => Text(name)),
           ),
           body: OrientationBuilder(
             builder: (context, orientation) {
@@ -76,7 +86,7 @@ class _PageHomeState extends State<PageHome> {
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(-1, "Keys", "Mix 5/6", "Tony",
+            child: VerticalFader(39, "Voc 1", "Mix 1", "Tony",
                 Colors.deepPurple.withAlpha(128), true),
           ),
         ],
@@ -96,8 +106,8 @@ class _PageHomeState extends State<PageHome> {
           buildGroup("Me"),
           Padding(
             padding: EdgeInsets.all(4),
-              child: VerticalFader(-1, "Keys", "Mix 5/6", "Alex",
-                  Colors.deepPurple.withAlpha(128), true),
+            child: VerticalFader(39, "Voc 1", "Mix 51", "Tony",
+                Colors.deepPurple.withAlpha(128), true),
           ),
         ],
       ),

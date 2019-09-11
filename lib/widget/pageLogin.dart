@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/entities/mixer.dart';
+import 'package:qu_me/core/MixerConnectionModel.dart';
+import 'package:qu_me/core/PersonalMixingModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
@@ -16,22 +17,22 @@ class PageLogin extends StatefulWidget {
 }
 
 class _PageLoginState extends State<PageLogin> {
+  final _mixerModel = MixerConnectionModel();
+  final _mixingModel = MixingModel();
+  final _mixers = {"Demo": InternetAddress.loopbackIPv4};
   var _loading = false;
-  var mixers = [
-    Mixer("Demo", InternetAddress.loopbackIPv4,
-        DateTime.now().add(Duration(days: 365)))
-  ];
 
   @protected
   void initState() {
     super.initState();
-    // todo stop on stop ;)
-    quFind.findQuMixers().listen((newMixer) {
+    _mixerModel.addListener(connectStateChanged);
+    _mixingModel.addListener(connectStateChanged);
+    quFind.findQuMixers((name, address, foundTime) {
       setState(() {
-        mixers.removeWhere((m) => m.name == newMixer.name);
-        mixers.add(newMixer);
+        _mixers[name] = address;
       });
     });
+    // todo stop on stop ;)
   }
 
   @override
@@ -61,10 +62,11 @@ class _PageLoginState extends State<PageLogin> {
                     borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                   child: ListView.builder(
-                    itemCount: mixers.length,
+                    itemCount: _mixers.length,
                     padding: EdgeInsets.all(0),
                     itemBuilder: (BuildContext context, int i) {
-                      return _MixerItem(mixers[i], onMixerSelected);
+                      return _MixerItem(
+                          _mixers.keys.elementAt(i), onMixerSelected);
                     },
                   ),
                 ),
@@ -77,29 +79,35 @@ class _PageLoginState extends State<PageLogin> {
     );
   }
 
-  void onMixerSelected(Mixer mixer) {
+  void onMixerSelected(String name) {
     setState(() => _loading = true);
-    network.connect(mixer, (mixer) {
+    network.connect(name, _mixers[name], (e) {
+      print(e);
+      setState(() => _loading = false);
+    });
+  }
+
+  void connectStateChanged() {
+    if (_mixerModel.initialized && _mixingModel.initialized) {
+      _mixerModel.removeListener(connectStateChanged);
+      _mixingModel.removeListener(connectStateChanged);
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => PageHome()),
       );
       quFind.stop();
       setState(() => _loading = false);
-    }, (e) {
-      print(e);
-      setState(() => _loading = false);
-    });
+    }
   }
 }
 
-typedef _MixerSelectedCallback = Function(Mixer address);
+typedef _MixerSelectedCallback = Function(String name);
 
 class _MixerItem extends StatelessWidget {
-  final Mixer _mixer;
-  final _MixerSelectedCallback selectedCallback;
+  final String _mixerName;
+  final _MixerSelectedCallback _selectedCallback;
 
-  const _MixerItem(this._mixer, this.selectedCallback, {Key key})
+  const _MixerItem(this._mixerName, this._selectedCallback, {Key key})
       : super(key: key);
 
   @override
@@ -107,12 +115,12 @@ class _MixerItem extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: () {
-          selectedCallback(_mixer);
+          _selectedCallback(_mixerName);
         },
         child: Container(
           padding: EdgeInsets.all(8),
           child: Text(
-            _mixer.name,
+            _mixerName,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),

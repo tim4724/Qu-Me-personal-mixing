@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:qu_me/core/FaderModel.dart';
 import 'package:qu_me/gestures/dragFader.dart';
-import 'package:qu_me/io/network.dart' as network;
 
 enum LevelType { mono, stereo_left, stereo_right }
 
@@ -17,8 +18,8 @@ abstract class Fader extends StatefulWidget {
   final Color _accentColor;
   final bool _stereo;
 
-  Fader(this.id, this._faderName, this._channel, this._userName, this._accentColor,
-      this._stereo,
+  Fader(this.id, this._faderName, this._channel, this._userName,
+      this._accentColor, this._stereo,
       {Key key})
       : super(key: key);
 }
@@ -46,7 +47,7 @@ abstract class _FaderState extends State<Fader> {
   final Color backgroundActiveColor = Colors.black.withAlpha(150);
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
-  StreamSubscription subscription;
+  final FaderModel faderModel = FaderModel();
   var activePointers = 0;
   var value = 0.0;
 
@@ -59,30 +60,18 @@ abstract class _FaderState extends State<Fader> {
         ..onTapCancel = ((pointer) => onPointerStop())
         ..onTapUp = (pointer, details) => onPointerStop();
     });
-    subscription = network.stream.listen(onNetworkData);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    subscription.cancel();
   }
 
   void onPointerStart() {
     setState(() => activePointers++);
   }
 
-  void onNetworkData(data) {
-    setState(() {
-      value = data[0] / 100;
-    });
-  }
-
   void onDragUpdate(double delta) {
-    var sliderSize = keyFaderSlider.currentContext.size;
-    var newValue = value + delta / (sliderSize.width - 16);
-    setState(() => value = newValue.clamp(0.0, 1.0));
-    // network.send((newValue * 100).toInt());
+    final sliderWidth = keyFaderSlider.currentContext.size.width;
+    final deltaNormalized = (delta / (sliderWidth - 16));
+    final currentSliderValue = faderModel.getSliderValue(widget.id);
+    final newSliderValue = currentSliderValue + deltaNormalized;
+    faderModel.onNewSliderValue(widget.id, newSliderValue);
   }
 
   void onPointerStop() {
@@ -106,8 +95,7 @@ class _HorizontalFaderState extends _FaderState {
   Widget build(BuildContext context) {
     bool active = activePointers > 0;
     Widget label = active
-        ? _FaderLabel(
-            value.toStringAsFixed(2), widget._channel, widget._accentColor)
+        ? _FaderLabel("", widget._channel, widget._accentColor)
         : _FaderLabel(widget._faderName, widget._userName, widget._accentColor);
     return Container(
       height: 56,
@@ -125,7 +113,7 @@ class _HorizontalFaderState extends _FaderState {
               gestures: gestures,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: _FaderSlider(value, active, widget._stereo,
+                child: FaderSlider(widget.id, active, widget._stereo,
                     key: keyFaderSlider),
               ),
             ),
@@ -153,8 +141,7 @@ class _VerticalFaderState extends _FaderState {
   Widget build(BuildContext context) {
     bool active = activePointers > 0;
     Widget label = active
-        ? _FaderLabel(
-            value.toStringAsFixed(2), widget._channel, widget._accentColor)
+        ? _FaderLabel("", widget._channel, widget._accentColor)
         : _FaderLabel(widget._faderName, widget._userName, widget._accentColor);
     return Container(
       width: 72,
@@ -174,7 +161,7 @@ class _VerticalFaderState extends _FaderState {
                 quarterTurns: 3,
                 child: Padding(
                     padding: EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    child: _FaderSlider(value, active, widget._stereo,
+                    child: FaderSlider(widget.id, active, widget._stereo,
                         key: keyFaderSlider)),
               ),
             ),
@@ -228,63 +215,68 @@ class _FaderLabel extends StatelessWidget {
   }
 }
 
-class _FaderSlider extends StatelessWidget {
-  static const radius = 9.0;
-  static const stops = [0.0, 0.3, 0.5, 0.7, 0.9];
-  static const colors = [
+class FaderSlider extends StatelessWidget {
+  static const rangeInDb = [-128, -50, -30, -10, 0, 10];
+  static const sliderValues = [0.0, 0.125, 0.25, 0.5, 0.75, 1.0];
+  static const _gradientStops = [0.0, 0.25, 0.5, 0.75, 1.0];
+  static const _levels = ["-inf", "-30", "-10", "0", "+10"];
+  static const _colors = [
     Colors.green,
     Colors.green,
     Colors.green,
     Colors.yellow,
     Colors.red
   ];
-  static const levels = ["-inf", "-20", "-10", "0", "+10"];
-  final double value;
-  final bool active;
-  final bool stereo;
+  static const _radius = 9.0;
+  final int _id;
+  final bool _active;
+  final bool _stereo;
 
-  const _FaderSlider(this.value, this.active, this.stereo, {Key key})
+  FaderSlider(this._id, this._active, this._stereo, {Key key})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(8),
-      child: LayoutBuilder(builder: (context, constraints) {
-        var width = constraints.maxWidth;
-        var height = constraints.maxHeight;
-        var knobPos = value * width;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          var width = constraints.maxWidth;
+          var height = constraints.maxHeight;
 
-        return Container(
-          height: height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: colors, stops: stops),
-            borderRadius: BorderRadius.all(Radius.circular(radius)),
-          ),
-          child: Stack(
-            overflow: Overflow.visible,
-            children: [0, 1, 2, 3, 4]
-                .map<Widget>((i) => _LevelLabel(
-                    levels[i], stops[i] * width, value * 0.7 > stops[i]))
-                .toList()
-                  ..insertAll(
-                    0,
-                    stereo
-                        ? [
-                            _LevelIndicator.left(
-                                value * 0.6, width, height / 2.0, radius),
-                            _LevelIndicator.right(
-                                value * 0.7, width, height / 2.0, radius),
-                          ]
-                        : [
-                            _LevelIndicator.mono(value * 0.7, width, radius),
-                          ],
-                  )
-                  ..add(_FaderKnop(knobPos, active)),
-          ),
-        );
-      }),
+          return Container(
+            height: height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: _colors, stops: _gradientStops),
+              borderRadius: BorderRadius.all(Radius.circular(_radius)),
+            ),
+            child: Stack(
+              overflow: Overflow.visible,
+              children: [0, 1, 2, 3, 4]
+                  .map<Widget>((i) => _LevelLabel(_levels[i],
+                      _gradientStops[i] * width, 0.5 > _gradientStops[i]))
+                  .toList()
+                    ..insertAll(0, _getLevelIndicator(0.5, width, height))
+                    ..add(Selector<FaderModel, double>(selector: (_, model) {
+                      return model.getSliderValue(_id);
+                    }, builder: (_, sliderValue, child) {
+                      return _FaderKnop(sliderValue * width, _active);
+                    })),
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  List<Widget> _getLevelIndicator(double level, double width, double height) {
+    if (_stereo) {
+      return [
+        _LevelIndicator.left(level, width, height / 2.0, _radius),
+        _LevelIndicator.right(level, width, height / 2.0, _radius)
+      ];
+    }
+    return [_LevelIndicator.mono(level, width, _radius)];
   }
 }
 

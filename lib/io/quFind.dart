@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:qu_me/entities/mixer.dart';
-
 RawDatagramSocket _udpSocket;
 
-Stream<Mixer> findQuMixers() {
-  final streamController = new StreamController<Mixer>();
+void findQuMixers(FoundCallback foundCallback) {
+  _udpSocket?.close();
+
   RawDatagramSocket.bind(InternetAddress.anyIPv4, 0).then((socket) {
-    _udpSocket?.close();
     _udpSocket = socket;
     final data = ascii.encode('QU Find');
     final broadcastAddress = InternetAddress('255.255.255.255');
@@ -26,7 +24,7 @@ Stream<Mixer> findQuMixers() {
         final dg = socket.receive();
         if (dg != null) {
           final name = ascii.decode(dg.data);
-          streamController.add(Mixer(name, dg.address));
+          foundCallback(name, dg.address, DateTime.now());
         }
       },
       onError: (e) {
@@ -34,14 +32,15 @@ Stream<Mixer> findQuMixers() {
       },
       onDone: () {
         t.cancel();
-        streamController.close();
         print("QU Find socket closed");
       },
       cancelOnError: false,
     );
   });
-  return streamController.stream;
 }
+
+typedef FoundCallback = Function(
+    String name, InternetAddress address, DateTime time);
 
 void stop() {
   _udpSocket?.close();

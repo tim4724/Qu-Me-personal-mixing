@@ -7,7 +7,7 @@ import 'package:qu_me/entities/send.dart';
 
 Scene parse(Uint8List data) {
   final sceneId = data[3];
-  final sceneName = readString(data, 12);
+  final sceneName = _readString(data, 12);
   print("Parsing scene \"$sceneName\" ($sceneId)");
 
   final blockLen = 192;
@@ -32,8 +32,7 @@ Scene parse(Uint8List data) {
     // id: 183
 
     final linked = data[offset + 144] == 1; // todo check link-fader
-    final name = readString(data, offset + 156);
-    var id = data[offset + 183];
+    var name = _readString(data, offset + 156);
 
     SendType type;
     if (i >= 0 && i < 32) {
@@ -41,35 +40,39 @@ Scene parse(Uint8List data) {
     } else if (i >= 32 && i < 35) {
       type = SendType.stereoChannel;
     } else {
-      // TODO: check if group or mix mode!!!
-      type = SendType.group;
-      id = i - 35;
+      type = SendType.fxReturn;
+      if (name == null || name.isEmpty) {
+        // if fx Return is not named, use the name of fx send
+        name = _readString(data, offset + 156 + (blockLen * 20));
+      }
     }
 
-    sends.add(Send(type, id, name, linked));
+    sends.add(Send(type, i, name, linked));
   }
 
   // Mono Mix 1 - 4
   // Stereo Mix 5/6, 7/8, 9/10
   for (var i = 0, offset = 48 + 39 * blockLen; i < 7; i++, offset += blockLen) {
-    final name = readString(data, offset + 156);
+    final name = _readString(data, offset + 156);
     mixes.add(Mix(i < 4 ? MixType.mono : MixType.stereo, i, name));
   }
 
-  // Fx Return ?
+  // Fx Send
+  /*
   for (var i = 0, offset = 48 + 55 * blockLen; i < 4; i++, offset += blockLen) {
-    final name = readString(data, offset + 156);
-    sends.add(Send(SendType.fxReturn, i, name, false));
+    final name = _readString(data, offset + 156);
   }
+  */
 
   return Scene(sends, mixes);
 }
 
-String readString(Uint8List data, int startIndex, {bool allowInvalid = false}) {
+String _readString(Uint8List data, int startIndex,
+    {bool allowInvalid = false}) {
   final stringBytes = data.sublist(startIndex, data.indexOf(0x00, startIndex));
   return ascii.decode(stringBytes, allowInvalid: allowInvalid);
 }
 
-int readUint16(Uint8List data, int startIndex) {
+int _readUint16(Uint8List data, int startIndex) {
   return data[startIndex] | data[startIndex + 1] << 8;
 }
