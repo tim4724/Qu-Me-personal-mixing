@@ -12,7 +12,5 @@ void main() {
   });
 
   test("t", () {
-      var a = 0x04 | 0x08 << 8;
-      print(a);
   });
 }

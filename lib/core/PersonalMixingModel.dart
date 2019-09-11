@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
-import 'package:rxdart/rxdart.dart';
 
 class MixingModel extends ChangeNotifier {
   static final MixingModel _instance = MixingModel._internal();

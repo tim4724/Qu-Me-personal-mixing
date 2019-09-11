@@ -69,14 +69,14 @@ void _connect(InternetAddress address, Function onError) async {
   // Check default password (aka is no password set)
   _socket.add(_buildSystemPacket(0x04, HEX.decode("01040000090e6490")));
 
-  // Listen for Mix 4 Master Fader
+  // Listen for Mix 1 Master Fader
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0327")));
   _socket.add(_buildSystemPacket(
       0x04,
       HEX.decode(
           "130000000000000080000000000000000000000000000000000000000000000000000000")));
 
-  // Listen for Mix 4 Sends Faders
+  // Listen for Mix 1 Sends Faders
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0427")));
   _socket.add(_buildSystemPacket(
       0x04,
@@ -133,34 +133,13 @@ void _connect(InternetAddress address, Function onError) async {
 
         if (dspPacket.targetGroup == 4 &&
             (dspPacket.valueId == 0x0a || dspPacket.valueId == 0x07)) {
-          // valueId == 10 for send fader
-          // valueId == 7 for master fader
+          // valueId == 0x0a for send fader
+          // valueId == 0x07 for master fader
           print("Fader value: ${dspPacket.value}");
           final valueInDb =
               (dspPacket.value / 256.0 - 128.0).clamp(-128.0, 10.0);
           faderModel.onNewFaderValue(dspPacket.param1, valueInDb);
         }
-
-        // Mix 4 Master Fader
-        // [3, 4, 7, 4, 42, 7, 192, 63]
-        // Mix 4 Channel 1 Fader
-        // [3, 4, 10, 12, 0, 3, 0, 0]
-        // Mix 4 Channel 2 Fader
-        // [3, 4, 10, 12, 1, 3, 170, 38]
-        // Mix 4 ST1 Fader
-        // [3, 4, 10, 12, 32, 3, 192, 63]
-        // Mix 4 FxRet 1 Fader
-        // [3, 4, 10, 12, 35, 3, 170, 84]
-
-        // Mix 1 Master Fader
-        // [3, 4, 7, 4, 39, 7, 187, 42]
-        // Mix 1 Channel 1 Fader
-        // [3, 4, 10, 12, 0, 0, 160, 75]
-        // Mix   ST1 Fader
-        // [3, 4, 10, 12, 32, 0, 162, 121]
-        // Mix 1 FX Ret 1 Fader
-        // [3, 4, 10, 12, 35, 0, 131, 119]
-
         break;
 
       default:
