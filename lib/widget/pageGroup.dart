@@ -68,7 +68,7 @@ class _PageGroupState extends State<PageGroup> {
             final send = sends[index];
             return Padding(
               padding: EdgeInsets.all(2.0),
-              child: HorizontalFader(send.id, send.name, "${send.id}", "",
+              child: HorizontalFader(send.id, send.name, "${send.id}", "Tom",
                   send.color, send.stereo),
             );
           },

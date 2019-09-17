@@ -235,6 +235,7 @@ class FaderSlider extends StatelessWidget {
   static const sliderValues = [0.0, 0.125, 0.25, 0.5, 0.75, 1.0];
   static const _gradientStops = [0.0, 0.25, 0.5, 0.75, 1.0];
   static const _levels = ["-inf", "-30", "-10", "0", "+10"];
+  static const _levelLabelOffsets = [0.2, -0.5, -0.5, -0.5, -1.1];
   static const _colors = [
     Colors.green,
     Colors.green,
@@ -268,8 +269,11 @@ class FaderSlider extends StatelessWidget {
             child: Stack(
               overflow: Overflow.visible,
               children: [0, 1, 2, 3, 4]
-                  .map<Widget>((i) => _LevelLabel(_levels[i],
-                      _gradientStops[i] * width, 0.5 > _gradientStops[i]))
+                  .map<Widget>((i) => _LevelLabel(
+                      _levels[i],
+                      _gradientStops[i] * width,
+                      0.5 > _gradientStops[i],
+                      _levelLabelOffsets[i]))
                   .toList()
                     ..insertAll(0, _getLevelIndicator(0.5, width, height))
                     ..add(Selector<FaderModel, double>(selector: (_, model) {
@@ -389,20 +393,22 @@ class _LevelIndicator extends StatelessWidget {
 
 class _LevelLabel extends StatelessWidget {
   final String text;
-  final double offset;
+  final double position;
   final bool highlight;
+  final double fractionalOffset;
 
-  const _LevelLabel(this.text, this.offset, this.highlight);
+  const _LevelLabel(
+      this.text, this.position, this.highlight, this.fractionalOffset);
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: max(offset, 16),
+      left: position,
       bottom: 0,
       top: 0,
       child: Center(
         child: FractionalTranslation(
-          translation: Offset(-0.5, 0),
+          translation: Offset(fractionalOffset, 0),
           child: Text(
             text,
             style: TextStyle(
