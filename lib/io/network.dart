@@ -8,7 +8,10 @@ import 'package:qu_me/core/FaderModel.dart';
 import 'package:qu_me/core/MixerConnectionModel.dart';
 import 'package:qu_me/core/PersonalMixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
-import 'package:qu_me/io/demoServer.dart' as demoServer;
+import 'package:qu_me/entities/mix.dart';
+import 'package:qu_me/entities/mixer.dart';
+import 'package:qu_me/entities/scene.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 
 Socket _socket;
@@ -17,9 +20,19 @@ void connect(String name, InternetAddress address, Function onError) {
   MixerConnectionModel().onStartConnect(name, address);
 
   if (address.isLoopback) {
-    demoServer.startDemoServer().then((a) {
-      _connect(address, onError);
-    });
+    final mixerModel = MixerConnectionModel();
+    mixerModel.onStartConnect(name, address);
+    mixerModel.onMixerVersion(MixerType.QU_16, "0");
+    final sends = List<Send>();
+    for (int i = 0; i < 32; i++) {
+      sends.add(Send(SendType.monoChannel, i, "Ch ${i + 1}", false));
+    }
+    // TODO ST, FX, ...
+    final mixes = List<Mix>();
+    Scene scene = Scene(sends, mixes);
+
+    final mixingModel = MixingModel();
+    mixingModel.onScene(scene);
   } else {
     _connect(address, onError);
   }
@@ -162,6 +175,9 @@ Uint8List _fromUint16(int value) {
 }
 
 void faderChanged(int id, double valueInDb) {
+  if(_socket == null) {
+    return;
+  }
   final value = ((valueInDb + 128) * 256.0).toInt();
   final valueId = id < 39 ? 0x0a : 0x07;
   final param2 = id < 39 ? 0x00 : 0x07;
