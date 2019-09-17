@@ -25,7 +25,7 @@ void connect(String name, InternetAddress address, Function onError) {
     mixerModel.onMixerVersion(MixerType.QU_16, "0");
     final sends = List<Send>();
     for (int i = 0; i < 32; i++) {
-      sends.add(Send(SendType.monoChannel, i, "Ch ${i + 1}", false));
+      sends.add(Send(SendType.monoChannel, i, "Demo${i + 1}", false));
     }
     // TODO ST, FX, ...
     final mixes = List<Mix>();

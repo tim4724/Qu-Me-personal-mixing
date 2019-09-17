@@ -48,7 +48,7 @@ class _PageGroupState extends State<PageGroup> {
               return Padding(
                 padding: EdgeInsets.all(2.0),
                 child: Align(
-                  child: VerticalFader(send.id, send.name, "${send.id}", "",
+                  child: VerticalFader(send.id, send.name, send.technicalName, "Tom",
                       send.color, send.stereo),
                 ),
               );
@@ -68,7 +68,7 @@ class _PageGroupState extends State<PageGroup> {
             final send = sends[index];
             return Padding(
               padding: EdgeInsets.all(2.0),
-              child: HorizontalFader(send.id, send.name, "${send.id}", "Tom",
+              child: HorizontalFader(send.id, send.name, send.technicalName, "Tom",
                   send.color, send.stereo),
             );
           },

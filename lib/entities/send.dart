@@ -19,6 +19,8 @@ class Send {
 
   bool get stereo => sendType == SendType.stereoChannel || faderLinked;
 
+  String get technicalName => "Ch $id"; // TODO fix with real deals
+
   @override
   String toString() {
     return 'Send{sendType: $sendType, id: $id, name: $name, faderLinked: $faderLinked}';
