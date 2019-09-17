@@ -51,6 +51,10 @@ abstract class _FaderState extends State<Fader> {
   var activePointers = 0;
   var value = 0.0;
 
+  bool get active => activePointers > 0;
+
+  Color get color => widget._accentColor;
+
   _FaderState() {
     gestures[MultiTapGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
@@ -77,6 +81,22 @@ abstract class _FaderState extends State<Fader> {
   void onPointerStop() {
     setState(() => activePointers--);
   }
+
+  Widget getFaderLabel() {
+    if (!active) {
+      return _FaderLabel(widget._faderName, widget._userName, color);
+    }
+    return Selector<FaderModel, String>(
+      selector: (_, model) {
+        final db = model.getValueInDb(widget.id);
+        return (db >= 0.1 ? "+" : "") + "${db.toStringAsFixed(1)}db";
+      },
+      builder: (_, dbValue, child) {
+        return _FaderLabel(dbValue, widget._channel, color,
+            textAlignPrimary: TextAlign.end);
+      },
+    );
+  }
 }
 
 class _HorizontalFaderState extends _FaderState {
@@ -93,10 +113,6 @@ class _HorizontalFaderState extends _FaderState {
 
   @override
   Widget build(BuildContext context) {
-    bool active = activePointers > 0;
-    Widget label = active
-        ? _FaderLabel("", widget._channel, widget._accentColor)
-        : _FaderLabel(widget._faderName, widget._userName, widget._accentColor);
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -106,7 +122,7 @@ class _HorizontalFaderState extends _FaderState {
       ),
       child: Row(
         children: [
-          label,
+          getFaderLabel(),
           Expanded(
             child: RawGestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -139,10 +155,6 @@ class _VerticalFaderState extends _FaderState {
 
   @override
   Widget build(BuildContext context) {
-    bool active = activePointers > 0;
-    Widget label = active
-        ? _FaderLabel("", widget._channel, widget._accentColor)
-        : _FaderLabel(widget._faderName, widget._userName, widget._accentColor);
     return Container(
       width: 72,
       decoration: BoxDecoration(
@@ -152,7 +164,7 @@ class _VerticalFaderState extends _FaderState {
       ),
       child: Column(
         children: [
-          label,
+          getFaderLabel(),
           Expanded(
             child: RawGestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -174,10 +186,12 @@ class _VerticalFaderState extends _FaderState {
 
 class _FaderLabel extends StatelessWidget {
   final String primary;
+  final TextAlign textAlignPrimary;
   final String secondary;
   final Color color;
 
-  const _FaderLabel(this.primary, this.secondary, this.color, {Key key})
+  const _FaderLabel(this.primary, this.secondary, this.color,
+      {Key key, this.textAlignPrimary = TextAlign.start})
       : super(key: key);
 
   Widget buildNameLabel(BuildContext context) {
@@ -190,6 +204,7 @@ class _FaderLabel extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.fade,
+          textAlign: textAlignPrimary,
         ),
         Text(
           secondary,

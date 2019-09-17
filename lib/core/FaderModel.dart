@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/io/network.dart' as network;
+import 'package:qu_me/widget/fader.dart';
 
 class FaderModel extends ChangeNotifier {
   static final FaderModel _instance = FaderModel._internal();
@@ -11,12 +11,13 @@ class FaderModel extends ChangeNotifier {
 
   // These are in range from -180.0 to +10.0
   final _valuesInDb = List.filled(60, 0.0);
+
   // These are in range from 0.0 to 1.0
   final _sliderValues = List.filled(60, 0.0);
 
   FaderModel._internal();
 
-  double getFaderValue(int id) {
+  double getValueInDb(int id) {
     return _valuesInDb[id];
   }
 
@@ -31,6 +32,7 @@ class FaderModel extends ChangeNotifier {
   }
 
   void onNewSliderValue(int id, double sliderValue) {
+    sliderValue = sliderValue.clamp(0, 1);
     _sliderValues[id] = sliderValue;
     _valuesInDb[id] = _convertFromSliderValue(sliderValue);
     notifyListeners();
