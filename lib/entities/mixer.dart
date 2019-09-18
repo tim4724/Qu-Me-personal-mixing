@@ -4,17 +4,15 @@ class Mixer {
   final String name;
   final InternetAddress address;
   int mixerType; // TODO check if initialized with null
-  DateTime lastHeartbeat;
   String firmwareVersion;
 
   Mixer(this.name, this.address) {
     // TODO : update from heartbeat
-    lastHeartbeat = DateTime.now();
   }
 
   @override
   String toString() {
-    return 'Mixer{name: $name, address: $address, mixerType: $mixerType, lastHeartbeat: $lastHeartbeat, firmwareVersion: $firmwareVersion}';
+    return 'Mixer{name: $name, address: $address, mixerType: $mixerType, firmwareVersion: $firmwareVersion}';
   }
 }
 

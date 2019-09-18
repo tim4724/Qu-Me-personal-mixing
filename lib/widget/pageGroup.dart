@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/PersonalMixingModel.dart';
+import 'package:qu_me/core/personalMixingModel.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
 
 class PageGroup extends StatefulWidget {
-  PageGroup({Key key}) : super(key: key);
-  final String title = "Instr";
+  final int groupIndex;
+  final String title;
+
+  PageGroup(this.groupIndex, this.title, {Key key}) : super(key: key);
 
   @override
   _PageGroupState createState() => _PageGroupState();
@@ -37,9 +39,8 @@ class _PageGroupState extends State<PageGroup> {
 
   Widget buildBodyLandscape() {
     return Selector<MixingModel, List<Send>>(
-        selector: (_, model) => model.getForGroup(0),
+        selector: (_, model) => model.getSendsForGroup(widget.groupIndex),
         builder: (_, sends, child) {
-          print("rebuild list");
           return ListView.builder(
             itemCount: sends.length,
             scrollDirection: Axis.horizontal,
@@ -48,8 +49,8 @@ class _PageGroupState extends State<PageGroup> {
               return Padding(
                 padding: EdgeInsets.all(2.0),
                 child: Align(
-                  child: VerticalFader(send.id, send.name, send.technicalName, "Tom",
-                      send.color, send.stereo),
+                  child: VerticalFader(send.id, send.name, send.technicalName,
+                      send.personName, send.color, send.stereo),
                 ),
               );
             },
@@ -60,7 +61,8 @@ class _PageGroupState extends State<PageGroup> {
   Widget buildBodyPortrait() {
     return Selector<MixingModel, List<Send>>(
       selector: (_, model) {
-        return model.getForGroup(0);},
+        return model.getSendsForGroup(widget.groupIndex);
+      },
       builder: (_, sends, child) {
         return ListView.builder(
           itemCount: sends.length,
@@ -68,8 +70,8 @@ class _PageGroupState extends State<PageGroup> {
             final send = sends[index];
             return Padding(
               padding: EdgeInsets.all(2.0),
-              child: HorizontalFader(send.id, send.name, send.technicalName, "Tom",
-                  send.color, send.stereo),
+              child: HorizontalFader(send.id, send.name, send.technicalName,
+                  send.personName, send.color, send.stereo),
             );
           },
         );

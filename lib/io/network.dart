@@ -4,35 +4,24 @@ import 'dart:typed_data';
 
 import 'package:async/async.dart';
 import 'package:hex/hex.dart';
-import 'package:qu_me/core/FaderModel.dart';
-import 'package:qu_me/core/MixerConnectionModel.dart';
-import 'package:qu_me/core/PersonalMixingModel.dart';
+import 'package:qu_me/core/faderModel.dart';
+import 'package:qu_me/core/mixerConnectionModel.dart';
+import 'package:qu_me/core/personalMixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
-import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
-import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
-
+import 'package:qu_me/io/metersListener.dart' as metersListener;
 Socket _socket;
 
-void connect(String name, InternetAddress address, Function onError) {
+void connect(String name, InternetAddress address, Function onError) async {
   MixerConnectionModel().onStartConnect(name, address);
 
   if (address.isLoopback) {
     final mixerModel = MixerConnectionModel();
-    mixerModel.onStartConnect(name, address);
     mixerModel.onMixerVersion(MixerType.QU_16, "0");
-    final sends = List<Send>();
-    for (int i = 0; i < 32; i++) {
-      sends.add(Send(SendType.monoChannel, i, "Demo${i + 1}", false));
-    }
-    // TODO ST, FX, ...
-    final mixes = List<Mix>();
-    Scene scene = Scene(sends, mixes);
-
     final mixingModel = MixingModel();
-    mixingModel.onScene(scene);
+    mixingModel.onScene(buildDemoScene());
   } else {
     _connect(address, onError);
   }
@@ -50,12 +39,13 @@ void _connect(InternetAddress address, Function onError) async {
   _socket.listen(
     (dataEvent) {
       for (final byte in dataEvent) {
+        // TODO better way?
         byteStreamController.add(byte);
       }
     },
     onDone: () {
       print("Socket was closed");
-      _socket.destroy();
+      _socket?.destroy();
       heartbeat.stop();
       byteStreamController.close();
       mixerModel.reset();
@@ -64,18 +54,19 @@ void _connect(InternetAddress address, Function onError) async {
     onError: _onError,
     cancelOnError: false,
   );
-
   // TODO: init timeout?!
 
-  // TODO: Init in heartbeat class?
-  final heartbeatSocket =
+  final metersSocket =
       await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 0);
+  metersListener.listen(metersSocket);
 
-  // request meters? or Request remote heartbeat port?
+  // Request meters
   // Group Id 0x00 -> "QU-You"?
-  _socket.add(_buildSystemPacket(0x00, _fromUint16(heartbeatSocket.port)));
+  _socket.add(_buildSystemPacket(0x00, _fromUint16(metersSocket.port)));
+
   // request mixer version
   _socket.add(_buildSystemPacket(0x04, [0x00, 0x00]));
+
   // request scene state
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 
@@ -111,7 +102,7 @@ void _connect(InternetAddress address, Function onError) async {
         switch (groupId) {
           case 0x00:
             final dstPort = _getUint16(data);
-            heartbeat.start(heartbeatSocket, _socket.remoteAddress, dstPort);
+            heartbeat.start(metersSocket, address, dstPort);
             break;
           case 0x01:
             mixerModel.onMixerVersion(
@@ -151,7 +142,7 @@ void _connect(InternetAddress address, Function onError) async {
           print("Fader value: ${dspPacket.value}");
           final valueInDb =
               (dspPacket.value / 256.0 - 128.0).clamp(-128.0, 10.0);
-          faderModel.onNewFaderValue(dspPacket.param1, valueInDb);
+          faderModel.onNewFaderLevel(dspPacket.param1, valueInDb);
         }
         break;
 
@@ -175,7 +166,7 @@ Uint8List _fromUint16(int value) {
 }
 
 void faderChanged(int id, double valueInDb) {
-  if(_socket == null) {
+  if (_socket == null) {
     return;
   }
   final value = ((valueInDb + 128) * 256.0).toInt();
@@ -195,7 +186,7 @@ void faderChanged(int id, double valueInDb) {
   ];
   packet.addAll(_fromUint16(value));
   _socket.add(packet);
-  print("Send Fader: $packet");
+  // print("Send Fader: $packet");
 }
 
 class DspPacket {
@@ -228,6 +219,14 @@ class DspPacket {
   }
 }
 
+void close() {
+  _socket?.destroy();
+}
+
 void _onError(e) {
   print(e);
+}
+
+void compareScenes() {
+  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }

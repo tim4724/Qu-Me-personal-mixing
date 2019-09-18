@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/MixerConnectionModel.dart';
+import 'package:qu_me/core/mixerConnectionModel.dart';
+import 'package:qu_me/core/personalMixingModel.dart';
+import 'package:qu_me/entities/mix.dart';
+import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
+import 'package:qu_me/widget/pageLogin.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key) {}
 
   final mixerModel = MixerConnectionModel();
+  final mixingModel = MixingModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -18,56 +23,77 @@ class PageHome extends StatefulWidget {
 class _PageHomeState extends State<PageHome> {
   bool wheelActive = false;
   bool wheelSelected = false;
+  Mix mix;
 
   @protected
   void initState() {
     super.initState();
+    setState(() {
+      mix = widget.mixingModel.availableMixes[0];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      PageGroup(),
-      AnimatedOpacity(
-        child: Scaffold(
-          appBar: AppBar(
-            title: Selector<MixerConnectionModel, String>(
-                selector: (_, model) => model.name,
-                builder: (_, name, child) => Text(name)),
+    return WillPopScope(
+      onWillPop: () => logout(),
+      child: Stack(children: [
+        PageGroup(0, "asdf"),
+        AnimatedOpacity(
+          child: Scaffold(
+            appBar: AppBar(
+              title: Selector<MixerConnectionModel, String>(
+                  selector: (_, model) => model.name,
+                  builder: (_, name, child) => Text(name)),
+              leading: new IconButton(
+                icon: new Icon(Icons.close),
+                tooltip: "Logout",
+                onPressed: () => logout(),
+              ),
+            ),
+            body: OrientationBuilder(
+              builder: (context, orientation) {
+                return orientation == Orientation.landscape
+                    ? buildBodyLandscape()
+                    : buildBodyPortrait();
+              },
+            ),
           ),
-          body: OrientationBuilder(
-            builder: (context, orientation) {
-              return orientation == Orientation.landscape
-                  ? buildBodyLandscape()
-                  : buildBodyPortrait();
-            },
-          ),
+          opacity: wheelActive ? 0.4 : 1,
+          duration: Duration(milliseconds: 500),
         ),
-        opacity: wheelActive ? 0.4 : 1,
-        duration: Duration(milliseconds: 500),
-      ),
-    ]);
+      ]),
+    );
   }
 
-  onWheelChanged(double delta) {
+  void onWheelChanged(double delta) {
     setState(() {
       wheelActive = true;
     });
   }
 
-  onWheelReleased() {
+  void onWheelReleased() {
     setState(() {
       wheelActive = false;
     });
   }
 
-  onWheelSelected() {
+  void onWheelSelected() {
     setState(() {
       wheelSelected = false;
     });
   }
 
+  logout() {
+    network.close();
+    widget.mixerModel.reset();
+    widget.mixingModel.reset();
+    final route = MaterialPageRoute(builder: (context) => PageLogin());
+    Navigator.pushReplacement(context, route);
+  }
+
   Widget buildBodyPortrait() {
+    final names = widget.mixingModel.groupNames;
     return Padding(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,19 +101,19 @@ class _PageHomeState extends State<PageHome> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup("Group 1"), buildGroup("Group 3")],
+              children: [buildGroup(names[0]), buildGroup(names[2])],
             ),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup("Group 2"), buildGroup("Me")],
+              children: [buildGroup(names[1]), buildGroup(names[3])],
             ),
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(39, "Voc 1", "Mix 1", "Tony",
-                Colors.deepPurple.withAlpha(128), true),
+            child: VerticalFader(mix.id, mix.name, mix.technicalName,
+                mix.personName, mix.color, mix.stereo),
           ),
         ],
       ),
@@ -96,18 +122,19 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildBodyLandscape() {
+    final names = widget.mixingModel.groupNames;
     return Padding(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          buildGroup("Group 1"),
-          buildGroup("Group 2"),
-          buildGroup("Group 3"),
-          buildGroup("Me"),
+          buildGroup(names[0]),
+          buildGroup(names[1]),
+          buildGroup(names[2]),
+          buildGroup(names[3]),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(39, "Voc 1", "Mix 51", "Tony",
-                Colors.deepPurple.withAlpha(128), true),
+            child: VerticalFader(mix.id, mix.name, mix.technicalName,
+                mix.personName, mix.color, mix.stereo),
           ),
         ],
       ),

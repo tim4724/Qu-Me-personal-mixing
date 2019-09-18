@@ -5,7 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/FaderModel.dart';
+import 'package:qu_me/core/faderModel.dart';
+import 'package:qu_me/core/metersModel.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 
 enum LevelType { mono, stereo_left, stereo_right }
@@ -25,8 +26,8 @@ abstract class Fader extends StatefulWidget {
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(int id, String faderName, String technicalName, String userName,
-      Color accentColor, bool stereo)
+  HorizontalFader(int id, String faderName, String technicalName,
+      String userName, Color accentColor, bool stereo)
       : super(id, faderName, technicalName, userName, accentColor, stereo);
 
   @override
@@ -291,11 +292,25 @@ class FaderSlider extends StatelessWidget {
   List<Widget> _getLevelIndicator(double level, double width, double height) {
     if (_stereo) {
       return [
-        _LevelIndicator.left(level, width, height / 2.0, _radius),
-        _LevelIndicator.right(level, width, height / 2.0, _radius)
+        Selector<MetersModel, double>(selector: (_, model) {
+          return model.getMeterValue(_id);
+        }, builder: (_, level, child) {
+          return _LevelIndicator.left(level, width, height / 2.0, _radius);
+        }),
+        Selector<MetersModel, double>(selector: (_, model) {
+          return model.getMeterValue(_id + 1);
+        }, builder: (_, level, child) {
+          return _LevelIndicator.right(level, width, height / 2.0, _radius);
+        }),
       ];
     }
-    return [_LevelIndicator.mono(level, width, _radius)];
+    return [
+      Selector<MetersModel, double>(selector: (_, model) {
+        return model.getMeterValue(_id);
+      }, builder: (_, level, child) {
+        return _LevelIndicator.mono(level, width, _radius);
+      })
+    ];
   }
 }
 
@@ -331,6 +346,7 @@ class _LevelIndicator extends StatelessWidget {
   final double width;
   final double height;
   final double radius;
+  final shadowColor = const Color.fromARGB(128, 0, 0, 0);
 
   const _LevelIndicator.left(this.level, this.width, this.height, this.radius,
       {Key key})
@@ -349,9 +365,7 @@ class _LevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color shadowColor = Colors.black.withAlpha(180);
     double levelPos = max((1 - level) * width, radius);
-
     var yOffset = 0.0;
     BorderRadius borderRadius;
     switch (type) {

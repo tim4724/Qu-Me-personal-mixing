@@ -1,29 +1,47 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:qu_me/core/findColor.dart';
 
 class Send {
-  final SendType sendType;
   final int id;
+  final SendType sendType;
+  final displayId;
+  String _technicalName;
   String name;
   bool faderLinked;
   String personName;
   Color color;
 
-  Send(this.sendType, this.id, this.name, this.faderLinked, [this.color]) {
-    if (color == null) {
-      // color by name
-      color = Colors.black;
+  Send(this.id, this.sendType, this.displayId, this.name, this.faderLinked) {
+    color = findColor(name);
+    switch (sendType) {
+      case SendType.monoChannel:
+        _technicalName = "Ch $displayId";
+        break;
+      case SendType.stereoChannel:
+        _technicalName = "St $displayId";
+        break;
+      case SendType.fxReturn:
+        _technicalName = "FxRet $displayId";
+        break;
+      case SendType.group:
+        _technicalName = "Grp $displayId";
+        break;
+      default:
+        _technicalName = "$displayId";
+        break;
     }
+    personName = "Tom";
   }
 
   bool get stereo => sendType == SendType.stereoChannel || faderLinked;
 
-  String get technicalName => "Ch $id"; // TODO fix with real deals
+  String get technicalName => _technicalName;
 
   @override
   String toString() {
-    return 'Send{sendType: $sendType, id: $id, name: $name, faderLinked: $faderLinked}';
+    return 'Send{id: $id, sendType: $sendType, displayId: $displayId, _technicalName: $_technicalName, name: $name, faderLinked: $faderLinked, personName: $personName, color: $color}';
   }
 }
 

@@ -12,8 +12,11 @@ class MixingModel extends ChangeNotifier {
 
   Scene _scene;
   final _sendsByGroup = List.filled(4, List<Send>());
+  final _groupNames = ["Group 1", "Group 2", "Group 3", "Me"];
 
   MixingModel._internal();
+
+  Scene get scene => _scene;
 
   void onScene(Scene scene) {
     _scene = scene;
@@ -21,9 +24,11 @@ class MixingModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Send> getForGroup(int index) {
+  List<Send> getSendsForGroup(int index) {
     return UnmodifiableListView(_sendsByGroup[index]);
   }
+
+  List<String> get groupNames => UnmodifiableListView(_groupNames);
 
   bool get initialized => _scene != null;
 

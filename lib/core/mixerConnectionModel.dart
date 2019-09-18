@@ -24,23 +24,16 @@ class MixerConnectionModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onHeartbeatReceived(InternetAddress fromAddress) {
-    if (fromAddress == _mixer?.address) {
-      _mixer.lastHeartbeat = DateTime.now();
-    }
-  }
-
   InternetAddress get remoteAddress => _mixer?.address;
 
   get name => _mixer?.name;
 
   bool get initialized {
-    return _mixer?.lastHeartbeat != null && _mixer?.mixerType != null;
+    return _mixer?.mixerType != null;
   }
 
   void reset() {
     _mixer?.mixerType = null;
-    _mixer?.lastHeartbeat = null;
     notifyListeners();
   }
 }

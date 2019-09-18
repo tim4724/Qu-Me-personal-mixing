@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/FaderModel.dart';
-import 'package:qu_me/core/MixerConnectionModel.dart';
-import 'package:qu_me/core/PersonalMixingModel.dart';
+import 'package:qu_me/core/faderModel.dart';
+import 'package:qu_me/core/metersModel.dart';
+import 'package:qu_me/core/mixerConnectionModel.dart';
+import 'package:qu_me/core/personalMixingModel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 
 class MyApp extends StatelessWidget {
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(builder: (context) => MixerConnectionModel()),
         ChangeNotifierProvider(builder: (context) => MixingModel()),
         ChangeNotifierProvider(builder: (context) => FaderModel()),
+        ChangeNotifierProvider(builder: (context) => MetersModel()),
       ],
       child: MaterialApp(
         title: 'QU ME',

@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/core/MixerConnectionModel.dart';
-import 'package:qu_me/core/PersonalMixingModel.dart';
+import 'package:qu_me/core/mixerConnectionModel.dart';
+import 'package:qu_me/core/personalMixingModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
@@ -91,7 +91,7 @@ class _PageLoginState extends State<PageLogin> {
     if (_mixerModel.initialized && _mixingModel.initialized) {
       _mixerModel.removeListener(connectStateChanged);
       _mixingModel.removeListener(connectStateChanged);
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => PageHome()),
       );
