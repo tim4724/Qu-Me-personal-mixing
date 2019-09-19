@@ -46,11 +46,9 @@ class FaderModel extends ChangeNotifier {
 
     for (final send in sends) {
       final id = send.id;
-      if (_levelsInDb[id] > -128.0) {
-        _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
-        _sliderValues[id] = convertFromDbValue(_levelsInDb[id]).clamp(0.0, 1.0);
-        _dirtySends.add(id);
-      }
+      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
+      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]).clamp(0.0, 1.0);
+      _dirtySends.add(id);
       // todo check linked channels
     }
     notifyListeners();
