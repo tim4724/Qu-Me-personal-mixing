@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mixer.dart';
+import 'package:qu_me/io/network.dart' as network;
 
 class MixerConnectionModel extends ChangeNotifier {
   static final MixerConnectionModel _instance =
@@ -15,6 +16,7 @@ class MixerConnectionModel extends ChangeNotifier {
 
   void onStartConnect(String name, InternetAddress address) {
     _mixer = Mixer(name, address);
+    network.connect(name, address);
     notifyListeners();
   }
 

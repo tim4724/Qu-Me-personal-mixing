@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/core/mixerConnectionModel.dart';
 import 'package:qu_me/core/personalMixingModel.dart';
-import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 
@@ -72,7 +71,7 @@ class _PageLoginState extends State<PageLogin> {
                 ),
               ],
             ),
-            _loading ? CircularProgressIndicator() : Container(),
+            if (_loading) CircularProgressIndicator(),
           ],
         ),
       ),
@@ -81,10 +80,7 @@ class _PageLoginState extends State<PageLogin> {
 
   void onMixerSelected(String name) {
     setState(() => _loading = true);
-    network.connect(name, _mixers[name], (e) {
-      print(e);
-      setState(() => _loading = false);
-    });
+    MixerConnectionModel().onStartConnect(name, _mixers[name]);
   }
 
   void connectStateChanged() {

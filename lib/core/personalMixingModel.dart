@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
+import 'package:qu_me/io/network.dart' as network;
 
 import 'faderModel.dart';
 
@@ -42,6 +43,7 @@ class MixingModel extends ChangeNotifier {
 
   void onMixSelected(int index) {
     currentMix = _scene.mixes[index];
+    network.mixSelectChanged();
     notifyListeners();
   }
 

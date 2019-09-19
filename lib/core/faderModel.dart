@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 
 import 'levelConverter.dart';
@@ -13,6 +16,9 @@ class FaderModel extends ChangeNotifier {
 
   // These are in range from 0.0 to 1.0
   final _sliderValues = List.filled(60, 0.0);
+
+  final _dirtySends = Set<int>();
+  Timer _networkNotifyTimer;
 
   FaderModel._internal();
 
@@ -30,12 +36,32 @@ class FaderModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void onTrim(List<Send> sends, double delta) {
+    final maxDbValue = convertToDbValue(1.0);
+    var deltaInDb = maxDbValue - convertToDbValue(1.0 - delta.abs());
+    if (delta < 0) {
+      deltaInDb *= -1;
+    }
+
+    for (int i = 0; i < sends.length; i++) {
+      var send = sends[i];
+      final id = send.id;
+      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
+      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
+      _dirtySends.add(id);
+      // todo check linked channels
+    }
+    notifyListeners();
+    notifyNetwork();
+  }
+
   void onNewSliderValue(int id, double sliderValue) {
     sliderValue = sliderValue.clamp(0.0, 1.0);
     _sliderValues[id] = sliderValue;
     _levelsInDb[id] = convertToDbValue(sliderValue);
+    _dirtySends.add(id);
     notifyListeners();
-    network.faderChanged(id, _levelsInDb[id]);
+    notifyNetwork();
   }
 
   void reset() {
@@ -44,6 +70,18 @@ class FaderModel extends ChangeNotifier {
       _sliderValues[i] = 0.0;
     }
     notifyListeners();
+  }
+
+  void notifyNetwork() {
+    if (_networkNotifyTimer == null || !_networkNotifyTimer.isActive) {
+      _networkNotifyTimer = Timer(Duration(milliseconds: 60), () {
+        for (var id in _dirtySends) {
+          network.faderChanged(id, _levelsInDb[id]);
+        }
+        _dirtySends.clear();
+        _networkNotifyTimer = null;
+      });
+    }
   }
 }
 

@@ -10,10 +10,12 @@ class Send {
   String _technicalName;
   String name;
   bool faderLinked;
+  bool panLinked;
   String personName;
   Color color;
 
-  Send(this.id, this.sendType, this.displayId, this.name, this.faderLinked) {
+  Send(this.id, this.sendType, this.displayId, this.name, this.faderLinked,
+      this.panLinked) {
     color = findColor(name);
     switch (sendType) {
       case SendType.monoChannel:

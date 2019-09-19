@@ -5,9 +5,17 @@ import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 
-Uint8List lastSceneData;
+Uint8List lastSceneData = Uint8List(0);
 
 Scene parse(Uint8List data) {
+  final dif = compare(lastSceneData, data);
+  print("Scene dif");
+  for (var index in dif) {
+    print(
+        "index: $index \t oldValue: ${lastSceneData[index]} \t newValue: ${data[index]}");
+  }
+  print("");
+
   lastSceneData = data;
   final sceneId = data[3];
   final sceneName = _readString(data, 12);
@@ -34,12 +42,14 @@ Scene parse(Uint8List data) {
     // pad: 155
     // id: 183
 
-    final linked = data[offset + 144] == 1; // todo check link-fader
+    final linked = data[offset + 144] == 1;
+    final panLinked = linked && data[offset + 149] >> 3 & 1 == 1;
+
     var name = _readString(data, offset + 156);
 
     SendType type;
     int displayId;
-    if (i >= 0 && i < 32) {
+    if (i < 32) {
       type = SendType.monoChannel;
       displayId = i + 1;
     } else if (i >= 32 && i < 35) {
@@ -53,7 +63,7 @@ Scene parse(Uint8List data) {
         name = _readString(data, offset + 156 + (blockLen * 20));
       }
     }
-    sends[i] = Send(i, type, displayId, name, linked);
+    sends[i] = Send(i, type, displayId, name, linked, panLinked);
   }
 
   final mixes = List<Mix>(7);

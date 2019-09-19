@@ -15,20 +15,18 @@ import 'package:qu_me/io/metersListener.dart' as metersListener;
 
 Socket _socket;
 
-void connect(String name, InternetAddress address, Function onError) async {
-  MixerConnectionModel().onStartConnect(name, address);
-
+void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
     final mixerModel = MixerConnectionModel();
     mixerModel.onMixerVersion(MixerType.QU_16, "0");
     final mixingModel = MixingModel();
     mixingModel.onScene(buildDemoScene());
   } else {
-    _connect(address, onError);
+    _connect(address);
   }
 }
 
-void _connect(InternetAddress address, Function onError) async {
+void _connect(InternetAddress address) async {
   final mixerModel = MixerConnectionModel();
   final mixingModel = MixingModel();
   final faderModel = FaderModel();
@@ -74,9 +72,7 @@ void _connect(InternetAddress address, Function onError) async {
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
 
   _requestSceneState();
-
-  mixingModel.addListener(() {});
-  _mixSelectChanged();
+  mixSelectChanged();
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -182,7 +178,7 @@ void _requestSceneState() {
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }
 
-void _mixSelectChanged() {
+void mixSelectChanged() {
   // TODO: allow different mixes...
   _requestSceneState();
 
@@ -237,8 +233,4 @@ void close() {
 
 void _onError(e) {
   print(e);
-}
-
-void compareScenes() {
-  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }

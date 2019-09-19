@@ -18,14 +18,14 @@ Scene buildDemoScene() {
   // TODO fix ids, names,
   final sends = List<Send>();
   for (int i = 0; i < 32; i++) {
-    sends.add(Send(i, SendType.monoChannel, i + 1, "Demo${i + 1}", false));
+    sends.add(Send(i, SendType.monoChannel, i + 1, "Demo${i + 1}", false, false));
   }
   for (int i = 0; i < 3; i++) {
     sends.add(
-        Send(i + 32, SendType.stereoChannel, i + 1, "Stereo${i + 1}", false));
+        Send(i + 32, SendType.stereoChannel, i + 1, "Stereo${i + 1}", false, false));
   }
   for (int i = 0; i < 4; i++) {
-    sends.add(Send(i + 35, SendType.stereoChannel, i + 1, "FX${i + 1}", false));
+    sends.add(Send(i + 35, SendType.stereoChannel, i + 1, "FX${i + 1}", false, false));
   }
   final mixes = [
     Mix(0x27, MixType.mono, 1, "Voc 1", List.filled(39, -128.0)),

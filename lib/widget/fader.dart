@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/faderModel.dart';
+import 'package:qu_me/core/levelConverter.dart';
 import 'package:qu_me/core/metersModel.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 
@@ -44,8 +45,12 @@ class VerticalFader extends Fader {
 }
 
 abstract class _FaderState extends State<Fader> {
-  final Color backgroundColor = Colors.black45;
-  final Color backgroundActiveColor = Colors.black.withAlpha(150);
+  static const borderRadius = BorderRadius.all(const Radius.circular(4));
+  static const int inActiveAlpha = 148;
+  static const Color backgroundActiveColor =
+      const Color.fromARGB(255, 42, 42, 42);
+  static final Color backgroundColor =
+      backgroundActiveColor.withAlpha(inActiveAlpha);
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
   final FaderModel faderModel = FaderModel();
@@ -83,9 +88,9 @@ abstract class _FaderState extends State<Fader> {
     setState(() => activePointers--);
   }
 
-  Widget getFaderLabel() {
+  Widget get faderLabel {
     if (!active) {
-      return _FaderLabel(widget._faderName, widget._userName, color);
+      return _FaderLabel(widget._faderName, widget._userName, color, active);
     }
     return Selector<FaderModel, String>(
       selector: (_, model) {
@@ -93,9 +98,17 @@ abstract class _FaderState extends State<Fader> {
         return (db >= 0.1 ? "+" : "") + "${db.toStringAsFixed(1)}db";
       },
       builder: (_, dbValue, child) {
-        return _FaderLabel(dbValue, widget._technicalName, color,
+        return _FaderLabel(dbValue, widget._technicalName, color, active,
             textAlignPrimary: TextAlign.end);
       },
+    );
+  }
+
+  BoxDecoration get decoration {
+    return BoxDecoration(
+      color: active ? backgroundActiveColor : backgroundColor,
+      borderRadius: _FaderState.borderRadius,
+      border: Border.all(color: widget._accentColor, width: 1),
     );
   }
 }
@@ -116,20 +129,16 @@ class _HorizontalFaderState extends _FaderState {
   Widget build(BuildContext context) {
     return Container(
       height: 56,
-      decoration: BoxDecoration(
-        color: active ? backgroundActiveColor : backgroundColor,
-        borderRadius: BorderRadius.all(Radius.circular(2)),
-        border: Border.all(color: widget._accentColor, width: 1),
-      ),
+      decoration: decoration,
       child: Row(
         children: [
-          getFaderLabel(),
+          faderLabel,
           Expanded(
             child: RawGestureDetector(
               behavior: HitTestBehavior.opaque,
               gestures: gestures,
               child: Padding(
-                padding: EdgeInsets.fromLTRB(12, 10, 12, 10),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: FaderSlider(widget.id, active, widget._stereo,
                     key: keyFaderSlider),
               ),
@@ -158,14 +167,10 @@ class _VerticalFaderState extends _FaderState {
   Widget build(BuildContext context) {
     return Container(
       width: 72,
-      decoration: BoxDecoration(
-        color: active ? backgroundActiveColor : backgroundColor,
-        borderRadius: BorderRadius.all(Radius.circular(2)),
-        border: Border.all(color: widget._accentColor, width: 1),
-      ),
+      decoration: decoration,
       child: Column(
         children: [
-          getFaderLabel(),
+          faderLabel,
           Expanded(
             child: RawGestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -173,7 +178,7 @@ class _VerticalFaderState extends _FaderState {
               child: RotatedBox(
                 quarterTurns: 3,
                 child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 18, 16, 18),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
                     child: FaderSlider(widget.id, active, widget._stereo,
                         key: keyFaderSlider)),
               ),
@@ -186,12 +191,14 @@ class _VerticalFaderState extends _FaderState {
 }
 
 class _FaderLabel extends StatelessWidget {
+  static const secondaryTextColor = const Color.fromARGB(196, 255, 255, 255);
   final String primary;
   final TextAlign textAlignPrimary;
   final String secondary;
   final Color color;
+  final bool active;
 
-  const _FaderLabel(this.primary, this.secondary, this.color,
+  const _FaderLabel(this.primary, this.secondary, this.color, this.active,
       {Key key, this.textAlignPrimary = TextAlign.start})
       : super(key: key);
 
@@ -214,7 +221,7 @@ class _FaderLabel extends StatelessWidget {
           overflow: TextOverflow.fade,
           style: DefaultTextStyle.of(context)
               .style
-              .apply(fontSizeFactor: 0.9, color: Colors.white70),
+              .apply(fontSizeFactor: 0.9, color: secondaryTextColor),
         )
       ],
     );
@@ -223,28 +230,27 @@ class _FaderLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints.tightFor(width: 72, height: 50),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      color: color,
+      constraints: const BoxConstraints.tightFor(width: 72, height: 50),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      color: active ? color : color.withAlpha(_FaderState.inActiveAlpha),
       child: buildNameLabel(context),
     );
   }
 }
 
 class FaderSlider extends StatelessWidget {
-  static const rangeInDb = [-128, -50, -30, -10, 0, 10];
-  static const sliderValues = [0.0, 0.125, 0.25, 0.5, 0.75, 1.0];
-  static const _gradientStops = [0.0, 0.25, 0.5, 0.75, 1.0];
-  static const _levels = ["-inf", "-30", "-10", "0", "+10"];
-  static const _levelLabelOffsets = [0.2, -0.5, -0.5, -0.5, -1.1];
+  static const stop = convertFromDbValue;
+  static const _levelTexts = ["-inf", "-30", "-10", "0"];
+  static const _levelFractionalOffset = [0.1, -0.5, -0.5, -0.5];
   static const _colors = [
-    Colors.green,
     Colors.green,
     Colors.green,
     Colors.yellow,
     Colors.red
   ];
   static const _radius = 9.0;
+  static final _levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];
+  static final _gradientStops = [stop(-128), stop(-5), stop(0), stop(10)];
   final int _id;
   final bool _active;
   final bool _stereo;
@@ -265,16 +271,14 @@ class FaderSlider extends StatelessWidget {
             height: height,
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: _colors, stops: _gradientStops),
-              borderRadius: BorderRadius.all(Radius.circular(_radius)),
+              borderRadius:
+                  const BorderRadius.all(const Radius.circular(_radius)),
             ),
             child: Stack(
               overflow: Overflow.visible,
-              children: [0, 1, 2, 3, 4]
-                  .map<Widget>((i) => _LevelLabel(
-                      _levels[i],
-                      _gradientStops[i] * width,
-                      0.5 > _gradientStops[i],
-                      _levelLabelOffsets[i]))
+              children: [0, 1, 2, 3]
+                  .map<Widget>((i) => _LevelLabel(_levelTexts[i],
+                      _levelStops[i] * width, _levelFractionalOffset[i]))
                   .toList()
                     ..insertAll(0, _getLevelIndicator(0.5, width, height))
                     ..add(Selector<FaderModel, double>(selector: (_, model) {
@@ -290,17 +294,18 @@ class FaderSlider extends StatelessWidget {
   }
 
   List<Widget> _getLevelIndicator(double level, double width, double height) {
+    // TODO: check mix is mono
     if (_stereo) {
       return [
         Selector<MetersModel, double>(selector: (_, model) {
           return model.getMeterValue(_id);
         }, builder: (_, level, child) {
-          return _LevelIndicator.left(level, width, height / 2.0, _radius);
+          return _LevelIndicator.left(level, width, height / 2.0);
         }),
         Selector<MetersModel, double>(selector: (_, model) {
-          return model.getMeterValue(_id + 1);
+          return model.getMeterValue(_id % 2 == 0 ? _id + 1 : _id - 1);
         }, builder: (_, level, child) {
-          return _LevelIndicator.right(level, width, height / 2.0, _radius);
+          return _LevelIndicator.right(level, width, height / 2.0);
         }),
       ];
     }
@@ -308,13 +313,15 @@ class FaderSlider extends StatelessWidget {
       Selector<MetersModel, double>(selector: (_, model) {
         return model.getMeterValue(_id);
       }, builder: (_, level, child) {
-        return _LevelIndicator.mono(level, width, _radius);
+        return _LevelIndicator.mono(level, width);
       })
     ];
   }
 }
 
 class _FaderKnop extends StatelessWidget {
+  static const color = Color.fromARGB(_FaderState.inActiveAlpha, 255, 255, 255);
+  static const colorActive = Color.fromARGB(255, 255, 255, 255);
   final double position;
   final bool active;
 
@@ -331,7 +338,7 @@ class _FaderKnop extends StatelessWidget {
         child: Center(
           child: Icon(
             Icons.adjust,
-            color: active ? Colors.white : Colors.white70,
+            color: active ? colorActive : color,
             size: 40,
           ),
         ),
@@ -341,51 +348,49 @@ class _FaderKnop extends StatelessWidget {
 }
 
 class _LevelIndicator extends StatelessWidget {
+  static const shadowColor = const Color.fromARGB(128, 0, 0, 0);
   final LevelType type;
   final double level;
   final double width;
   final double height;
-  final double radius;
-  final shadowColor = const Color.fromARGB(128, 0, 0, 0);
 
-  const _LevelIndicator.left(this.level, this.width, this.height, this.radius,
-      {Key key})
+  const _LevelIndicator.left(this.level, this.width, this.height, {Key key})
       : type = LevelType.stereo_left,
         super(key: key);
 
-  const _LevelIndicator.right(this.level, this.width, this.height, this.radius,
-      {Key key})
+  const _LevelIndicator.right(this.level, this.width, this.height, {Key key})
       : type = LevelType.stereo_right,
         super(key: key);
 
-  const _LevelIndicator.mono(this.level, this.width, this.radius, {Key key})
+  const _LevelIndicator.mono(this.level, this.width, {Key key})
       : type = LevelType.mono,
         height = null,
         super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    double levelPos = max((1 - level) * width, radius);
+    const radius = FaderSlider._radius;
+    final levelPos = max((1 - level) * width, radius);
     var yOffset = 0.0;
     BorderRadius borderRadius;
     switch (type) {
       case LevelType.stereo_left:
         borderRadius = BorderRadius.only(
           topLeft: Radius.circular(max(0, radius - width + levelPos)),
-          topRight: Radius.circular(radius),
+          topRight: const Radius.circular(radius),
         );
         break;
       case LevelType.stereo_right:
         borderRadius = BorderRadius.only(
           bottomLeft: Radius.circular(max(0, radius - width + levelPos)),
-          bottomRight: Radius.circular(radius),
+          bottomRight: const Radius.circular(radius),
         );
         yOffset = height;
         break;
       case LevelType.mono:
       default:
         borderRadius = BorderRadius.horizontal(
-          right: Radius.circular(radius),
+          right: const Radius.circular(radius),
           left: Radius.circular(max(0, radius - width + levelPos)),
         );
         break;
@@ -406,13 +411,12 @@ class _LevelIndicator extends StatelessWidget {
 }
 
 class _LevelLabel extends StatelessWidget {
+  static const textColor = Color.fromARGB(196, 0, 0, 0);
   final String text;
   final double position;
-  final bool highlight;
   final double fractionalOffset;
 
-  const _LevelLabel(
-      this.text, this.position, this.highlight, this.fractionalOffset);
+  const _LevelLabel(this.text, this.position, this.fractionalOffset);
 
   @override
   Widget build(BuildContext context) {
@@ -425,9 +429,7 @@ class _LevelLabel extends StatelessWidget {
           translation: Offset(fractionalOffset, 0),
           child: Text(
             text,
-            style: TextStyle(
-              color: highlight ? Colors.white70 : Colors.black54,
-            ),
+            style: const TextStyle(color: textColor),
           ),
         ),
       ),

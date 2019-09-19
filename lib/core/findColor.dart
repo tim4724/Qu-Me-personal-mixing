@@ -1,13 +1,13 @@
 import 'dart:ui';
 
-final _colors = [
+const _colors = [
   Color.fromARGB(255, 0, 0, 0),
-  Color.fromARGB(255, 255, 0, 0),
-  Color.fromARGB(255, 0, 0, 255),
-  Color.fromARGB(255, 128, 128, 128),
+  Color.fromARGB(255, 222, 67, 31),
+  Color.fromARGB(255, 67, 31, 222),
+  Color.fromARGB(255, 196, 196, 196),
 ];
 
-final _names = [
+const _names = [
   ["drum", "kick", "snare", "tom"],
   ["git", "guit", "base", "bass"],
   ["key", "pad", "piano", "organ", "syn"],

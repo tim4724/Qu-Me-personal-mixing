@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/mixerConnectionModel.dart';
 import 'package:qu_me/core/personalMixingModel.dart';
 import 'package:qu_me/entities/mix.dart';
@@ -15,6 +16,7 @@ class PageHome extends StatefulWidget {
 
   final mixerModel = MixerConnectionModel();
   final mixingModel = MixingModel();
+  final faderModel = FaderModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -28,6 +30,7 @@ class _PageHomeState extends State<PageHome> {
   void initState() {
     super.initState();
     setState(() {
+      // TODO make changeable
       mix = widget.mixingModel.availableMixes[0];
     });
   }
@@ -38,7 +41,7 @@ class _PageHomeState extends State<PageHome> {
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(children: [
-        PageGroup(activeWheel == -1 ? 0 : activeWheel, ""),
+        if (activeWheel != -1) PageGroup(activeWheel, ""),
         AnimatedOpacity(
           child: Scaffold(
             appBar: AppBar(
@@ -50,6 +53,15 @@ class _PageHomeState extends State<PageHome> {
                 tooltip: "Logout",
                 onPressed: () => logout(),
               ),
+              actions: <Widget>[
+                // action button
+                FlatButton(
+                  child: Text("Select Mix"),
+                  onPressed: () {
+                    showSelectMixDialog();
+                  },
+                )
+              ],
             ),
             body: OrientationBuilder(
               builder: (context, orientation) {
@@ -69,6 +81,10 @@ class _PageHomeState extends State<PageHome> {
     setState(() {
       if (activeWheel == -1) {
         activeWheel = id;
+      }
+      if (activeWheel == id) {
+        final sends = widget.mixingModel.getSendsForGroup(id);
+        widget.faderModel.onTrim(sends, delta);
       }
     });
   }
@@ -145,6 +161,41 @@ class _PageHomeState extends State<PageHome> {
         padding: EdgeInsets.all(4),
         child: GroupWheel(index, name, color, onWheelChanged, onWheelReleased),
       ),
+    );
+  }
+
+  void showSelectMixDialog() {
+    final availableMixes = widget.mixingModel.availableMixes;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          title: const Text("Select Mix"),
+          children: availableMixes.map<SimpleDialogOption>(
+            (e) {
+              return SimpleDialogOption(
+                onPressed: () {
+                  widget.mixingModel.onMixSelected(e.id);
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      e.technicalName,
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    Expanded(
+                      child: Text(
+                        e.name,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  ],
+                ),
+              );
+            },
+          ).toList(),
+        );
+      },
     );
   }
 }
