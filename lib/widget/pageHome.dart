@@ -21,8 +21,7 @@ class PageHome extends StatefulWidget {
 }
 
 class _PageHomeState extends State<PageHome> {
-  bool wheelActive = false;
-  bool wheelSelected = false;
+  var activeWheel = -1;
   Mix mix;
 
   @protected
@@ -35,10 +34,11 @@ class _PageHomeState extends State<PageHome> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: fade pagegroup widget
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(children: [
-        PageGroup(0, "asdf"),
+        PageGroup(activeWheel == -1 ? 0 : activeWheel, ""),
         AnimatedOpacity(
           child: Scaffold(
             appBar: AppBar(
@@ -53,34 +53,31 @@ class _PageHomeState extends State<PageHome> {
             ),
             body: OrientationBuilder(
               builder: (context, orientation) {
-                return orientation == Orientation.landscape
-                    ? buildBodyLandscape()
-                    : buildBodyPortrait();
+                final land = orientation == Orientation.landscape;
+                return land ? buildBodyLandscape() : buildBodyPortrait();
               },
             ),
           ),
-          opacity: wheelActive ? 0.4 : 1,
-          duration: Duration(milliseconds: 500),
+          opacity: activeWheel != -1 ? 0.4 : 1,
+          duration: Duration(milliseconds: activeWheel != -1 ? 500 : 0),
         ),
       ]),
     );
   }
 
-  void onWheelChanged(double delta) {
+  void onWheelChanged(int id, double delta) {
     setState(() {
-      wheelActive = true;
+      if (activeWheel == -1) {
+        activeWheel = id;
+      }
     });
   }
 
-  void onWheelReleased() {
+  void onWheelReleased(int id) {
     setState(() {
-      wheelActive = false;
-    });
-  }
-
-  void onWheelSelected() {
-    setState(() {
-      wheelSelected = false;
+      if (activeWheel == id) {
+        activeWheel = -1;
+      }
     });
   }
 
@@ -93,7 +90,6 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildBodyPortrait() {
-    final names = widget.mixingModel.groupNames;
     return Padding(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -101,13 +97,13 @@ class _PageHomeState extends State<PageHome> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup(names[0]), buildGroup(names[2])],
+              children: [buildGroup(0), buildGroup(2)],
             ),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup(names[1]), buildGroup(names[3])],
+              children: [buildGroup(1), buildGroup(3)],
             ),
           ),
           Padding(
@@ -122,15 +118,14 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildBodyLandscape() {
-    final names = widget.mixingModel.groupNames;
     return Padding(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          buildGroup(names[0]),
-          buildGroup(names[1]),
-          buildGroup(names[2]),
-          buildGroup(names[3]),
+          buildGroup(0),
+          buildGroup(1),
+          buildGroup(2),
+          buildGroup(3),
           Padding(
             padding: EdgeInsets.all(4),
             child: VerticalFader(mix.id, mix.name, mix.technicalName,
@@ -142,12 +137,13 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildGroup(String name) {
+  Widget buildGroup(int index) {
+    final name = widget.mixingModel.getNameForGroup(index);
+    final color = Color.fromARGB(128, 0, 0, 0);
     return Expanded(
       child: Padding(
         padding: EdgeInsets.all(4),
-        child: GroupWheel(
-            Colors.black.withAlpha(128), name, onWheelChanged, onWheelReleased),
+        child: GroupWheel(index, name, color, onWheelChanged, onWheelReleased),
       ),
     );
   }

@@ -35,7 +35,7 @@ class Send {
     personName = "Tom";
   }
 
-  bool get stereo => sendType == SendType.stereoChannel || faderLinked;
+  bool get stereo => sendType == SendType.stereoChannel;
 
   String get technicalName => _technicalName;
 

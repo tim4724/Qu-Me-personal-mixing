@@ -16,11 +16,11 @@ Scene parse(Uint8List data) {
   final blockLen = 192;
 
   final sends = List<Send>(39);
-  final mixes = List<Mix>(7);
 
-  // Mono input channels
-  // Stereo input channels
-  // Groups
+  // Mono input channels 1 - 32
+  // Stereo input channels 1 - 3
+  // Fx Return 1 - 4
+  // TODO: Group?
   for (var i = 0, offset = 48; i < sends.length; i++, offset += blockLen) {
     // hpf, gate, eq, compressor: byte 0 - 120
     // fader???: 121 - 123
@@ -53,40 +53,37 @@ Scene parse(Uint8List data) {
         name = _readString(data, offset + 156 + (blockLen * 20));
       }
     }
-
-    print("$i ${data.sublist(offset, offset + blockLen)}");
     sends[i] = Send(i, type, displayId, name, linked);
   }
 
+  final mixes = List<Mix>(7);
+  final mixMasterLevels = List<double>(7);
+
   // Mono Mix 1 - 4
   // Stereo Mix 5/6, 7/8, 9/10
+  // TODO Mix-Group?
   for (var i = 0, offset = 48 + 39 * blockLen;
       i < mixes.length;
       i++, offset += blockLen) {
     final name = _readString(data, offset + 156);
+    final type = i < 4 ? MixType.mono : MixType.stereo;
+    final displayId = i < 4 ? i + 1 : 2 * i - 3;
 
-    MixType type;
-    int displayId;
-    if (i < 4) {
-      type = MixType.mono;
-      displayId = i + 1;
-    } else {
-      type = MixType.stereo;
-      displayId = 5 + ((i - 4) * 2);
-    }
-    final sendValues = List<int>(39);
-
-    // channel 1 send mix 1 = _readUint16(data, 11872) / 256 - 128
-    var sendValueOffset = 11872 + i * 100;
-    // TODO channel 2, 3,...
-    for (var j = 0; j < sendValues.length; j++, sendValueOffset += 2) {
-      sendValues[j] = _readUint16(data, sendValueOffset);
+    // channel 1 send mix 1 = _readUint16(data, 11872) / 256.0 - 128.0;
+    // channel 2 send mix 1 = _readUint16(data, 12032) / 256.0 - 128.0;
+    // channel 1 send mix 2 = _readUint16(data, 11880) / 256.0 - 128.0;
+    // Mix 1 Master Fader = _readUint16(data, 7662) / 256.0 - 128.0;
+    // Mix 2 Master Fader = _readUint16(data, 7854) / 256.0 - 128.0;
+    final sendLevelsInDb = List<double>(39);
+    var sendValueOffset = 11872 + i * 8;
+    final masterLevelOffset = 7662 + i * 192;
+    for (var j = 0; j < sendLevelsInDb.length; j++, sendValueOffset += 160) {
+      sendLevelsInDb[j] = _readUint16(data, sendValueOffset) / 256.0 - 128.0;
     }
     // TODO PAN
-
-    mixes[i] = Mix(39 + i, type, displayId, name, sendValues);
+    mixes[i] = Mix(39 + i, type, displayId, name, sendLevelsInDb);
+    mixMasterLevels[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
   }
-
 
   // Fx Send
   /*
@@ -94,8 +91,7 @@ Scene parse(Uint8List data) {
     final name = _readString(data, offset + 156);
   }
   */
-
-  return Scene(sends, mixes);
+  return Scene(sends, mixes, mixMasterLevels);
 }
 
 String _readString(Uint8List data, int startIndex,

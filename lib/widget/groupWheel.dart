@@ -6,21 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
-import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/pageGroup.dart';
 
-typedef WheelSelected = Function();
-typedef WheelDragUpdate = Function(double delta);
-typedef WheelDragRelease = Function();
+typedef WheelSelected = Function(int id);
+typedef WheelDragUpdate = Function(int id, double delta);
+typedef WheelDragRelease = Function(int id);
 
 class GroupWheel extends StatefulWidget {
-  final Color _accentColor;
+  final int _id;
   final String _groupName;
+  final Color _accentColor;
   final WheelDragUpdate dragUpdateCallback;
   final WheelDragRelease dragReleaseCallback;
 
-  const GroupWheel(this._accentColor, this._groupName, this.dragUpdateCallback,
-      this.dragReleaseCallback,
+  const GroupWheel(this._id, this._groupName, this._accentColor,
+      this.dragUpdateCallback, this.dragReleaseCallback,
       {Key key})
       : super(key: key);
 
@@ -39,6 +39,10 @@ class _GroupWheelState extends State<GroupWheel> {
   var lastTapTimestamp = 0;
   ui.Image shadowOverlay;
 
+  int get id => widget._id;
+
+  String get name => widget._groupName;
+
   _GroupWheelState() {
     asset.loadImage("assets/shadow.png").then(onImageLoaded);
   }
@@ -52,9 +56,9 @@ class _GroupWheelState extends State<GroupWheel> {
   }
 
   void onDragUpdate(double delta) {
-    var wheelHeight = keyWheel.currentContext.size.height;
-    widget.dragUpdateCallback(-delta / wheelHeight);
-    var newWheelDragDelta = (wheelDragDelta - delta).clamp(0, wheelHeight);
+    final wheelHeight = keyWheel.currentContext.size.height;
+    widget.dragUpdateCallback(widget._id, -delta / wheelHeight);
+    final newWheelDragDelta = (wheelDragDelta - delta).clamp(0.0, wheelHeight);
     setState(() => wheelDragDelta = newWheelDragDelta);
   }
 
@@ -64,7 +68,7 @@ class _GroupWheelState extends State<GroupWheel> {
     if (currentTime - lastTapTimestamp < 300) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => PageGroup()),
+        MaterialPageRoute(builder: (context) => PageGroup(id, name)),
       );
     }
     lastTapTimestamp = currentTime;
@@ -74,7 +78,7 @@ class _GroupWheelState extends State<GroupWheel> {
     setState(() {
       activePointers--;
       if (activePointers == 0) {
-        widget.dragReleaseCallback();
+        widget.dragReleaseCallback(widget._id);
       }
     });
   }

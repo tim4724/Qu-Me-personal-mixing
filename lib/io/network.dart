@@ -12,6 +12,7 @@ import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/metersListener.dart' as metersListener;
+
 Socket _socket;
 
 void connect(String name, InternetAddress address, Function onError) async {
@@ -67,28 +68,15 @@ void _connect(InternetAddress address, Function onError) async {
   // request mixer version
   _socket.add(_buildSystemPacket(0x04, [0x00, 0x00]));
 
-  // request scene state
-  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
-
   // Check default password (aka is no password set)
   _socket.add(_buildSystemPacket(0x04, HEX.decode("01040000090e6490")));
-
-  // Listen for Mix 1 Master Fader
-  _socket.add(_buildSystemPacket(0x04, HEX.decode("0327")));
-  _socket.add(_buildSystemPacket(
-      0x04,
-      HEX.decode(
-          "130000000000000080000000000000000000000000000000000000000000000000000000")));
-
-  // Listen for Mix 1 Sends Faders
-  _socket.add(_buildSystemPacket(0x04, HEX.decode("0427")));
-  _socket.add(_buildSystemPacket(
-      0x04,
-      HEX.decode(
-          "140000000100000000000000000000000000000000000000000000000000000000000000")));
-
   // Check password "inear"
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
+
+  _requestSceneState();
+
+  mixingModel.addListener(() {});
+  _mixSelectChanged();
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -187,6 +175,30 @@ void faderChanged(int id, double valueInDb) {
   packet.addAll(_fromUint16(value));
   _socket.add(packet);
   // print("Send Fader: $packet");
+}
+
+void _requestSceneState() {
+  // request scene state
+  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
+}
+
+void _mixSelectChanged() {
+  // TODO: allow different mixes...
+  _requestSceneState();
+
+  // Listen for Mix 1 Master Fader
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("0327")));
+  _socket.add(_buildSystemPacket(
+      0x04,
+      HEX.decode(
+          "130000000000000080000000000000000000000000000000000000000000000000000000")));
+
+  // Listen for Mix 1 Sends Faders
+  _socket.add(_buildSystemPacket(0x04, HEX.decode("0427")));
+  _socket.add(_buildSystemPacket(
+      0x04,
+      HEX.decode(
+          "140000000100000000000000000000000000000000000000000000000000000000000000")));
 }
 
 class DspPacket {

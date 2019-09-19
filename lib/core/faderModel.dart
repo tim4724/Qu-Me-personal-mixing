@@ -37,6 +37,14 @@ class FaderModel extends ChangeNotifier {
     notifyListeners();
     network.faderChanged(id, _levelsInDb[id]);
   }
+
+  void reset() {
+    for (int i = 0; i < _levelsInDb.length; i++) {
+      _levelsInDb[i] = -128.0;
+      _sliderValues[i] = 0.0;
+    }
+    notifyListeners();
+  }
 }
 
 /**

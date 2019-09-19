@@ -15,6 +15,7 @@ void findQuMixers(FoundCallback foundCallback) {
 
     socket.broadcastEnabled = true;
     socket.send(data, broadcastAddress, port);
+    print("QU Find start");
     final t = Timer.periodic(Duration(seconds: 1), (t) {
       socket.send(data, broadcastAddress, port);
     });
