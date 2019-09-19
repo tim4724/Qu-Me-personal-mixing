@@ -72,7 +72,7 @@ void _connect(InternetAddress address) async {
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
 
   _requestSceneState();
-  mixSelectChanged();
+  mixSelectChanged(0x27);
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -174,23 +174,30 @@ void faderChanged(int id, double valueInDb) {
 }
 
 void _requestSceneState() {
+  if (_socket == null) {
+    return;
+  }
   // request scene state
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }
 
-void mixSelectChanged() {
-  // TODO: allow different mixes...
+void mixSelectChanged(int mixId) {
+  if (_socket == null) {
+    return;
+  }
   _requestSceneState();
 
-  // Listen for Mix 1 Master Fader
-  _socket.add(_buildSystemPacket(0x04, HEX.decode("0327")));
+  // Listen for Mix Master Fader
+  _socket.add(_buildSystemPacket(0x04, [0x03, mixId]));
+  // TODO: Check wtf is this
   _socket.add(_buildSystemPacket(
       0x04,
       HEX.decode(
           "130000000000000080000000000000000000000000000000000000000000000000000000")));
 
-  // Listen for Mix 1 Sends Faders
-  _socket.add(_buildSystemPacket(0x04, HEX.decode("0427")));
+  // Listen for Mix Sends Faders
+  _socket.add(_buildSystemPacket(0x04, [0x04, mixId]));
+  // TODO: Check wtf is this
   _socket.add(_buildSystemPacket(
       0x04,
       HEX.decode(

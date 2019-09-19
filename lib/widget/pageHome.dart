@@ -10,6 +10,7 @@ import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 import 'package:qu_me/widget/pageLogin.dart';
+import 'package:qu_me/widget/selectMixDialog.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key) {}
@@ -24,15 +25,10 @@ class PageHome extends StatefulWidget {
 
 class _PageHomeState extends State<PageHome> {
   var activeWheel = -1;
-  Mix mix;
 
   @protected
   void initState() {
     super.initState();
-    setState(() {
-      // TODO make changeable
-      mix = widget.mixingModel.availableMixes[0];
-    });
   }
 
   @override
@@ -124,8 +120,7 @@ class _PageHomeState extends State<PageHome> {
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(mix.id, mix.name, mix.technicalName,
-                mix.personName, mix.color, mix.stereo),
+            child: buildFader(),
           ),
         ],
       ),
@@ -144,8 +139,7 @@ class _PageHomeState extends State<PageHome> {
           buildGroup(3),
           Padding(
             padding: EdgeInsets.all(4),
-            child: VerticalFader(mix.id, mix.name, mix.technicalName,
-                mix.personName, mix.color, mix.stereo),
+            child: buildFader(),
           ),
         ],
       ),
@@ -164,38 +158,22 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
+  Widget buildFader() {
+    return Selector<MixingModel, Mix>(
+      selector: (_, model) {
+        return model.currentMix;
+      },
+      builder: (_, mix, child) {
+        return VerticalFader(mix.id, mix.name, mix.technicalName,
+            mix.personName, mix.color, mix.stereo);
+      },
+    );
+  }
+
   void showSelectMixDialog() {
-    final availableMixes = widget.mixingModel.availableMixes;
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: const Text("Select Mix"),
-          children: availableMixes.map<SimpleDialogOption>(
-            (e) {
-              return SimpleDialogOption(
-                onPressed: () {
-                  widget.mixingModel.onMixSelected(e.id);
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      e.technicalName,
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    Expanded(
-                      child: Text(
-                        e.name,
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  ],
-                ),
-              );
-            },
-          ).toList(),
-        );
-      },
+      builder: (BuildContext context) => SelectMixDialog(),
     );
   }
 }

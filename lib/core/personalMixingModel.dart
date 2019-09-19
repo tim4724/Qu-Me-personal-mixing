@@ -43,7 +43,7 @@ class MixingModel extends ChangeNotifier {
 
   void onMixSelected(int index) {
     currentMix = _scene.mixes[index];
-    network.mixSelectChanged();
+    network.mixSelectChanged(currentMix.id);
     notifyListeners();
   }
 
