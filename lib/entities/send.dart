@@ -8,15 +8,15 @@ class Send {
   final SendType sendType;
   final displayId;
   String _technicalName;
-  String name;
+  String _name;
   bool faderLinked;
   bool panLinked;
   String personName;
   Color color;
 
-  Send(this.id, this.sendType, this.displayId, this.name, this.faderLinked,
+  Send(this.id, this.sendType, this.displayId, this._name, this.faderLinked,
       this.panLinked) {
-    color = findColor(name);
+    color = findColor(_name);
     switch (sendType) {
       case SendType.monoChannel:
         _technicalName = "Ch $displayId";
@@ -40,6 +40,13 @@ class Send {
   bool get stereo => sendType == SendType.stereoChannel;
 
   String get technicalName => _technicalName;
+
+  String get name => _name;
+
+  void set name(String name) {
+    _name = name;
+    color = findColor(name);
+  }
 
   @override
   String toString() {

@@ -36,19 +36,21 @@ class FaderModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  static final maxDbValue = convertToDbValue(1.0);
+
   void onTrim(List<Send> sends, double delta) {
-    final maxDbValue = convertToDbValue(1.0);
     var deltaInDb = maxDbValue - convertToDbValue(1.0 - delta.abs());
     if (delta < 0) {
       deltaInDb *= -1;
     }
 
-    for (int i = 0; i < sends.length; i++) {
-      var send = sends[i];
+    for (final send in sends) {
       final id = send.id;
-      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
-      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
-      _dirtySends.add(id);
+      if (_levelsInDb[id] > -128.0) {
+        _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
+        _sliderValues[id] = convertFromDbValue(_levelsInDb[id]).clamp(0.0, 1.0);
+        _dirtySends.add(id);
+      }
       // todo check linked channels
     }
     notifyListeners();

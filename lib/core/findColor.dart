@@ -8,13 +8,20 @@ const _colors = [
 ];
 
 const _names = [
-  ["drum", "kick", "snare", "tom"],
-  ["git", "guit", "base", "bass"],
+  ["drum", "kick", "snare", "tom", "hi-hat", "hihat", "crash", "ride"],
+  ["git", "guit", "base", "bass", "cello"],
   ["key", "pad", "piano", "organ", "syn"],
   ["voc", "vox", "v"],
 ];
 
 Color findColor(String name) {
-  // TODO: algorithm
+  for (int i = 0; i < _names.length; i++) {
+    final nameList = _names[i];
+    for (final n in nameList) {
+      if (name.toLowerCase().contains(n)) {
+        return _colors[i];
+      }
+    }
+  }
   return _colors[name.hashCode % _colors.length];
 }
