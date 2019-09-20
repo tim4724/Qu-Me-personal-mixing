@@ -11,7 +11,11 @@ class FaderModel extends ChangeNotifier {
 
   factory FaderModel() => _instance;
 
-  // These are in range from -128.0 to +10.0
+  // These are in range from -inf to +10.0
+  // -128.0 equals "-inf" as far as the qu mixer is concerned
+  // However the level in this model can go lower than -128.0
+  // The reason is to keep the proportion between sends the same
+  // if trim reduces the level
   final _levelsInDb = List.filled(60, -128.0);
 
   // These are in range from 0.0 to 1.0
@@ -31,7 +35,7 @@ class FaderModel extends ChangeNotifier {
   }
 
   void onNewFaderLevel(int id, double levelInDb) {
-    _levelsInDb[id] = levelInDb;
+    _levelsInDb[id] = levelInDb.clamp(-128.0, 10.0);
     _sliderValues[id] = convertFromDbValue(levelInDb);
     notifyListeners();
   }
@@ -39,17 +43,43 @@ class FaderModel extends ChangeNotifier {
   static final maxDbValue = convertToDbValue(1.0);
 
   void onTrim(List<Send> sends, double delta) {
-    var deltaInDb = maxDbValue - convertToDbValue(1.0 - delta.abs());
-    if (delta < 0) {
-      deltaInDb *= -1;
+    if (sends == null || sends.length == 0 || delta == 0) {
+      return;
     }
+
+    int maxSendId;
+    double maxSendLevel = 0.0;
+    for (final send in sends) {
+      final sendLevel = _sliderValues[send.id];
+      if (sendLevel > maxSendLevel) {
+        maxSendLevel = sendLevel;
+        maxSendId = send.id;
+      }
+    }
+
+    // One fader reached the top. Do not increase trim anymore
+    if (delta > 0 && maxSendLevel >= 1.0) {
+      return;
+    }
+
+    final newMaxSendLevel = (maxSendLevel + delta).clamp(0.0, 1.0);
+    print("newMaxSendLevel: $newMaxSendLevel maxSendLevel: $maxSendLevel delta: $delta");
+
+    // Delta in db for all sends will be calculated based on the
+    // delta for the highest send level
+    final deltaInDb =
+        convertToDbValue(newMaxSendLevel) - convertToDbValue(maxSendLevel);
+
+    print("deltaInDb: $deltaInDb");
 
     for (final send in sends) {
       final id = send.id;
-      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb).clamp(-128.0, 10.0);
-      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]).clamp(0.0, 1.0);
-      _dirtySends.add(id);
-      // todo check linked channels
+      // If 2 Faders are linked. Only change 1 fader
+      if (!send.faderLinked || id % 2 == 0) {
+        _levelsInDb[id] = (_levelsInDb[id] + deltaInDb);
+        _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
+        _dirtySends.add(id);
+      }
     }
     notifyListeners();
     notifyNetwork();
@@ -73,10 +103,13 @@ class FaderModel extends ChangeNotifier {
   }
 
   void notifyNetwork() {
+    print("notifyNetwork: ${DateTime.now().millisecondsSinceEpoch}");
+    // do not spam the qu mixer with messages
     if (_networkNotifyTimer == null || !_networkNotifyTimer.isActive) {
-      _networkNotifyTimer = Timer(Duration(milliseconds: 60), () {
+      final minInterval = (_dirtySends.length ~/ 8 + 1) * 5;
+      _networkNotifyTimer = Timer(Duration(milliseconds: minInterval), () {
         for (var id in _dirtySends) {
-          network.faderChanged(id, _levelsInDb[id]);
+          network.faderChanged(id, _levelsInDb[id].clamp(-128.0, 10.0));
         }
         _dirtySends.clear();
         _networkNotifyTimer = null;

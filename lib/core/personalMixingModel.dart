@@ -25,7 +25,9 @@ class MixingModel extends ChangeNotifier {
     _sendsByGroup[0] = _scene.sends;
 
     // TODO let user select
-    currentMix = availableMixes[0];
+    if(currentMix == null) {
+      currentMix = availableMixes[0];
+    }
 
     FaderModel faderModel = FaderModel();
     if(currentMix != null) {
@@ -43,7 +45,8 @@ class MixingModel extends ChangeNotifier {
 
   void onMixSelected(int index) {
     currentMix = _scene.mixes[index];
-    network.mixSelectChanged(currentMix.id);
+    print("New Mix Selected ${currentMix.technicalName}");
+    network.mixSelectChanged(currentMix.id, index);
     notifyListeners();
   }
 

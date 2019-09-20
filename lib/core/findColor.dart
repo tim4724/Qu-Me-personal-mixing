@@ -5,6 +5,7 @@ const _colors = [
   Color.fromARGB(255, 222, 67, 31),
   Color.fromARGB(255, 67, 31, 222),
   Color.fromARGB(255, 196, 196, 196),
+  Color.fromARGB(255, 210, 222, 31),
 ];
 
 const _names = [
@@ -12,6 +13,7 @@ const _names = [
   ["git", "guit", "base", "bass", "cello"],
   ["key", "pad", "piano", "organ", "syn"],
   ["voc", "vox", "v"],
+  ["click", "metr", "guide", "mic", "tb", "talk"],
 ];
 
 Color findColor(String name) {

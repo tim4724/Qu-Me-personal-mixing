@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
@@ -14,6 +15,7 @@ import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/metersListener.dart' as metersListener;
 
 Socket _socket;
+int _currentMixIndex = -1;
 
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
@@ -72,7 +74,8 @@ void _connect(InternetAddress address) async {
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
 
   _requestSceneState();
-  mixSelectChanged(0x27);
+
+  mixSelectChanged(39, 0);
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -92,9 +95,6 @@ void _connect(InternetAddress address) async {
             mixerModel.onMixerVersion(
                 data[0], "${data[1]}.${data[2]}-${_getUint16(data, 4)}");
             break;
-          case 0x06:
-            mixingModel.onScene(sceneParser.parse(Uint8List.fromList(data)));
-            break;
           case 0x02:
             if (data[0] == 4 && data[1] == 0) {
               print("password incorrect");
@@ -102,7 +102,11 @@ void _connect(InternetAddress address) async {
               print("password correct");
             }
             break;
+          case 0x06:
+            mixingModel.onScene(sceneParser.parse(Uint8List.fromList(data)));
+            break;
           case 0x07:
+            // Don't know what this is...
             print("group id: $groupId; dataLen: $dataLen");
             print("data: $data");
             break;
@@ -124,8 +128,7 @@ void _connect(InternetAddress address) async {
           // valueId == 0x0a for send fader
           // valueId == 0x07 for master fader
           print("Fader value: ${dspPacket.value}");
-          final valueInDb =
-              (dspPacket.value / 256.0 - 128.0).clamp(-128.0, 10.0);
+          final valueInDb = (dspPacket.value / 256.0 - 128.0);
           faderModel.onNewFaderLevel(dspPacket.param1, valueInDb);
         }
         break;
@@ -150,19 +153,19 @@ Uint8List _fromUint16(int value) {
 }
 
 void faderChanged(int id, double valueInDb) {
-  if (_socket == null) {
+  if (_socket == null || _currentMixIndex == -1) {
     return;
   }
-  final value = ((valueInDb + 128) * 256.0).toInt();
+  final value = ((valueInDb + 128.0) * 256.0).toInt();
   final valueId = id < 39 ? 0x0a : 0x07;
-  final param2 = id < 39 ? 0x00 : 0x07;
+  final param2 = id < 39 ? _currentMixIndex : 0x07;
   final packet = [
-    0x7F,
-    0x03,
-    0x08,
-    0x00,
-    0x04,
-    0x04,
+    0x7F, // System Packet
+    0x03, // Group Id
+    0x08, // Len
+    0x00, // Len
+    0x04, //
+    0x04, //
     valueId,
     0x00,
     id,
@@ -170,7 +173,6 @@ void faderChanged(int id, double valueInDb) {
   ];
   packet.addAll(_fromUint16(value));
   _socket.add(packet);
-  // print("Send Fader: $packet");
 }
 
 void _requestSceneState() {
@@ -181,27 +183,43 @@ void _requestSceneState() {
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }
 
-void mixSelectChanged(int mixId) {
+void mixSelectChanged(int mixId, int mixIndex) {
   if (_socket == null) {
     return;
   }
+  _currentMixIndex = -1;
+  // Request current scene state
+  // - to receive latest send levels for new mix
+  // - to receive latest new mix master fader level
   _requestSceneState();
 
-  // Listen for Mix Master Fader
+  // Listen for future Mix Master Fader changes?
+  final magicData = Uint8List(36);
+  magicData[0] = 0x13;
+  final magicValue = _fromUint16(0x80 * pow(2, mixIndex));
+  magicData[8] = magicValue[0];
+  magicData[9] = magicValue[1];
   _socket.add(_buildSystemPacket(0x04, [0x03, mixId]));
-  // TODO: Check wtf is this
-  _socket.add(_buildSystemPacket(
-      0x04,
-      HEX.decode(
-          "130000000000000080000000000000000000000000000000000000000000000000000000")));
+  _socket.add(_buildSystemPacket(0x04, magicData));
+  print(HEX.encode(magicData));
 
-  // Listen for Mix Sends Faders
+  // _socket.add(_buildSystemPacket(
+  //      0x04,
+  //      HEX.decode(130000000000000000010000000000000000000000000000000000000000000000000000
+  //          "130000000000000080000000000000000000000000000000000000000000000000000000")));
+
+  // Listen for future send level changes for new mix?
+  final magicData1 = Uint8List(36);
+  magicData1[0] = 0x14;
+  magicData1[4] = 0x01 * pow(2, mixIndex);
   _socket.add(_buildSystemPacket(0x04, [0x04, mixId]));
-  // TODO: Check wtf is this
-  _socket.add(_buildSystemPacket(
-      0x04,
-      HEX.decode(
-          "140000000100000000000000000000000000000000000000000000000000000000000000")));
+  _socket.add(_buildSystemPacket(0x04, magicData1));
+  print(HEX.encode(magicData1));
+  // _socket.add(_buildSystemPacket(
+  //    0x04,
+  //    HEX.decode(
+  //        "140000000100000000000000000000000000000000000000000000000000000000000000")));
+  _currentMixIndex = mixIndex;
 }
 
 class DspPacket {

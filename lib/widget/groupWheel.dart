@@ -58,7 +58,7 @@ class _GroupWheelState extends State<GroupWheel> {
   void onDragUpdate(double delta) {
     final wheelHeight = keyWheel.currentContext.size.height;
     widget.dragUpdateCallback(widget._id, -delta / wheelHeight / 2);
-    final newWheelDragDelta = (wheelDragDelta - delta).clamp(0.0, wheelHeight);
+    final newWheelDragDelta = (wheelDragDelta - delta);
     setState(() => wheelDragDelta = newWheelDragDelta);
   }
 

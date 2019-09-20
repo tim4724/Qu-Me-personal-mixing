@@ -11,7 +11,7 @@ class Send {
   String _name;
   bool faderLinked;
   bool panLinked;
-  String personName;
+  String _personName;
   Color color;
 
   Send(this.id, this.sendType, this.displayId, this._name, this.faderLinked,
@@ -34,12 +34,18 @@ class Send {
         _technicalName = "$displayId";
         break;
     }
-    personName = "Tom";
   }
 
   bool get stereo => sendType == SendType.stereoChannel;
 
   String get technicalName => _technicalName;
+
+  String get personName {
+    if (_personName != null && _personName.isNotEmpty) {
+      return personName;
+    }
+    return technicalName;
+  }
 
   String get name => _name;
 
@@ -50,7 +56,9 @@ class Send {
 
   @override
   String toString() {
-    return 'Send{id: $id, sendType: $sendType, displayId: $displayId, _technicalName: $_technicalName, name: $name, faderLinked: $faderLinked, personName: $personName, color: $color}';
+    return 'Send{id: $id, sendType: $sendType, displayId: $displayId, '
+        '_technicalName: $_technicalName, name: $name, faderLinked: $faderLinked, '
+        'personName: $personName, color: $color}';
   }
 }
 
