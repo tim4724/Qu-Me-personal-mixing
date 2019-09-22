@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/core/personalMixingModel.dart';
+import 'package:qu_me/core/mixingModel.dart';
 
-class SelectMixDialog extends StatelessWidget {
+class DialogSelectMix extends StatelessWidget {
   final mixingModel = MixingModel();
 
   @override
@@ -15,12 +15,14 @@ class SelectMixDialog extends StatelessWidget {
       children.add(
         SimpleDialogOption(
           onPressed: () {
-            mixingModel.onMixSelected(i);
+            mixingModel.selectMix(i);
             Navigator.of(context).pop();
           },
           child: Row(
             children: [
-              (mixes[i] == currentMix) ? Icon(Icons.check) : Icon(Icons.remove),
+              (mixes[i].id == currentMix.id)
+                  ? Icon(Icons.check)
+                  : Icon(Icons.remove),
               Expanded(child: Text(" ${mixes[i].technicalName}")),
               Text(mixes[i].name, textAlign: TextAlign.center),
             ],

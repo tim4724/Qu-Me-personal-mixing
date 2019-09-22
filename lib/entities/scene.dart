@@ -18,12 +18,14 @@ Scene buildDemoScene() {
   final names = [
     "Kick",
     "Snare",
-    "Drum L",
-    "Drum R",
+    "Drums L",
+    "Drums R",
     "Bass",
-    "Cello",
-    "E-Git, " "Git",
-    "Keys",
+    "",
+    "E-Git",
+    "Git",
+    "Keys L",
+    "Keys R",
     "Pads",
     "Synth",
     "Voc 1",
@@ -35,16 +37,19 @@ Scene buildDemoScene() {
   ];
   final sends = List<Send>();
   for (int i = 0; i < 32; i++) {
-    final name = i < names.length ? names[i] : "Demo ${i + 1}";
-    sends.add(Send(i, SendType.monoChannel, i + 1, name, false, false));
+    final name = i < names.length ? names[i] : "CH ${i + 1}";
+    sends.add(Send(i, SendType.monoChannel, i + 1, name,
+        name.startsWith("Drums") || name.startsWith("Keys"), false));
   }
+  final stereoNames = ["PC", "Handy", "Atmo"];
   for (int i = 0; i < 3; i++) {
-    sends.add(Send(
-        i + 32, SendType.stereoChannel, i + 1, "Stereo${i + 1}", false, false));
+    final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
+    sends.add(Send(i + 32, SendType.stereoChannel, i + 1, name, false, false));
   }
+  final fxNames = ["voc", "instr"];
   for (int i = 0; i < 4; i++) {
-    sends.add(Send(
-        i + 35, SendType.stereoChannel, i + 1, "FX ${i + 1}", false, false));
+    final name = i < fxNames.length ? fxNames[i] : "FX ${i + 1}";
+    sends.add(Send(i + 35, SendType.fxReturn, i + 1, name, false, false));
   }
   final mixes = [
     Mix(0x27, MixType.mono, 1, "Voc 1", List.filled(39, -128.0)),

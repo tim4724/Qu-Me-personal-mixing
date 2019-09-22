@@ -16,7 +16,13 @@ const _names = [
   ["click", "metr", "guide", "mic", "tb", "talk"],
 ];
 
+/*
+https://github.com/flutter/flutter/blob/master/examples/flutter_gallery/lib/demo/material/chip_demo.dart#L177
+Maybe this is helpful
+ */
+
 Color findColor(String name) {
+
   for (int i = 0; i < _names.length; i++) {
     final nameList = _names[i];
     for (final n in nameList) {

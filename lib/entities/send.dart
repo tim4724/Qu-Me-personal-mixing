@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:qu_me/core/findColor.dart';
 
 class Send {
-  final int id;
+  final int id; // global id
   final SendType sendType;
-  final displayId;
-  String _technicalName;
-  String _name;
+  final displayId; // not user defined id for send
+  String _technicalName; // not user defined name for send
+  String _name; // user defined name
   bool faderLinked;
   bool panLinked;
-  String _personName;
+  String _personName; // name of the musician
   Color color;
 
   Send(this.id, this.sendType, this.displayId, this._name, this.faderLinked,
@@ -34,18 +34,14 @@ class Send {
         _technicalName = "$displayId";
         break;
     }
+    _personName = "Tim";
   }
 
   bool get stereo => sendType == SendType.stereoChannel;
 
   String get technicalName => _technicalName;
 
-  String get personName {
-    if (_personName != null && _personName.isNotEmpty) {
-      return personName;
-    }
-    return technicalName;
-  }
+  String get personName => _personName;
 
   String get name => _name;
 

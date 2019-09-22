@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:hex/hex.dart';
 import 'package:qu_me/core/faderModel.dart';
-import 'package:qu_me/core/mixerConnectionModel.dart';
-import 'package:qu_me/core/personalMixingModel.dart';
+import 'package:qu_me/core/connectionModel.dart';
+import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
@@ -19,7 +19,7 @@ int _currentMixIndex = -1;
 
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
-    final mixerModel = MixerConnectionModel();
+    final mixerModel = ConnectionModel();
     mixerModel.onMixerVersion(MixerType.QU_16, "0");
     final mixingModel = MixingModel();
     mixingModel.onScene(buildDemoScene());
@@ -29,7 +29,7 @@ void connect(String name, InternetAddress address) async {
 }
 
 void _connect(InternetAddress address) async {
-  final mixerModel = MixerConnectionModel();
+  final mixerModel = ConnectionModel();
   final mixingModel = MixingModel();
   final faderModel = FaderModel();
 

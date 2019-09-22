@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/core/mixerConnectionModel.dart';
-import 'package:qu_me/core/personalMixingModel.dart';
+import 'package:qu_me/core/connectionModel.dart';
+import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 
@@ -16,7 +16,7 @@ class PageLogin extends StatefulWidget {
 }
 
 class _PageLoginState extends State<PageLogin> {
-  final _mixerModel = MixerConnectionModel();
+  final _mixerModel = ConnectionModel();
   final _mixingModel = MixingModel();
   final _mixers = {"Demo": InternetAddress.loopbackIPv4};
   var _loading = false;
@@ -80,7 +80,7 @@ class _PageLoginState extends State<PageLogin> {
 
   void onMixerSelected(String name) {
     setState(() => _loading = true);
-    MixerConnectionModel().onStartConnect(name, _mixers[name]);
+    ConnectionModel().onStartConnect(name, _mixers[name]);
   }
 
   void connectStateChanged() {

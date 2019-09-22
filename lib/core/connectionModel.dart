@@ -4,15 +4,15 @@ import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 
-class MixerConnectionModel extends ChangeNotifier {
-  static final MixerConnectionModel _instance =
-      MixerConnectionModel._internal();
+class ConnectionModel extends ChangeNotifier {
+  static final ConnectionModel _instance =
+      ConnectionModel._internal();
 
-  factory MixerConnectionModel() => _instance;
+  factory ConnectionModel() => _instance;
 
   Mixer _mixer;
 
-  MixerConnectionModel._internal();
+  ConnectionModel._internal();
 
   void onStartConnect(String name, InternetAddress address) {
     _mixer = Mixer(name, address);
@@ -28,7 +28,9 @@ class MixerConnectionModel extends ChangeNotifier {
 
   InternetAddress get remoteAddress => _mixer?.address;
 
-  get name => _mixer?.name;
+  String get name => _mixer?.name;
+
+  get type => _mixer?.mixerType;
 
   bool get initialized {
     return _mixer?.mixerType != null;

@@ -18,7 +18,8 @@ class FaderModel extends ChangeNotifier {
   // if trim reduces the level
   final _levelsInDb = List.filled(60, -128.0);
 
-  // These are in range from 0.0 to 1.0
+  // These are in range from 0.0 to 1.0 and
+  // are related to fader position in the ui
   final _sliderValues = List.filled(60, 0.0);
 
   final _dirtySends = Set<int>();
@@ -47,13 +48,11 @@ class FaderModel extends ChangeNotifier {
       return;
     }
 
-    int maxSendId;
     double maxSendLevel = 0.0;
     for (final send in sends) {
       final sendLevel = _sliderValues[send.id];
       if (sendLevel > maxSendLevel) {
         maxSendLevel = sendLevel;
-        maxSendId = send.id;
       }
     }
 
@@ -63,23 +62,20 @@ class FaderModel extends ChangeNotifier {
     }
 
     final newMaxSendLevel = (maxSendLevel + delta).clamp(0.0, 1.0);
-    print("newMaxSendLevel: $newMaxSendLevel maxSendLevel: $maxSendLevel delta: $delta");
-
     // Delta in db for all sends will be calculated based on the
     // delta for the highest send level
     final deltaInDb =
         convertToDbValue(newMaxSendLevel) - convertToDbValue(maxSendLevel);
 
-    print("deltaInDb: $deltaInDb");
-
     for (final send in sends) {
       final id = send.id;
       // If 2 Faders are linked. Only change 1 fader
-      if (!send.faderLinked || id % 2 == 0) {
-        _levelsInDb[id] = (_levelsInDb[id] + deltaInDb);
-        _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
-        _dirtySends.add(id);
+      if (send.faderLinked && id % 2 == 1) {
+        continue;
       }
+      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb);
+      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
+      _dirtySends.add(id);
     }
     notifyListeners();
     notifyNetwork();
@@ -103,7 +99,6 @@ class FaderModel extends ChangeNotifier {
   }
 
   void notifyNetwork() {
-    print("notifyNetwork: ${DateTime.now().millisecondsSinceEpoch}");
     // do not spam the qu mixer with messages
     if (_networkNotifyTimer == null || !_networkNotifyTimer.isActive) {
       final minInterval = (_dirtySends.length ~/ 8 + 1) * 5;

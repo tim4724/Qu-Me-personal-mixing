@@ -25,6 +25,8 @@ dependencies:
   cupertino_icons: ^0.1.2
   provider: ^3.1.0
   hex: ^0.1.2
+  auto_size_text: ^2.1.0
+  quiver: '>=2.0.0 <3.0.0'
 
 dev_dependencies:
   flutter_test:

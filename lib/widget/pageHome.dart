@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/faderModel.dart';
-import 'package:qu_me/core/mixerConnectionModel.dart';
-import 'package:qu_me/core/personalMixingModel.dart';
+import 'package:qu_me/core/connectionModel.dart';
+import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/io/network.dart' as network;
+import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 import 'package:qu_me/widget/pageLogin.dart';
-import 'package:qu_me/widget/selectMixDialog.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key) {}
 
-  final mixerModel = MixerConnectionModel();
+  final mixerModel = ConnectionModel();
   final mixingModel = MixingModel();
   final faderModel = FaderModel();
 
@@ -34,6 +34,8 @@ class _PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
     // TODO: fade pagegroup widget
+    print("build pageHome");
+    // TODO : avoid rebuilding entire widget
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(children: [
@@ -41,7 +43,7 @@ class _PageHomeState extends State<PageHome> {
         AnimatedOpacity(
           child: Scaffold(
             appBar: AppBar(
-              title: Selector<MixerConnectionModel, String>(
+              title: Selector<ConnectionModel, String>(
                   selector: (_, model) => model.name,
                   builder: (_, name, child) => Text(name)),
               leading: new IconButton(
@@ -74,15 +76,15 @@ class _PageHomeState extends State<PageHome> {
   }
 
   void onWheelChanged(int id, double delta) {
-    setState(() {
-      if (activeWheel == -1) {
+    if (activeWheel == -1) {
+      setState(() {
         activeWheel = id;
-      }
-      if (activeWheel == id) {
-        final sends = widget.mixingModel.getSendsForGroup(id);
-        widget.faderModel.onTrim(sends, delta);
-      }
-    });
+      });
+    }
+    if (activeWheel == id) {
+      final sends = widget.mixingModel.getSendsForGroup(id);
+      widget.faderModel.onTrim(sends, delta);
+    }
   }
 
   void onWheelReleased(int id) {
@@ -147,13 +149,14 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildGroup(int index) {
-    final name = widget.mixingModel.getNameForGroup(index);
+  Widget buildGroup(int id) {
+    final group = widget.mixingModel.getGroup(id);
+    final name = group.name;
     final color = Color.fromARGB(128, 0, 0, 0);
     return Expanded(
       child: Padding(
         padding: EdgeInsets.all(4),
-        child: GroupWheel(index, name, color, onWheelChanged, onWheelReleased),
+        child: GroupWheel(id, name, color, onWheelChanged, onWheelReleased),
       ),
     );
   }
@@ -173,7 +176,7 @@ class _PageHomeState extends State<PageHome> {
   void showSelectMixDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) => SelectMixDialog(),
+      builder: (BuildContext context) => DialogSelectMix(),
     );
   }
 }
