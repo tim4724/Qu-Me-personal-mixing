@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
 import 'package:qu_me/widget/pageGroup.dart';
@@ -31,8 +33,8 @@ class GroupWheel extends StatefulWidget {
 }
 
 class _GroupWheelState extends State<GroupWheel> {
-  final Color backgroundColor = Colors.black45;
-  final Color backgroundActiveColor = Colors.black.withAlpha(150);
+  final Color backgroundColor = Color.fromARGB(255, 42, 42, 42);
+  final Color backgroundActiveColor = Color.fromARGB(255, 21, 21, 21);
   final keyWheel = GlobalKey();
   var activePointers = 0;
   var wheelDragDelta = 0.0;
@@ -66,9 +68,11 @@ class _GroupWheelState extends State<GroupWheel> {
     onPointerStop();
     var currentTime = DateTime.now().millisecondsSinceEpoch;
     if (currentTime - lastTapTimestamp < 300) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PageGroup(id, name)),
+      Navigator.of(context).push(
+        platformPageRoute<void>(
+          builder: (context) => PageGroup(id, name),
+          context: context,
+        ),
       );
     }
     lastTapTimestamp = currentTime;
@@ -152,6 +156,7 @@ class _GroupLabel extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.fade,
+          style: TextStyle(color: Color(0xFFFFFFFF)),
         ),
       ),
     );

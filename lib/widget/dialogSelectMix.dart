@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/mixingModel.dart';
 
 class DialogSelectMix extends StatelessWidget {
@@ -13,7 +14,7 @@ class DialogSelectMix extends StatelessWidget {
 
     for (int i = 0; i < mixes.length; i++) {
       children.add(
-        SimpleDialogOption(
+        PlatformDialogAction(
           onPressed: () {
             mixingModel.selectMix(i);
             Navigator.of(context).pop();
@@ -34,8 +35,8 @@ class DialogSelectMix extends StatelessWidget {
       }
     }
 
-    return AlertDialog(
-      title: const Text('Select Mix'),
+    return PlatformAlertDialog(
+      title: Text('Select Mix'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

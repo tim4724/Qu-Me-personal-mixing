@@ -9,8 +9,8 @@ import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:quiver/collection.dart';
 
-import 'faderModel.dart';
 import 'connectionModel.dart';
+import 'faderModel.dart';
 
 class MixingModel extends ChangeNotifier {
   static final MixingModel _instance = MixingModel._internal();
@@ -80,6 +80,14 @@ class MixingModel extends ChangeNotifier {
     print("New Mix Selected ${currentMix.technicalName}");
     network.mixSelectChanged(currentMix.id, index);
     notifyListeners();
+  }
+
+  void toggleSendAssignement(int groupId, int sendId) {
+    if (_assignement.getGroupId(sendId) == groupId) {
+      unassignSend(groupId, sendId);
+    } else {
+      assignSend(groupId, sendId);
+    }
   }
 
   void assignSend(int groupId, int sendId) {

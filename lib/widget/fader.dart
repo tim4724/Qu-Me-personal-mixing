@@ -213,15 +213,15 @@ class _FaderLabel extends StatelessWidget {
           softWrap: false,
           overflow: TextOverflow.fade,
           textAlign: textAlignPrimary,
+          style: TextStyle(color: Color(0xFFFFFFFF)),
         ),
         Text(
           secondary,
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.fade,
-          style: DefaultTextStyle.of(context)
-              .style
-              .apply(fontSizeFactor: 0.9, color: secondaryTextColor),
+          textScaleFactor: 0.9,
+          style: TextStyle(color: secondaryTextColor),
         )
       ],
     );
@@ -429,7 +429,7 @@ class _LevelLabel extends StatelessWidget {
           translation: Offset(fractionalOffset, 0),
           child: Text(
             text,
-            style: const TextStyle(color: textColor),
+            style: const TextStyle(inherit: false, color: textColor),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/connectionModel.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
@@ -36,7 +37,7 @@ class _PageLoginState extends State<PageLogin> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PlatformScaffold(
       body: Center(
         child: Stack(
           alignment: AlignmentDirectional.center,
@@ -44,12 +45,15 @@ class _PageLoginState extends State<PageLogin> {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                FlutterLogo(size: 100),
-                Container(
-                  margin: EdgeInsets.all(16),
+                Placeholder(
+                  fallbackHeight: 100,
+                  fallbackWidth: 100,
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16),
                   child: Text(
                     widget.title,
-                    style: Theme.of(context).textTheme.headline,
+                    style: TextStyle(color: Color(0xFFFFFFFF)),
                   ),
                 ),
                 Container(
@@ -57,7 +61,7 @@ class _PageLoginState extends State<PageLogin> {
                   height: 200,
                   width: 200,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Color.fromARGB(255, 21, 21, 21),
                     borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                   child: ListView.builder(
@@ -71,7 +75,7 @@ class _PageLoginState extends State<PageLogin> {
                 ),
               ],
             ),
-            if (_loading) CircularProgressIndicator(),
+            if (_loading) PlatformCircularProgressIndicator(),
           ],
         ),
       ),
@@ -87,9 +91,8 @@ class _PageLoginState extends State<PageLogin> {
     if (_mixerModel.initialized && _mixingModel.initialized) {
       _mixerModel.removeListener(connectStateChanged);
       _mixingModel.removeListener(connectStateChanged);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => PageHome()),
+      Navigator.of(context).pushReplacement(
+        platformPageRoute(builder: (context) => PageHome(), context: context),
       );
       quFind.stop();
       setState(() => _loading = false);
@@ -108,18 +111,16 @@ class _MixerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: () {
-          _selectedCallback(_mixerName);
-        },
-        child: Container(
-          padding: EdgeInsets.all(8),
-          child: Text(
-            _mixerName,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
-          ),
+    return PlatformButton(
+      onPressed: () {
+        _selectedCallback(_mixerName);
+      },
+      child: Container(
+        padding: EdgeInsets.all(8),
+        child: Text(
+          _mixerName,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
         ),
       ),
     );

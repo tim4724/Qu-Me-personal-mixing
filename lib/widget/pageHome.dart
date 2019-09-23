@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/connectionModel.dart';
+import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/io/network.dart' as network;
@@ -15,7 +17,7 @@ import 'package:qu_me/widget/pageLogin.dart';
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key) {}
 
-  final mixerModel = ConnectionModel();
+  final connectionModel = ConnectionModel();
   final mixingModel = MixingModel();
   final faderModel = FaderModel();
 
@@ -26,11 +28,6 @@ class PageHome extends StatefulWidget {
 class _PageHomeState extends State<PageHome> {
   var activeWheel = -1;
 
-  @protected
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     // TODO: fade pagegroup widget
@@ -38,40 +35,49 @@ class _PageHomeState extends State<PageHome> {
     // TODO : avoid rebuilding entire widget
     return WillPopScope(
       onWillPop: () => logout(),
-      child: Stack(children: [
-        if (activeWheel != -1) PageGroup(activeWheel, ""),
-        AnimatedOpacity(
-          child: Scaffold(
-            appBar: AppBar(
-              title: Selector<ConnectionModel, String>(
-                  selector: (_, model) => model.name,
-                  builder: (_, name, child) => Text(name)),
-              leading: new IconButton(
-                icon: new Icon(Icons.close),
-                tooltip: "Logout",
-                onPressed: () => logout(),
-              ),
-              actions: <Widget>[
-                // action button
-                FlatButton(
-                  child: Text("Select Mix"),
-                  onPressed: () {
-                    showSelectMixDialog();
+      child: Stack(
+        children: [
+          if (activeWheel != -1) PageGroup(activeWheel, ""),
+          AnimatedOpacity(
+            child: PlatformScaffold(
+              appBar: PlatformAppBar(
+                  title: Text(widget.connectionModel.name),
+                  ios: (context) => CupertinoNavigationBarData(
+                          leading: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: Text('Logout'),
+                        onPressed: () => logout(),
+                      )),
+                  android: (context) => MaterialAppBarData(
+                        leading: IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () => logout(),
+                        ),
+                      ),
+                  trailingActions: <Widget>[
+                    PlatformButton(
+                      androidFlat: (context) => MaterialFlatButtonData(),
+                      padding: EdgeInsets.zero,
+                      child: Text('Mix Select'),
+                      onPressed: () {
+                        showSelectMixDialog();
+                      },
+                    )
+                  ]),
+              body: SafeArea(
+                child: OrientationBuilder(
+                  builder: (context, orientation) {
+                    final land = orientation == Orientation.landscape;
+                    return land ? buildBodyLandscape() : buildBodyPortrait();
                   },
-                )
-              ],
+                ),
+              ),
             ),
-            body: OrientationBuilder(
-              builder: (context, orientation) {
-                final land = orientation == Orientation.landscape;
-                return land ? buildBodyLandscape() : buildBodyPortrait();
-              },
-            ),
+            opacity: activeWheel != -1 ? 0.4 : 1,
+            duration: Duration(milliseconds: activeWheel != -1 ? 500 : 0),
           ),
-          opacity: activeWheel != -1 ? 0.4 : 1,
-          duration: Duration(milliseconds: activeWheel != -1 ? 500 : 0),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -97,9 +103,10 @@ class _PageHomeState extends State<PageHome> {
 
   logout() {
     network.close();
-    widget.mixerModel.reset();
+    ConnectionModel().reset();
     widget.mixingModel.reset();
-    final route = MaterialPageRoute(builder: (context) => PageLogin());
+    final route =
+        platformPageRoute(builder: (context) => PageLogin(), context: context);
     Navigator.pushReplacement(context, route);
   }
 
@@ -122,7 +129,24 @@ class _PageHomeState extends State<PageHome> {
           ),
           Padding(
             padding: EdgeInsets.all(4),
-            child: buildFader(),
+            child: Column(
+              children: [
+                PlatformButton(
+                  child: Text("Mute"),
+                  onPressed: () {
+                    final platformProvider = PlatformProvider.of(context);
+                    if (platformProvider.platform == TargetPlatform.android) {
+                      platformProvider.changeToCupertinoPlatform();
+                    } else {
+                      platformProvider.changeToMaterialPlatform();
+                    }
+                  },
+                  padding: EdgeInsets.all(0),
+                  androidFlat: (context) => MaterialFlatButtonData(),
+                ),
+                Expanded(child: buildFader()),
+              ],
+            ),
           ),
         ],
       ),
@@ -141,7 +165,15 @@ class _PageHomeState extends State<PageHome> {
           buildGroup(3),
           Padding(
             padding: EdgeInsets.all(4),
-            child: buildFader(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PlatformButton(
+                  child: Text("Mute"),
+                ),
+                buildFader(),
+              ],
+            ),
           ),
         ],
       ),
@@ -149,14 +181,14 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildGroup(int id) {
-    final group = widget.mixingModel.getGroup(id);
+  Widget buildGroup(int index) {
+    final group = widget.mixingModel.getGroup(index);
     final name = group.name;
     final color = Color.fromARGB(128, 0, 0, 0);
     return Expanded(
       child: Padding(
         padding: EdgeInsets.all(4),
-        child: GroupWheel(id, name, color, onWheelChanged, onWheelReleased),
+        child: GroupWheel(index, name, color, onWheelChanged, onWheelReleased),
       ),
     );
   }
@@ -174,7 +206,7 @@ class _PageHomeState extends State<PageHome> {
   }
 
   void showSelectMixDialog() {
-    showDialog(
+    showPlatformDialog(
       context: context,
       builder: (BuildContext context) => DialogSelectMix(),
     );

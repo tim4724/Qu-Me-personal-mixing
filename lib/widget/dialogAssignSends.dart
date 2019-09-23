@@ -1,10 +1,14 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/send.dart';
+
+import 'quCupertinoDialog.dart';
 
 class DialogAssignSends extends StatelessWidget {
   final int currentGroupId;
@@ -15,31 +19,46 @@ class DialogAssignSends extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentGroup = mixingModel.getGroup(currentGroupId);
-    return AlertDialog(
-      title: Text('Assign to ${currentGroup.technicalName}'),
-      content: Selector<MixingModel, List<Send>>(
-        selector: (context, model) => model.availableSends,
-        builder: (context, sends, child) {
-          return SingleChildScrollView(
-            child: Wrap(
-              runSpacing: 0,
-              spacing: 8.0,
-              alignment: WrapAlignment.spaceEvenly,
-              children: sends.map((send) => buildSendChild(send)).toList(),
-            ),
-          );
-        },
+    final title = Text('Assign to ${currentGroup.technicalName}');
+    final content = Selector<MixingModel, List<Send>>(
+      selector: (context, model) => model.availableSends,
+      builder: (context, sends, child) {
+        return SingleChildScrollView(
+          child: Wrap(
+            runSpacing: 4.0,
+            spacing: 8.0,
+            alignment: WrapAlignment.spaceEvenly,
+            children: sends.map((send) => buildSendChild(send)).toList(),
+          ),
+        );
+      },
+    );
+
+    final Text okAction = Text("Done");
+    return PlatformWidget(
+      android: (context) => AlertDialog(
+        title: title,
+        content: content,
+        actions: [
+          FlatButton(
+            child: okAction,
+            onPressed: () => Navigator.of(context).pop(),
+          )
+        ],
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-      actions: <Widget>[
-        FlatButton(
-          child: Text('Done'),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+      ios: (context) => Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Center(
+          child: QuCupertinoDialog(
+            title: title,
+            content: content,
+            action: CupertinoButton(
+              child: okAction,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
         ),
-      ],
-      backgroundColor: const Color.fromARGB(200, 21, 21, 21),
+      ),
     );
   }
 
@@ -51,68 +70,64 @@ class DialogAssignSends extends StatelessWidget {
         return Stack(
           overflow: Overflow.visible,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 6),
-              child: ChoiceChip(
-                padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
-                labelPadding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                label: SizedBox(
-                  width: 50,
-                  height: 34,
+            GestureDetector(
+              onTap: () {
+                mixingModel.toggleSendAssignement(currentGroupId, send.id);
+              },
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                child: Container(
+                  width: 64,
+                  height: 42,
+                  padding: EdgeInsets.all(4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AutoSizeText(
                         send.name,
                         minFontSize: 8,
+                        maxLines: 1,
                         maxFontSize: 16,
-                        style: const TextStyle(color: Colors.white),
                       ),
                       AutoSizeText(
                         send.sendType != SendType.fxReturn
                             ? send.personName
                             : send.technicalName,
                         minFontSize: 8,
+                        maxLines: 1,
                         maxFontSize: 16,
-                        textScaleFactor: 0.8,
+                        textScaleFactor: 0.7,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white),
                       ),
                     ],
                   ),
+                  decoration: BoxDecoration(
+                      color: isInCurrentGroup ? Colors.green : Colors.grey,
+                      borderRadius: BorderRadius.all(Radius.circular(4))),
                 ),
-                selected: isInCurrentGroup,
-                selectedColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4.0),
-                ),
-                onSelected: (bool selected) {
-                  if (selected) {
-                    mixingModel.assignSend(currentGroupId, send.id);
-                  } else {
-                    mixingModel.unassignSend(currentGroupId, send.id);
-                  }
-                },
               ),
             ),
-            if (group != null)
-              Positioned(
-                right: 0,
-                bottom: 2,
+            Positioned(
+              right: 0,
+              bottom: 4,
+              child: AnimatedOpacity(
                 child: CircleAvatar(
                   child: Padding(
                     padding: EdgeInsets.all(3),
                     child: AutoSizeText(
-                      group.displayId,
+                      group != null ? group.displayId : "",
                       minFontSize: 8,
                       maxFontSize: 20,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Color(0xFFFFFFFF)),
                     ),
                   ),
-                  backgroundColor: Colors.grey.withAlpha(200),
+                  backgroundColor: Colors.grey.withAlpha(220),
                   radius: 12,
                 ),
+                duration: Duration(milliseconds: 300),
+                opacity: group != null ? 1 : 0,
               ),
+            ),
           ],
         );
       },

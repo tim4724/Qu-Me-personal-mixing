@@ -1,5 +1,8 @@
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/entities/send.dart';
@@ -18,36 +21,36 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
-  @protected
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: <Widget>[
-          FlatButton(
-            child: Text("Asssign"),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) =>
-                    DialogAssignSends(widget.groupId),
-              );
-            },
-          )
-        ],
-      ),
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          return orientation == Orientation.landscape
-              ? buildBodyLandscape()
-              : buildBodyPortrait();
-        },
-      ),
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        return PlatformScaffold(
+          appBar: PlatformAppBar(
+            title: Text(widget.title),
+            trailingActions: <Widget>[
+              PlatformButton(
+                padding: EdgeInsets.zero,
+                child: Text('Assign'),
+                androidFlat: (context) => MaterialFlatButtonData(),
+                onPressed: () {
+                  showPlatformDialog(
+                    context: context,
+                    androidBarrierDismissible: true,
+                    builder: (BuildContext context) =>
+                        DialogAssignSends(widget.groupId),
+                  );
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: orientation == Orientation.landscape
+                ? buildBodyLandscape()
+                : buildBodyPortrait(),
+          ),
+        );
+      },
     );
   }
 
