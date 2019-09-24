@@ -7,13 +7,20 @@ class QuCheckButton extends StatelessWidget {
   final Function onSelect;
   final EdgeInsets margin;
   final EdgeInsets padding;
+  final double width;
+  final double height;
+  final Color checkColor;
 
-  QuCheckButton(
-      {this.selected,
-      this.child,
-      this.onSelect,
-      this.margin = const EdgeInsets.all(0),
-      this.padding = const EdgeInsets.all(8)});
+  QuCheckButton({
+    this.selected,
+    this.child,
+    this.onSelect,
+    this.margin = const EdgeInsets.all(0),
+    this.padding = const EdgeInsets.all(8),
+    this.width,
+    this.height,
+    this.checkColor = Colors.green,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +29,12 @@ class QuCheckButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onSelect,
         child: Container(
-          width: 64,
-          height: 42,
+          width: width,
+          height: height,
           padding: padding,
           child: child,
           decoration: BoxDecoration(
-              color: selected ? Colors.green : Colors.grey,
+              color: selected ? checkColor : Colors.grey,
               borderRadius: const BorderRadius.all(Radius.circular(4))),
         ),
       ),

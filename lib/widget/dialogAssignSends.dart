@@ -54,33 +54,36 @@ class DialogAssignSends extends StatelessWidget {
           overflow: Overflow.visible,
           children: [
             QuCheckButton(
-                selected: isInCurrentGroup,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AutoSizeText(
-                      send.name,
-                      minFontSize: 8,
-                      maxLines: 1,
-                      maxFontSize: 16,
-                    ),
-                    AutoSizeText(
-                      send.sendType != SendType.fxReturn
-                          ? send.personName
-                          : send.technicalName,
-                      minFontSize: 8,
-                      maxLines: 1,
-                      maxFontSize: 16,
-                      textScaleFactor: 0.7,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                onSelect: () {
-                  mixingModel.toggleSendAssignement(currentGroupId, send.id);
-                },
-                margin: EdgeInsets.only(bottom: 10),
-                padding: EdgeInsets.all(4)),
+              selected: isInCurrentGroup,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AutoSizeText(
+                    send.name,
+                    minFontSize: 8,
+                    maxLines: 1,
+                    maxFontSize: 16,
+                  ),
+                  AutoSizeText(
+                    send.sendType != SendType.fxReturn
+                        ? send.personName
+                        : send.technicalName,
+                    minFontSize: 8,
+                    maxLines: 1,
+                    maxFontSize: 16,
+                    textScaleFactor: 0.7,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              onSelect: () {
+                mixingModel.toggleSendAssignement(currentGroupId, send.id);
+              },
+              margin: EdgeInsets.only(bottom: 10),
+              padding: EdgeInsets.all(4),
+              width: 64,
+              height: 42,
+            ),
             Positioned(
               right: 0,
               bottom: 4,

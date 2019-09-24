@@ -13,6 +13,7 @@ import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 import 'package:qu_me/widget/pageLogin.dart';
+import 'package:qu_me/widget/quCheckButton.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key) {}
@@ -127,27 +128,7 @@ class _PageHomeState extends State<PageHome> {
               children: [buildGroup(1), buildGroup(3)],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(4),
-            child: Column(
-              children: [
-                PlatformButton(
-                  child: Text("Mute"),
-                  onPressed: () {
-                    final platformProvider = PlatformProvider.of(context);
-                    if (platformProvider.platform == TargetPlatform.android) {
-                      platformProvider.changeToCupertinoPlatform();
-                    } else {
-                      platformProvider.changeToMaterialPlatform();
-                    }
-                  },
-                  padding: EdgeInsets.all(0),
-                  androidFlat: (context) => MaterialFlatButtonData(),
-                ),
-                Expanded(child: buildFader()),
-              ],
-            ),
-          ),
+          buildFaderWithMuteButton()
         ],
       ),
       padding: EdgeInsets.all(4),
@@ -163,18 +144,7 @@ class _PageHomeState extends State<PageHome> {
           buildGroup(1),
           buildGroup(2),
           buildGroup(3),
-          Padding(
-            padding: EdgeInsets.all(4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PlatformButton(
-                  child: Text("Mute"),
-                ),
-                buildFader(),
-              ],
-            ),
-          ),
+          buildFaderWithMuteButton(),
         ],
       ),
       padding: EdgeInsets.all(4),
@@ -193,15 +163,42 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildFader() {
-    return Selector<MixingModel, Mix>(
-      selector: (_, model) {
-        return model.currentMix;
+  Widget buildFaderWithMuteButton() {
+    return Padding(
+      padding: EdgeInsets.all(4),
+      child: Column(
+        children: [
+          buildMuteButton(),
+          Expanded(
+            child: Selector<MixingModel, Mix>(
+              selector: (_, model) {
+                return model.currentMix;
+              },
+              builder: (_, mix, child) {
+                return VerticalFader(mix.id, mix.name, mix.technicalName,
+                    mix.personName, mix.color, mix.stereo);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildMuteButton() {
+    final platformProvider = PlatformProvider.of(context);
+    return QuCheckButton(
+      child: Text("Mute", textAlign: TextAlign.center),
+      selected: platformProvider.platform == TargetPlatform.android,
+      onSelect: () {
+        if (platformProvider.platform == TargetPlatform.android) {
+          platformProvider.changeToCupertinoPlatform();
+        } else {
+          platformProvider.changeToMaterialPlatform();
+        }
       },
-      builder: (_, mix, child) {
-        return VerticalFader(mix.id, mix.name, mix.technicalName,
-            mix.personName, mix.color, mix.stereo);
-      },
+      margin: EdgeInsets.all(8),
+      checkColor: Colors.red,
     );
   }
 
