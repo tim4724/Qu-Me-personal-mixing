@@ -42,7 +42,7 @@ class _QuCheckButtonState extends State<QuCheckButton> {
         padding: widget.margin,
         child: AnimatedOpacity(
           opacity: down ? widget.pressedOpacity : 1.0,
-          duration: down ? Duration.zero : Duration(milliseconds: 100),
+          duration: down ? Duration.zero : const Duration(milliseconds: 100),
           child: Container(
             width: widget.width,
             height: widget.height,

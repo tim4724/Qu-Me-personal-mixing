@@ -1,3 +1,4 @@
+import 'package:declarative_animated_list/declarative_animated_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -54,22 +55,34 @@ class _PageGroupState extends State<PageGroup> {
 
   Widget buildBody(Orientation orientation) {
     bool landscape = orientation == Orientation.landscape;
+    final buildListItem = (_, Send send, i, Animation<double> anim) {
+      return buildFader(anim, send, landscape);
+    };
     return Selector<MixingModel, List<Send>>(
       selector: (_, model) => model.getSendsForGroup(widget.groupId),
-      builder: (_, sends, child) => ListView.builder(
-        itemCount: sends.length,
-        scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
-        itemBuilder: (BuildContext context, int index) {
-          final send = sends[index];
-          return Padding(
-            padding: EdgeInsets.all(2.0),
-            child: landscape
-                ? VerticalFader(send.id, send.name, send.technicalName,
-                    send.personName, send.color, send.stereo)
-                : HorizontalFader(send.id, send.name, send.technicalName,
-                    send.personName, send.color, send.stereo),
-          );
-        },
+      builder: (_, sends, child) => DeclarativeList(
+        items: MixingModel().getSendsForGroup(widget.groupId),
+        itemBuilder: buildListItem,
+        removeBuilder: buildListItem,
+        equalityCheck: (a, b) => a.id == b.id,
+      ),
+    );
+  }
+
+  Widget buildFader(Animation<double> anim, Send send, bool landscape) {
+    return FadeTransition(
+      opacity: anim,
+      child: SizeTransition(
+        sizeFactor: anim,
+        axisAlignment: 0.0,
+        child: Padding(
+          padding: EdgeInsets.all(2.0),
+          child: landscape
+              ? VerticalFader(send.id, send.name, send.technicalName,
+                  send.personName, send.color, send.stereo)
+              : HorizontalFader(send.id, send.name, send.technicalName,
+                  send.personName, send.color, send.stereo),
+        ),
       ),
     );
   }

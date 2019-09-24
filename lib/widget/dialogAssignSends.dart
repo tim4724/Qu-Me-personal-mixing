@@ -22,13 +22,11 @@ class DialogAssignSends extends StatelessWidget {
     final content = Selector<MixingModel, List<Send>>(
       selector: (context, model) => model.availableSends,
       builder: (context, sends, child) {
-        return SingleChildScrollView(
-          child: Wrap(
-            runSpacing: 2.0,
-            spacing: 8.0,
-            alignment: WrapAlignment.spaceEvenly,
-            children: sends.map((send) => buildSendChild(send)).toList(),
-          ),
+        return Wrap(
+          runSpacing: 2.0,
+          spacing: 8.0,
+          alignment: WrapAlignment.spaceEvenly,
+          children: sends.map((send) => buildSendChild(send)).toList(),
         );
       },
     );

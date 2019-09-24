@@ -16,7 +16,7 @@ class QuDialog extends StatelessWidget {
     return PlatformWidget(
       android: (context) => AlertDialog(
         title: Text(title),
-        content: content,
+        content: SingleChildScrollView(child: content),
         actions: [action],
         contentPadding: EdgeInsets.fromLTRB(24, 16, 24, 0),
       ),
@@ -47,25 +47,30 @@ class QuCupertinoDialog extends CupertinoPopupSurface {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 12, 24, 12),
+      padding: EdgeInsets.fromLTRB(36, 12, 36, 12),
       child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(_kDialogCornerRadius),
           child: BackdropFilter(
             filter:
                 ImageFilter.blur(sigmaX: _kBlurAmount, sigmaY: _kBlurAmount),
-            child: Container(
-              color: isSurfacePainted ? _kDialogColor : null,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (title != null)
-                    Padding(padding: EdgeInsets.all(16), child: title),
-                  Padding(
-                      padding: EdgeInsets.fromLTRB(24, 0, 24, 0), child: child),
-                  if (action != null) action,
-                ],
+            child: SingleChildScrollView(
+              child: Container(
+                color: isSurfacePainted ? _kDialogColor : null,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (title != null)
+                      Padding(padding: EdgeInsets.all(16), child: title),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                      child: child,
+                    ),
+                    if (action != null) action
+                  ],
+                ),
               ),
+              physics: ClampingScrollPhysics(),
             ),
           ),
         ),

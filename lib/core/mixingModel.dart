@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/group.dart';
@@ -52,7 +53,7 @@ class MixingModel extends ChangeNotifier {
       final allSends = scene.sends;
       for (Send send in allSends) {
         if (currentMix.sendAssigns[send.id] &&
-          (send.sendType != SendType.monoChannel || send.id < 16)) {
+            (send.sendType != SendType.monoChannel || send.id < 16)) {
           _availableSends.add(send);
         }
       }
@@ -110,9 +111,24 @@ class MixingModel extends ChangeNotifier {
   void unassignSend(int groupId, int victimId) {
     _assignement.unset(groupId, victimId);
     if (_sendForId[victimId].faderLinked) {
-      int linkedId = victimId % 2 == 0 ? victimId + 1 : victimId - 1;
-      _assignement.unset(groupId, linkedId);
+      final linkedId = victimId % 2 == 0 ? victimId + 1 : victimId - 1;
+      var highestId = -1;
+      for (int id in _assignement.getIds(groupId)) {
+        highestId = max(highestId, id);
+      }
+      if (highestId == victimId || highestId == linkedId) {
+        // Delay unset, because of animated list bug
+        // Bug occures, when two items are removed at the same time,
+        // and one of them is the last item in list
+        Future.delayed(Duration(milliseconds: 32), () {
+          _assignement.unset(groupId, linkedId);
+          notifyListeners();
+        });
+      } else {
+        _assignement.unset(groupId, linkedId);
+      }
     }
+
     notifyListeners();
   }
 
