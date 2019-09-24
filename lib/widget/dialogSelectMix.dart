@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -24,18 +25,24 @@ class DialogSelectMix extends StatelessWidget {
             selected: isCurrentMix,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.max,
-              children: [
+              children: <Widget>[
                 SizedBox(
-                  width: 80,
-                  child: Text(" ${mix.technicalName}"),
+                  width: 70,
+                  child: Text("${mix.technicalName}"),
                 ),
-                Text(mix.name),
+                AutoSizeText(
+                  mix.name,
+                  textAlign: TextAlign.center,
+                  maxFontSize: 20,
+                  maxLines: 1,
+                ),
                 SizedBox(
-                  width: 80,
-                  child: Text(
-                    "Tommy",
+                  width: 70,
+                  child: AutoSizeText(
+                    "Tim",
                     textAlign: TextAlign.end,
+                    maxFontSize: 20,
+                    maxLines: 1,
                   ),
                 ),
               ],

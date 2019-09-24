@@ -24,18 +24,21 @@ class QuCheckButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: margin,
-      child: GestureDetector(
-        onTap: onSelect,
+    return GestureDetector(
+      onTap: onSelect,
+      child: Padding(
+        padding: margin,
         child: Container(
           width: width,
           height: height,
           padding: padding,
           child: child,
           decoration: BoxDecoration(
-              color: selected ? checkColor : Colors.grey,
-              borderRadius: const BorderRadius.all(Radius.circular(4))),
+            color: selected ? checkColor : Colors.grey,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(4),
+            ),
+          ),
         ),
       ),
     );

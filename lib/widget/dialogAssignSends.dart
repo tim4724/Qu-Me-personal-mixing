@@ -24,7 +24,7 @@ class DialogAssignSends extends StatelessWidget {
       builder: (context, sends, child) {
         return SingleChildScrollView(
           child: Wrap(
-            runSpacing: 4.0,
+            runSpacing: 2.0,
             spacing: 8.0,
             alignment: WrapAlignment.spaceEvenly,
             children: sends.map((send) => buildSendChild(send)).toList(),
@@ -57,6 +57,7 @@ class DialogAssignSends extends StatelessWidget {
               selected: isInCurrentGroup,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   AutoSizeText(
                     send.name,
@@ -79,30 +80,32 @@ class DialogAssignSends extends StatelessWidget {
               onSelect: () {
                 mixingModel.toggleSendAssignement(currentGroupId, send.id);
               },
-              margin: EdgeInsets.only(bottom: 10),
+              margin: EdgeInsets.only(bottom: 6),
               padding: EdgeInsets.all(4),
               width: 64,
               height: 42,
             ),
             Positioned(
               right: 0,
-              bottom: 4,
-              child: AnimatedOpacity(
-                child: CircleAvatar(
-                  child: Padding(
-                    padding: EdgeInsets.all(3),
-                    child: AutoSizeText(
-                      group != null ? group.displayId : "",
-                      minFontSize: 8,
-                      maxFontSize: 20,
-                      style: TextStyle(color: Color(0xFFFFFFFF)),
+              bottom: 0,
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  child: CircleAvatar(
+                    child: Padding(
+                      padding: EdgeInsets.all(3),
+                      child: AutoSizeText(
+                        group != null ? group.displayId : "",
+                        minFontSize: 8,
+                        maxFontSize: 20,
+                        style: TextStyle(color: Color(0xFFFFFFFF)),
+                      ),
                     ),
+                    backgroundColor: Colors.grey.withAlpha(220),
+                    radius: 12,
                   ),
-                  backgroundColor: Colors.grey.withAlpha(220),
-                  radius: 12,
+                  duration: Duration(milliseconds: 300),
+                  opacity: group != null ? 1 : 0,
                 ),
-                duration: Duration(milliseconds: 300),
-                opacity: group != null ? 1 : 0,
               ),
             ),
           ],
