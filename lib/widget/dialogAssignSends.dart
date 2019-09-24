@@ -103,7 +103,7 @@ class DialogAssignSends extends StatelessWidget {
                     backgroundColor: Colors.grey.withAlpha(220),
                     radius: 12,
                   ),
-                  duration: Duration(milliseconds: 300),
+                  duration: Duration(milliseconds: 200),
                   opacity: group != null ? 1 : 0,
                 ),
               ),

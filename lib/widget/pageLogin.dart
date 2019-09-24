@@ -64,12 +64,12 @@ class _PageLoginState extends State<PageLogin> {
                   height: 200,
                   width: 200,
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 21, 21, 21),
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                    color: const Color.fromARGB(255, 21, 21, 21),
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
                   ),
                   child: ListView.builder(
                     itemCount: mixers.length,
-                    padding: EdgeInsets.all(0),
+                    padding: const EdgeInsets.all(0),
                     shrinkWrap: true,
                     itemBuilder: (BuildContext context, int i) {
                       return _MixerItem(
@@ -91,8 +91,8 @@ class _PageLoginState extends State<PageLogin> {
   }
 
   void onMixerSelected(String name) {
-    setState(() => loading = true);
     ConnectionModel().onStartConnect(name, mixers[name]);
+    setState(() => loading = true);
   }
 
   void connectStateChanged() {
@@ -114,12 +114,11 @@ class _PageLoginState extends State<PageLogin> {
 typedef _MixerSelectedCallback = Function(String name);
 
 class _MixerItem extends StatelessWidget {
-  final String _mixerName;
+  final String name;
   final bool selected;
-  final _MixerSelectedCallback _selectedCallback;
+  final _MixerSelectedCallback selectedCallback;
 
-  const _MixerItem(this._mixerName, this._selectedCallback, this.selected,
-      {Key key})
+  const _MixerItem(this.name, this.selectedCallback, this.selected, {Key key})
       : super(key: key);
 
   @override
@@ -128,8 +127,8 @@ class _MixerItem extends StatelessWidget {
       padding: EdgeInsets.only(top: 2, bottom: 2),
       child: QuCheckButton(
         selected: selected,
-        child: Text(_mixerName, textAlign: TextAlign.center),
-        onSelect: () => _selectedCallback(_mixerName),
+        child: Text(name, textAlign: TextAlign.center),
+        onSelect: () => selectedCallback(name),
       ),
     );
   }
