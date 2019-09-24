@@ -53,22 +53,21 @@ class _PageGroupState extends State<PageGroup> {
   }
 
   Widget buildBody(Orientation orientation) {
+    bool landscape = orientation == Orientation.landscape;
     return Selector<MixingModel, List<Send>>(
       selector: (_, model) => model.getSendsForGroup(widget.groupId),
       builder: (_, sends, child) => ListView.builder(
         itemCount: sends.length,
-        scrollDirection: Axis.horizontal,
+        scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
         itemBuilder: (BuildContext context, int index) {
           final send = sends[index];
           return Padding(
             padding: EdgeInsets.all(2.0),
-            child: Align(
-              child: orientation == Orientation.landscape
-                  ? VerticalFader(send.id, send.name, send.technicalName,
-                      send.personName, send.color, send.stereo)
-                  : HorizontalFader(send.id, send.name, send.technicalName,
-                      send.personName, send.color, send.stereo),
-            ),
+            child: landscape
+                ? VerticalFader(send.id, send.name, send.technicalName,
+                    send.personName, send.color, send.stereo)
+                : HorizontalFader(send.id, send.name, send.technicalName,
+                    send.personName, send.color, send.stereo),
           );
         },
       ),
