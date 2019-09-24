@@ -75,11 +75,15 @@ class MixingModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void selectMix(int index) {
-    currentMix = _allMixes[index];
-    print("New Mix Selected ${currentMix.technicalName}");
-    network.mixSelectChanged(currentMix.id, index);
-    notifyListeners();
+  void selectMix(int id) {
+    for (int i = 0; i < _allMixes.length; i++) {
+      if (_allMixes[i].id == id) {
+        currentMix = _allMixes[i];
+        network.mixSelectChanged(currentMix.id, i);
+        notifyListeners();
+        return;
+      }
+    }
   }
 
   void toggleSendAssignement(int groupId, int sendId) {

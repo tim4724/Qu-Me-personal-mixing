@@ -7,8 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/send.dart';
+import 'package:qu_me/widget/quCheckButton.dart';
 
-import 'quCupertinoDialog.dart';
+import 'quDialog.dart';
 
 class DialogAssignSends extends StatelessWidget {
   final int currentGroupId;
@@ -18,8 +19,6 @@ class DialogAssignSends extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentGroup = mixingModel.getGroup(currentGroupId);
-    final title = Text('Assign to ${currentGroup.technicalName}');
     final content = Selector<MixingModel, List<Send>>(
       selector: (context, model) => model.availableSends,
       builder: (context, sends, child) {
@@ -33,32 +32,16 @@ class DialogAssignSends extends StatelessWidget {
         );
       },
     );
+    final action = PlatformButton(
+      child: Text("Done"),
+      androidFlat: (context) => MaterialFlatButtonData(),
+      onPressed: () => Navigator.of(context).pop(),
+    );
 
-    final Text okAction = Text("Done");
-    return PlatformWidget(
-      android: (context) => AlertDialog(
-        title: title,
-        content: content,
-        actions: [
-          FlatButton(
-            child: okAction,
-            onPressed: () => Navigator.of(context).pop(),
-          )
-        ],
-      ),
-      ios: (context) => Padding(
-        padding: EdgeInsets.all(24.0),
-        child: Center(
-          child: QuCupertinoDialog(
-            title: title,
-            content: content,
-            action: CupertinoButton(
-              child: okAction,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-        ),
-      ),
+    return QuDialog(
+      title: 'Assign to ${mixingModel.getGroup(currentGroupId).technicalName}',
+      content: content,
+      action: action,
     );
   }
 
@@ -70,43 +53,34 @@ class DialogAssignSends extends StatelessWidget {
         return Stack(
           overflow: Overflow.visible,
           children: [
-            GestureDetector(
-              onTap: () {
-                mixingModel.toggleSendAssignement(currentGroupId, send.id);
-              },
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                child: Container(
-                  width: 64,
-                  height: 42,
-                  padding: EdgeInsets.all(4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AutoSizeText(
-                        send.name,
-                        minFontSize: 8,
-                        maxLines: 1,
-                        maxFontSize: 16,
-                      ),
-                      AutoSizeText(
-                        send.sendType != SendType.fxReturn
-                            ? send.personName
-                            : send.technicalName,
-                        minFontSize: 8,
-                        maxLines: 1,
-                        maxFontSize: 16,
-                        textScaleFactor: 0.7,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  decoration: BoxDecoration(
-                      color: isInCurrentGroup ? Colors.green : Colors.grey,
-                      borderRadius: BorderRadius.all(Radius.circular(4))),
+            QuCheckButton(
+                selected: isInCurrentGroup,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AutoSizeText(
+                      send.name,
+                      minFontSize: 8,
+                      maxLines: 1,
+                      maxFontSize: 16,
+                    ),
+                    AutoSizeText(
+                      send.sendType != SendType.fxReturn
+                          ? send.personName
+                          : send.technicalName,
+                      minFontSize: 8,
+                      maxLines: 1,
+                      maxFontSize: 16,
+                      textScaleFactor: 0.7,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ),
-            ),
+                onSelect: () {
+                  mixingModel.toggleSendAssignement(currentGroupId, send.id);
+                },
+                margin: EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.all(4)),
             Positioned(
               right: 0,
               bottom: 4,

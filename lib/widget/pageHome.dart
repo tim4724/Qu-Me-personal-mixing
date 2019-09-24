@@ -208,6 +208,7 @@ class _PageHomeState extends State<PageHome> {
   void showSelectMixDialog() {
     showPlatformDialog(
       context: context,
+      androidBarrierDismissible: true,
       builder: (BuildContext context) => DialogSelectMix(),
     );
   }
