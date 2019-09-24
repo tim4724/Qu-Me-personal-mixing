@@ -173,8 +173,14 @@ class _PageHomeState extends State<PageHome> {
                 return model.currentMix;
               },
               builder: (_, mix, child) {
-                return VerticalFader(mix.id, mix.name, mix.technicalName,
-                    mix.personName, mix.color, mix.stereo);
+                return VerticalFader(
+                  mix.id,
+                  mix.name,
+                  mix.technicalName,
+                  mix.personName,
+                  mix.color,
+                  mix.stereo,
+                );
               },
             ),
           ),
@@ -189,6 +195,9 @@ class _PageHomeState extends State<PageHome> {
       child: Text("Mute"),
       selected: platformProvider.platform == TargetPlatform.android,
       onSelect: () {
+        MixingModel().reset();
+        ConnectionModel().reset();
+        FaderModel().reset();
         if (platformProvider.platform == TargetPlatform.android) {
           platformProvider.changeToCupertinoPlatform();
         } else {

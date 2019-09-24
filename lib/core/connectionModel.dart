@@ -5,8 +5,7 @@ import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 
 class ConnectionModel extends ChangeNotifier {
-  static final ConnectionModel _instance =
-      ConnectionModel._internal();
+  static final ConnectionModel _instance = ConnectionModel._internal();
 
   factory ConnectionModel() => _instance;
 
@@ -37,7 +36,7 @@ class ConnectionModel extends ChangeNotifier {
   }
 
   void reset() {
-    _mixer?.mixerType = null;
+    _mixer = null;
     notifyListeners();
   }
 }

@@ -19,17 +19,19 @@ int _currentMixIndex = -1;
 
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
-    final mixerModel = ConnectionModel();
-    mixerModel.onMixerVersion(MixerType.QU_16, "0");
-    final mixingModel = MixingModel();
-    mixingModel.onScene(buildDemoScene());
+    Future.delayed(Duration(milliseconds: 500), () {
+      final mixerModel = ConnectionModel();
+      mixerModel.onMixerVersion(MixerType.QU_16, "0");
+      final mixingModel = MixingModel();
+      mixingModel.onScene(buildDemoScene());
+    });
   } else {
     _connect(address);
   }
 }
 
 void _connect(InternetAddress address) async {
-  final mixerModel = ConnectionModel();
+  final connectionModel = ConnectionModel();
   final mixingModel = MixingModel();
   final faderModel = FaderModel();
 
@@ -50,7 +52,7 @@ void _connect(InternetAddress address) async {
       _socket?.destroy();
       heartbeat.stop();
       byteStreamController.close();
-      mixerModel.reset();
+      connectionModel.reset();
       mixingModel.reset();
     },
     onError: _onError,
@@ -93,7 +95,7 @@ void _connect(InternetAddress address) async {
             heartbeat.start(metersSocket, address, dstPort);
             break;
           case 0x01:
-            mixerModel.onMixerVersion(
+            connectionModel.onMixerVersion(
                 data[0], "${data[1]}.${data[2]}-${_getUint16(data, 4)}");
             break;
           case 0x02:
