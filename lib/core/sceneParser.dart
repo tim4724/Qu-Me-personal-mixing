@@ -41,9 +41,11 @@ Scene parse(Uint8List data) {
     // phantom: 154
     // pad: 155
     // id: 183
+    // mute: 184
 
     final linked = data[offset + 144] == 1;
     final panLinked = linked && data[offset + 149] >> 3 & 1 == 1;
+    final muteOn = data[offset + 184] == 1;
 
     var name = _readString(data, offset + 156);
 
@@ -63,7 +65,7 @@ Scene parse(Uint8List data) {
         name = _readString(data, offset + 156 + (blockLen * 20));
       }
     }
-    sends[i] = Send(i, type, displayId, name, linked, panLinked);
+    sends[i] = Send(i, type, displayId, name, linked, panLinked, muteOn);
   }
 
   final mixes = List<Mix>(7);
@@ -84,14 +86,24 @@ Scene parse(Uint8List data) {
     // channel 1 send mix 2 = _readUint16(data, 11880) / 256.0 - 128.0;
     // Mix 1 Master Fader = _readUint16(data, 7662) / 256.0 - 128.0;
     // Mix 2 Master Fader = _readUint16(data, 7854) / 256.0 - 128.0;
+    // channel 1 assign send mix 1 = data[11877] == 1;
+    // channel 1 assign send mix 2 = data[11885] == 1;
+    // channel 2 assign send mix 2 = data[12045] == 1;
     final sendLevelsInDb = List<double>(39);
     var sendValueOffset = 11872 + i * 8;
-    final masterLevelOffset = 7662 + i * 192;
     for (var j = 0; j < sendLevelsInDb.length; j++, sendValueOffset += 160) {
       sendLevelsInDb[j] = _readUint16(data, sendValueOffset) / 256.0 - 128.0;
     }
+
+    var sendAssignOffset = 11877 + i * 8;
+    final sendAssigns = List<bool>(39);
+    for (var j = 0; j < sendAssigns.length; j++, sendAssignOffset += 160) {
+      sendAssigns[j] = data[sendAssignOffset] == 1;
+    }
+
+    final masterLevelOffset = 7662 + i * 192;
     // TODO PAN
-    mixes[i] = Mix(39 + i, type, displayId, name, sendLevelsInDb);
+    mixes[i] = Mix(39 + i, type, displayId, name, sendLevelsInDb, sendAssigns);
     mixMasterLevels[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
   }
 

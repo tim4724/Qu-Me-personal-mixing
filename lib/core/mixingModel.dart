@@ -33,6 +33,7 @@ class MixingModel extends ChangeNotifier {
   MixingModel._internal();
 
   void onScene(Scene scene) {
+    print("onScene");
     _allMixes.clear();
     _allMixes.addAll(scene.mixes);
 
@@ -50,7 +51,8 @@ class MixingModel extends ChangeNotifier {
     if (ConnectionModel().type == MixerType.QU_16) {
       final allSends = scene.sends;
       for (Send send in allSends) {
-        if (send.sendType != SendType.monoChannel || send.id < 16) {
+        if (currentMix.sendAssigns[send.id] &&
+          (send.sendType != SendType.monoChannel || send.id < 16)) {
           _availableSends.add(send);
         }
       }
@@ -79,7 +81,9 @@ class MixingModel extends ChangeNotifier {
     for (int i = 0; i < _allMixes.length; i++) {
       if (_allMixes[i].id == id) {
         currentMix = _allMixes[i];
+
         network.mixSelectChanged(currentMix.id, i);
+        // TODO show loading till changed successfully
         notifyListeners();
         return;
       }

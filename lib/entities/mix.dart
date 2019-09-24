@@ -7,12 +7,14 @@ class Mix {
   final MixType mixType;
   final int displayId;
   final List<double> sendLevelsInDb;
+  final List<bool> sendAssigns;
   String _technicalName;
   String name;
   String personName;
   Color color;
 
-  Mix(this.id, this.mixType, this.displayId, this.name, this.sendLevelsInDb) {
+  Mix(this.id, this.mixType, this.displayId, this.name, this.sendLevelsInDb,
+      this.sendAssigns) {
     if (mixType == MixType.mono) {
       _technicalName = "Mix $displayId";
     } else {
@@ -28,9 +30,7 @@ class Mix {
 
   @override
   String toString() {
-    return 'Mix{id: $id, mixType: $mixType, displayId: $displayId, '
-        'sendValues: $sendLevelsInDb, _technicalName: $_technicalName, '
-        'name: $name, personName: $personName}';
+    return 'Mix{id: $id, mixType: $mixType, displayId: $displayId, sendLevelsInDb: $sendLevelsInDb, sendAssigns: $sendAssigns, _technicalName: $_technicalName, name: $name, personName: $personName, color: $color}';
   }
 }
 

@@ -5,8 +5,8 @@ import 'dart:typed_data';
 
 import 'package:async/async.dart';
 import 'package:hex/hex.dart';
-import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/connectionModel.dart';
+import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/mixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/mixer.dart';
@@ -45,6 +45,7 @@ void _connect(InternetAddress address) async {
       }
     },
     onDone: () {
+      // TODO: do something useful
       print("Socket was closed");
       _socket?.destroy();
       heartbeat.stop();
@@ -123,18 +124,32 @@ void _connect(InternetAddress address) async {
         final dspPacket = DspPacket(Uint8List.fromList(data));
         print("$dspPacket");
 
-        if (dspPacket.targetGroup == 4 &&
-            (dspPacket.valueId == 0x0a || dspPacket.valueId == 0x07)) {
-          // valueId == 0x0a for send fader
-          // valueId == 0x07 for master fader
-          print("Fader value: ${dspPacket.value}");
-          final valueInDb = (dspPacket.value / 256.0 - 128.0);
-          faderModel.onNewFaderLevel(dspPacket.param1, valueInDb);
+        if (dspPacket.targetGroup == 4) {
+          final faderId = dspPacket.param1;
+          switch (dspPacket.valueId) {
+            case 0x0a:
+            case 0x07:
+              final valueInDb = (dspPacket.value / 256.0 - 128.0);
+              faderModel.onNewFaderLevel(faderId, valueInDb);
+              print("Fader value: ${dspPacket.value}");
+              break;
+            case 0x06:
+              final muteOn = dspPacket.value == 1;
+              print("Mute fader $faderId: $muteOn");
+              break;
+            case 0x09:
+              final assignOn = dspPacket.value == 1;
+              print("Assign send $faderId to current Mix: $assignOn");
+              break;
+            default:
+              print("unexpected valueId: ${dspPacket.valueId}");
+              break;
+          }
         }
         break;
-
       default:
         print("unexpected type: $type");
+        break;
     }
   }
 }
@@ -201,7 +216,6 @@ void mixSelectChanged(int mixId, int mixIndex) {
   magicData[9] = magicValue[1];
   _socket.add(_buildSystemPacket(0x04, [0x03, mixId]));
   _socket.add(_buildSystemPacket(0x04, magicData));
-  print(HEX.encode(magicData));
 
   // _socket.add(_buildSystemPacket(
   //      0x04,
@@ -214,7 +228,6 @@ void mixSelectChanged(int mixId, int mixIndex) {
   magicData1[4] = 0x01 * pow(2, mixIndex);
   _socket.add(_buildSystemPacket(0x04, [0x04, mixId]));
   _socket.add(_buildSystemPacket(0x04, magicData1));
-  print(HEX.encode(magicData1));
   // _socket.add(_buildSystemPacket(
   //    0x04,
   //    HEX.decode(

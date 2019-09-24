@@ -13,9 +13,10 @@ class Send {
   bool panLinked;
   String _personName; // name of the musician
   Color color;
+  bool muteOn;
 
   Send(this.id, this.sendType, this.displayId, this._name, this.faderLinked,
-      this.panLinked) {
+      this.panLinked, this.muteOn) {
     color = findColor(_name);
     switch (sendType) {
       case SendType.monoChannel:
