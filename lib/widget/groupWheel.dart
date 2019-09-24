@@ -6,6 +6,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:qu_me/core/mixingModel.dart';
+import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
 import 'package:qu_me/widget/pageGroup.dart';
@@ -16,13 +19,10 @@ typedef WheelDragRelease = Function(int id);
 
 class GroupWheel extends StatefulWidget {
   final int _id;
-  final String _groupName;
-  final Color _accentColor;
   final WheelDragUpdate dragUpdateCallback;
   final WheelDragRelease dragReleaseCallback;
 
-  const GroupWheel(this._id, this._groupName, this._accentColor,
-      this.dragUpdateCallback, this.dragReleaseCallback,
+  const GroupWheel(this._id, this.dragUpdateCallback, this.dragReleaseCallback,
       {Key key})
       : super(key: key);
 
@@ -34,7 +34,7 @@ class GroupWheel extends StatefulWidget {
 
 class _GroupWheelState extends State<GroupWheel> {
   final Color backgroundColor = Color.fromARGB(255, 42, 42, 42);
-  final Color backgroundActiveColor = Color.fromARGB(255, 21, 21, 21);
+  final Color backgroundActiveColor = Color.fromARGB(255, 38, 38, 38);
   final keyWheel = GlobalKey();
   var activePointers = 0;
   var wheelDragDelta = 0.0;
@@ -42,8 +42,6 @@ class _GroupWheelState extends State<GroupWheel> {
   ui.Image shadowOverlay;
 
   int get id => widget._id;
-
-  String get name => widget._groupName;
 
   _GroupWheelState() {
     asset.loadImage("assets/shadow.png").then(onImageLoaded);
@@ -70,7 +68,7 @@ class _GroupWheelState extends State<GroupWheel> {
     if (currentTime - lastTapTimestamp < 300) {
       Navigator.of(context).push(
         platformPageRoute<void>(
-          builder: (context) => PageGroup(id, name),
+          builder: (context) => PageGroup(id),
           context: context,
         ),
       );
@@ -108,31 +106,63 @@ class _GroupWheelState extends State<GroupWheel> {
           ..onTapUp = (pointer, details) => onTapUp();
       }),
     };
-    return Container(
-      width: 72,
-      decoration: BoxDecoration(
-        color: active ? backgroundActiveColor : backgroundColor,
-        borderRadius: BorderRadius.all(Radius.circular(2)),
-        border: Border.all(color: widget._accentColor, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _GroupLabel(widget._groupName, widget._accentColor),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: RawGestureDetector(
-                behavior: HitTestBehavior.opaque,
-                gestures: gestures,
-                child: CustomPaint(
-                  painter: _Wheel(wheelDragDelta, shadowOverlay),
-                  key: keyWheel,
+
+    return Selector<MixingModel, MapEntry<Group, int>>(
+      selector: (context, model) =>
+          MapEntry(model.getGroup(id), model.getSendsForGroup(id).length),
+      builder: (context, pair, child) {
+        final group = pair.key;
+        final sendsCount = pair.value;
+        return Container(
+          width: 72,
+          decoration: BoxDecoration(
+            color: active ? backgroundActiveColor : backgroundColor,
+            borderRadius: BorderRadius.all(Radius.circular(2)),
+            border: Border.all(color: group.color, width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _GroupLabel(group.name, group.color),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: RawGestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    gestures: sendsCount > 0
+                        ? gestures
+                        : {
+                            MultiTapGestureRecognizer:
+                                gestures[MultiTapGestureRecognizer]
+                          },
+                    child: buildWheelArea(sendsCount),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget buildWheelArea(int sendsCount) {
+    if (sendsCount > 0) {
+      return CustomPaint(
+        painter: _Wheel(wheelDragDelta, shadowOverlay),
+        key: keyWheel,
+      );
+    }
+    return Container(
+      color: Color(0xFF111111),
+      child: Center(
+        child: Text(
+          "Nothing Assigned\nDouble Tap",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFFA0A0A0),
+          ),
+        ),
       ),
     );
   }

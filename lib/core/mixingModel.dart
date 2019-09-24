@@ -117,7 +117,9 @@ class MixingModel extends ChangeNotifier {
     final ids = _assignement.getIds(groupId);
     if (ids != null) {
       for (int id in ids) {
-        sends.add(_sendForId[id]);
+        if (_sendForId.length > id) {
+          sends.add(_sendForId[id]);
+        }
       }
       sends.sort((a, b) => a.id - b.id);
     }

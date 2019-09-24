@@ -1,4 +1,3 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -12,9 +11,8 @@ import 'dialogAssignSends.dart';
 
 class PageGroup extends StatefulWidget {
   final int groupId;
-  final String title;
 
-  PageGroup(this.groupId, this.title, {Key key}) : super(key: key);
+  PageGroup(this.groupId, {Key key}) : super(key: key);
 
   @override
   _PageGroupState createState() => _PageGroupState();
@@ -27,7 +25,9 @@ class _PageGroupState extends State<PageGroup> {
       builder: (context, orientation) {
         return PlatformScaffold(
           appBar: PlatformAppBar(
-            title: Text(widget.title),
+            title: Selector<MixingModel, String>(
+                selector: (_, model) => model.getGroup(widget.groupId).name,
+                builder: (_, title, __) => Text(title)),
             trailingActions: <Widget>[
               PlatformButton(
                 padding: EdgeInsets.zero,
@@ -45,22 +45,17 @@ class _PageGroupState extends State<PageGroup> {
             ],
           ),
           body: SafeArea(
-            child: orientation == Orientation.landscape
-                ? buildBodyLandscape()
-                : buildBodyPortrait(),
+            child: buildBody(orientation),
           ),
         );
       },
     );
   }
 
-  Widget buildBodyLandscape() {
-    return Selector<MixingModel, List<Send>>(selector: (_, model) {
-      print("pagegroup selector");
-      return model.getSendsForGroup(widget.groupId);
-    }, builder: (_, sends, child) {
-      print("pagegroup builder");
-      return ListView.builder(
+  Widget buildBody(Orientation orientation) {
+    return Selector<MixingModel, List<Send>>(
+      selector: (_, model) => model.getSendsForGroup(widget.groupId),
+      builder: (_, sends, child) => ListView.builder(
         itemCount: sends.length,
         scrollDirection: Axis.horizontal,
         itemBuilder: (BuildContext context, int index) {
@@ -68,32 +63,15 @@ class _PageGroupState extends State<PageGroup> {
           return Padding(
             padding: EdgeInsets.all(2.0),
             child: Align(
-              child: VerticalFader(send.id, send.name, send.technicalName,
-                  send.personName, send.color, send.stereo),
+              child: orientation == Orientation.landscape
+                  ? VerticalFader(send.id, send.name, send.technicalName,
+                      send.personName, send.color, send.stereo)
+                  : HorizontalFader(send.id, send.name, send.technicalName,
+                      send.personName, send.color, send.stereo),
             ),
           );
         },
-      );
-    });
-  }
-
-  Widget buildBodyPortrait() {
-    return Selector<MixingModel, List<Send>>(selector: (_, model) {
-      print("pagegroup selector");
-      return model.getSendsForGroup(widget.groupId);
-    }, builder: (_, sends, child) {
-      print("pagegroup builder");
-      return ListView.builder(
-        itemCount: sends.length,
-        itemBuilder: (BuildContext context, int index) {
-          final send = sends[index];
-          return Padding(
-            padding: EdgeInsets.all(2.0),
-            child: HorizontalFader(send.id, send.name, send.technicalName,
-                send.personName, send.color, send.stereo),
-          );
-        },
-      );
-    });
+      ),
+    );
   }
 }

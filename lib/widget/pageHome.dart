@@ -16,7 +16,7 @@ import 'package:qu_me/widget/pageLogin.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
 
 class PageHome extends StatefulWidget {
-  PageHome({Key key}) : super(key: key) {}
+  PageHome({Key key}) : super(key: key);
 
   final connectionModel = ConnectionModel();
   final mixingModel = MixingModel();
@@ -33,22 +33,23 @@ class _PageHomeState extends State<PageHome> {
   Widget build(BuildContext context) {
     // TODO: fade pagegroup widget
     print("build pageHome");
-    // TODO : avoid rebuilding entire widget
+    // TODO : avoid rebuilding entire widget on wheel scroll
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(
         children: [
-          if (activeWheel != -1) PageGroup(activeWheel, ""),
+          if (activeWheel != -1) PageGroup(activeWheel),
           AnimatedOpacity(
             child: PlatformScaffold(
               appBar: PlatformAppBar(
                   title: Text(widget.connectionModel.name),
                   ios: (context) => CupertinoNavigationBarData(
-                          leading: CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        child: Text('Logout'),
-                        onPressed: () => logout(),
-                      )),
+                        leading: CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Text('Logout'),
+                          onPressed: () => logout(),
+                        ),
+                      ),
                   android: (context) => MaterialAppBarData(
                         leading: IconButton(
                           icon: Icon(Icons.close),
@@ -151,14 +152,11 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildGroup(int index) {
-    final group = widget.mixingModel.getGroup(index);
-    final name = group.name;
-    final color = Color.fromARGB(128, 0, 0, 0);
+  Widget buildGroup(int groupId) {
     return Expanded(
       child: Padding(
         padding: EdgeInsets.all(4),
-        child: GroupWheel(index, name, color, onWheelChanged, onWheelReleased),
+        child: GroupWheel(groupId, onWheelChanged, onWheelReleased),
       ),
     );
   }
@@ -188,7 +186,7 @@ class _PageHomeState extends State<PageHome> {
   Widget buildMuteButton() {
     final platformProvider = PlatformProvider.of(context);
     return QuCheckButton(
-      child: Text("Mute", textAlign: TextAlign.center),
+      child: Text("Mute"),
       selected: platformProvider.platform == TargetPlatform.android,
       onSelect: () {
         if (platformProvider.platform == TargetPlatform.android) {
