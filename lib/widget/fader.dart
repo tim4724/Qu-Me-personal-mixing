@@ -5,40 +5,29 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/faderModel.dart';
 import 'package:qu_me/core/levelConverter.dart';
-import 'package:qu_me/core/metersModel.dart';
+import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/metersModel.dart';
+import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 
 enum LevelType { mono, stereo_left, stereo_right }
 
 abstract class Fader extends StatefulWidget {
-  final int id;
-  final String _faderName;
-  final String _technicalName;
-  final String _userName;
-  final Color _accentColor;
-  final bool _stereo;
+  final ValueNotifier<FaderInfo> faderInfoNotifier;
 
-  Fader(this.id, this._faderName, this._technicalName, this._userName,
-      this._accentColor, this._stereo,
-      {Key key})
-      : super(key: key);
+  Fader(this.faderInfoNotifier, {Key key}) : super(key: key);
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(int id, String faderName, String technicalName,
-      String userName, Color accentColor, bool stereo)
-      : super(id, faderName, technicalName, userName, accentColor, stereo);
+  HorizontalFader(ValueNotifier<FaderInfo> faderInfo) : super(faderInfo);
 
   @override
   State<StatefulWidget> createState() => _HorizontalFaderState();
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(int id, String faderName, String technicalName, String userName,
-      Color accentColor, bool stereo)
-      : super(id, faderName, technicalName, userName, accentColor, stereo);
+  VerticalFader(ValueNotifier<FaderInfo> faderInfo) : super(faderInfo);
 
   @override
   State<StatefulWidget> createState() => _VerticalFaderState();
@@ -53,13 +42,10 @@ abstract class _FaderState extends State<Fader> {
       backgroundActiveColor.withAlpha(inActiveAlpha);
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
-  final FaderModel faderModel = FaderModel();
+  final FaderLevelModel faderModel = FaderLevelModel();
   var activePointers = 0;
-  var value = 0.0;
 
   bool get active => activePointers > 0;
-
-  Color get color => widget._accentColor;
 
   _FaderState() {
     gestures[MultiTapGestureRecognizer] =
@@ -79,36 +65,41 @@ abstract class _FaderState extends State<Fader> {
   void onDragUpdate(double delta) {
     final sliderWidth = keyFaderSlider.currentContext.size.width;
     final deltaNormalized = (delta / (sliderWidth - 16));
-    final currentSliderValue = faderModel.getSliderValue(widget.id);
+    final currentSliderValue = faderModel.getSliderValue(faderInfo.id);
     final newSliderValue = currentSliderValue + deltaNormalized;
-    faderModel.onNewSliderValue(widget.id, newSliderValue);
+    faderModel.onNewSliderValue(faderInfo.id, newSliderValue);
   }
 
   void onPointerStop() {
     setState(() => activePointers--);
   }
 
+  FaderInfo get faderInfo => widget.faderInfoNotifier.value;
+
   Widget get faderLabel {
+    final info = faderInfo;
     if (!active) {
-      return _FaderLabel(widget._faderName, widget._userName, color, active);
+      final secondary =
+          info.personName != null ? info.personName : info.technicalName;
+      return _FaderLabel(info.name, secondary, info.color, active);
     }
-    return Selector<FaderModel, String>(
+    return Selector<FaderLevelModel, String>(
       selector: (_, model) {
-        final db = model.getValueInDb(widget.id);
+        final db = model.getValueInDb(faderInfo.id);
         return (db >= 0.1 ? "+" : "") + "${db.toStringAsFixed(1)}db";
       },
       builder: (_, dbValue, child) {
-        return _FaderLabel(dbValue, widget._technicalName, color, active,
+        return _FaderLabel(dbValue, info.technicalName, info.color, active,
             textAlignPrimary: TextAlign.end);
       },
     );
   }
 
-  BoxDecoration get decoration {
+  BoxDecoration decoration(Color color) {
     return BoxDecoration(
       color: active ? backgroundActiveColor : backgroundColor,
       borderRadius: _FaderState.borderRadius,
-      border: Border.all(color: widget._accentColor, width: 1),
+      border: Border.all(color: color, width: 1),
     );
   }
 }
@@ -127,25 +118,35 @@ class _HorizontalFaderState extends _FaderState {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: decoration,
-      child: Row(
-        children: [
-          faderLabel,
-          Expanded(
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.opaque,
-              gestures: gestures,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: FaderSlider(widget.id, active, widget._stereo,
-                    key: keyFaderSlider),
-              ),
+    // TODO: clean up code
+    // TODO : combine ChangeNotifierProvider and Consumer???
+    return ChangeNotifierProvider<ValueNotifier<FaderInfo>>.value(
+      value: widget.faderInfoNotifier,
+      child: Consumer<ValueNotifier<FaderInfo>>(
+        builder: (context, valueNotifier, child) {
+          final faderInfo = valueNotifier.value;
+          return Container(
+            height: 56,
+            decoration: decoration(faderInfo.color),
+            child: Row(
+              children: [
+                faderLabel,
+                Expanded(
+                  child: RawGestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    gestures: gestures,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: FaderSlider(faderInfo.id, active, faderInfo.stereo,
+                          key: keyFaderSlider),
+                    ),
+                  ),
+                ),
+              ],
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             ),
-          ),
-        ],
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+          );
+        },
       ),
     );
   }
@@ -165,26 +166,35 @@ class _VerticalFaderState extends _FaderState {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 72,
-      decoration: decoration,
-      child: Column(
-        children: [
-          faderLabel,
-          Expanded(
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.opaque,
-              gestures: gestures,
-              child: RotatedBox(
-                quarterTurns: 3,
-                child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    child: FaderSlider(widget.id, active, widget._stereo,
-                        key: keyFaderSlider)),
-              ),
+    return ChangeNotifierProvider<ValueNotifier<FaderInfo>>.value(
+      value: widget.faderInfoNotifier,
+      child: Consumer<ValueNotifier<FaderInfo>>(
+        builder: (context, valueNotifier, child) {
+          final faderInfo = valueNotifier.value;
+          return Container(
+            width: 72,
+            decoration: decoration(faderInfo.color),
+            child: Column(
+              children: [
+                faderLabel,
+                Expanded(
+                  child: RawGestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    gestures: gestures,
+                    child: RotatedBox(
+                      quarterTurns: 3,
+                      child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                          child: FaderSlider(
+                              faderInfo.id, active, faderInfo.stereo,
+                              key: keyFaderSlider)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -281,7 +291,8 @@ class FaderSlider extends StatelessWidget {
                       _levelStops[i] * width, _levelFractionalOffset[i]))
                   .toList()
                     ..insertAll(0, _getLevelIndicator(0.5, width, height))
-                    ..add(Selector<FaderModel, double>(selector: (_, model) {
+                    ..add(
+                        Selector<FaderLevelModel, double>(selector: (_, model) {
                       return model.getSliderValue(_id);
                     }, builder: (_, sliderValue, child) {
                       return _FaderKnop(sliderValue * width, _active);

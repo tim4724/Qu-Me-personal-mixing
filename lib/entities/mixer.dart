@@ -3,12 +3,10 @@ import 'dart:io';
 class Mixer {
   final String name;
   final InternetAddress address;
-  int mixerType; // TODO check if initialized with null
+  int mixerType;
   String firmwareVersion;
 
-  Mixer(this.name, this.address) {
-    // TODO : update from heartbeat
-  }
+  Mixer(this.name, this.address);
 
   @override
   String toString() {

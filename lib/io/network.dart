@@ -5,9 +5,9 @@ import 'dart:typed_data';
 
 import 'package:async/async.dart';
 import 'package:hex/hex.dart';
-import 'package:qu_me/core/connectionModel.dart';
-import 'package:qu_me/core/faderModel.dart';
-import 'package:qu_me/core/mixingModel.dart';
+import 'package:qu_me/core/model/connectionModel.dart';
+import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
@@ -33,7 +33,7 @@ void connect(String name, InternetAddress address) async {
 void _connect(InternetAddress address) async {
   final connectionModel = ConnectionModel();
   final mixingModel = MixingModel();
-  final faderModel = FaderModel();
+  final faderModel = FaderLevelModel();
 
   _socket = await Socket.connect(address, 51326);
   _socket.setOption(SocketOption.tcpNoDelay, true);
@@ -143,6 +143,9 @@ void _connect(InternetAddress address) async {
               final assignOn = dspPacket.value == 1;
               print("Assign send $faderId to current Mix: $assignOn");
               break;
+              // TODO name of send/mix
+              // TODO pan
+              //
             default:
               print("unexpected valueId: ${dspPacket.valueId}");
               break;

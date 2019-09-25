@@ -2,61 +2,76 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:qu_me/core/findColor.dart';
+import 'package:qu_me/entities/faderInfo.dart';
 
-class Send {
-  final int id; // global id
+class Send extends FaderInfo {
   final SendType sendType;
-  final displayId; // not user defined id for send
-  String _technicalName; // not user defined name for send
-  String _name; // user defined name
-  bool faderLinked;
-  bool panLinked;
-  String _personName; // name of the musician
-  Color color;
-  bool muteOn;
+  final bool faderLinked;
+  final bool panLinked;
 
-  Send(this.id, this.sendType, this.displayId, this._name, this.faderLinked,
-      this.panLinked, this.muteOn) {
-    color = findColor(_name);
-    switch (sendType) {
+  Send._internal(
+      int id,
+      this.sendType,
+      int displayId,
+      String technicalName,
+      String name,
+      Color color,
+      String personName,
+      this.faderLinked,
+      this.panLinked,
+      bool muteOn)
+      : super(id, displayId, technicalName, name, color, personName, muteOn);
+
+  factory Send(int id, SendType type, int displayId, String name,
+      bool faderLinked, bool panLinked, bool muteOn) {
+    String technicalName;
+    switch (type) {
       case SendType.monoChannel:
-        _technicalName = "Ch $displayId";
+        technicalName = "Ch $displayId";
         break;
       case SendType.stereoChannel:
-        _technicalName = "St $displayId";
+        technicalName = "St $displayId";
         break;
       case SendType.fxReturn:
-        _technicalName = "FxRet $displayId";
+        technicalName = "FxRet $displayId";
         break;
       case SendType.group:
-        _technicalName = "Grp $displayId";
+        technicalName = "Grp $displayId";
         break;
       default:
-        _technicalName = "$displayId";
+        technicalName = "$displayId";
         break;
     }
-    _personName = "Tim";
+    final color = findColor(name);
+    final personName = "Tim";
+    return Send._internal(id, type, displayId, technicalName, name, color,
+        personName, faderLinked, panLinked, muteOn);
   }
 
-  bool get stereo => sendType == SendType.stereoChannel;
-
-  String get technicalName => _technicalName;
-
-  String get personName => _personName;
-
-  String get name => _name;
-
-  void set name(String name) {
-    _name = name;
-    color = findColor(name);
+  Send copyWith(
+      {id,
+      displayId,
+      technicalName,
+      name,
+      color,
+      personName,
+      muteOn,
+      sendType,
+      faderLinked,
+      panLinked}) {
+    return Send(
+      id ?? this.id,
+      sendType ?? this.sendType,
+      displayId ?? this.displayId,
+      name ?? this.name,
+      faderLinked ?? this.faderLinked,
+      panLinked ?? this.panLinked,
+      muteOn == this.muteOn,
+    );
   }
 
   @override
-  String toString() {
-    return 'Send{id: $id, sendType: $sendType, displayId: $displayId, '
-        '_technicalName: $_technicalName, name: $name, faderLinked: $faderLinked, '
-        'personName: $personName, color: $color}';
-  }
+  bool get stereo => sendType == SendType.stereoChannel;
 }
 
 enum SendType { monoChannel, stereoChannel, fxReturn, group }

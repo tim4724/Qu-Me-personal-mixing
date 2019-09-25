@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/entities/send.dart';
+import 'package:qu_me/core/levelConverter.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 
-import 'levelConverter.dart';
+// TODO is performance good for many listeners?
+class FaderLevelModel extends ChangeNotifier {
+  static final FaderLevelModel _instance = FaderLevelModel._internal();
 
-class FaderModel extends ChangeNotifier {
-  static final FaderModel _instance = FaderModel._internal();
-
-  factory FaderModel() => _instance;
+  factory FaderLevelModel() => _instance;
 
   // These are in range from -inf to +10.0
   // -128.0 equals "-inf" as far as the qu mixer is concerned
@@ -22,10 +22,11 @@ class FaderModel extends ChangeNotifier {
   // are related to fader position in the ui
   final _sliderValues = List.filled(60, 0.0);
 
+  final mixingModel = MixingModel();
   final _dirtySends = Set<int>();
   Timer _networkNotifyTimer;
 
-  FaderModel._internal();
+  FaderLevelModel._internal();
 
   double getValueInDb(int id) {
     return _levelsInDb[id];
@@ -43,14 +44,14 @@ class FaderModel extends ChangeNotifier {
 
   static final maxDbValue = convertToDbValue(1.0);
 
-  void onTrim(List<Send> sends, double delta) {
-    if (sends == null || sends.length == 0 || delta == 0) {
+  void onTrim(List<int> sendIds, double delta) {
+    if (sendIds == null || sendIds.length == 0 || delta == 0) {
       return;
     }
 
     double maxSendLevel = 0.0;
-    for (final send in sends) {
-      final sendLevel = _sliderValues[send.id];
+    for (final sendId in sendIds) {
+      final sendLevel = _sliderValues[sendId];
       if (sendLevel > maxSendLevel) {
         maxSendLevel = sendLevel;
       }
@@ -67,15 +68,14 @@ class FaderModel extends ChangeNotifier {
     final deltaInDb =
         convertToDbValue(newMaxSendLevel) - convertToDbValue(maxSendLevel);
 
-    for (final send in sends) {
-      final id = send.id;
+    for (final sendId in sendIds) {
       // If 2 Faders are linked. Only change 1 fader
-      if (send.faderLinked && id % 2 == 1) {
+      if (mixingModel.getSend(sendId).faderLinked && sendId % 2 == 1) {
         continue;
       }
-      _levelsInDb[id] = (_levelsInDb[id] + deltaInDb);
-      _sliderValues[id] = convertFromDbValue(_levelsInDb[id]);
-      _dirtySends.add(id);
+      _levelsInDb[sendId] = (_levelsInDb[sendId] + deltaInDb);
+      _sliderValues[sendId] = convertFromDbValue(_levelsInDb[sendId]);
+      _dirtySends.add(sendId);
     }
     notifyListeners();
     notifyNetwork();

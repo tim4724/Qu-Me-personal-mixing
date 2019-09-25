@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/core/levelConverter.dart';
 
-import 'levelConverter.dart';
-
+// TODO is performance good for many listeners?
 class MetersModel extends ChangeNotifier {
   static final MetersModel _instance = MetersModel._internal();
 

@@ -54,19 +54,19 @@ Scene buildDemoScene() {
         .add(Send(i + 35, SendType.fxReturn, i + 1, name, false, false, false));
   }
   final mixes = [
-    Mix(0x27, MixType.mono, 1, "Voc 1", List.filled(39, -128.0),
+    Mix(0x27, MixType.mono, 1, "Voc 1", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x28, MixType.mono, 2, "Voc 2", List.filled(39, -128.0),
+    Mix(0x28, MixType.mono, 2, "Voc 2", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x29, MixType.mono, 3, "Voc 3", List.filled(39, -128.0),
+    Mix(0x29, MixType.mono, 3, "Voc 3", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x2A, MixType.mono, 4, "Voc 4", List.filled(39, -128.0),
+    Mix(0x2A, MixType.mono, 4, "Voc 4", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x2B, MixType.stereo, 5, "Key", List.filled(39, -128.0),
+    Mix(0x2B, MixType.stereo, 5, "Key", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x2C, MixType.stereo, 7, "Bass", List.filled(39, -128.0),
+    Mix(0x2C, MixType.stereo, 7, "Bass", false, List.filled(39, -128.0),
         List.filled(39, true)),
-    Mix(0x2D, MixType.stereo, 9, "Drum", List.filled(39, -128.0),
+    Mix(0x2D, MixType.stereo, 9, "Drum", false, List.filled(39, -128.0),
         List.filled(39, true)),
   ];
   return Scene(sends, mixes, List.filled(7, -128.0));

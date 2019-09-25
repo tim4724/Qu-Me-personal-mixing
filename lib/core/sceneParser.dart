@@ -103,7 +103,8 @@ Scene parse(Uint8List data) {
 
     final masterLevelOffset = 7662 + i * 192;
     // TODO PAN
-    mixes[i] = Mix(39 + i, type, displayId, name, sendLevelsInDb, sendAssigns);
+    // TODO MUTE
+    mixes[i] = Mix(39 + i, type, displayId, name, false, sendLevelsInDb, sendAssigns);
     mixMasterLevels[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
   }
 

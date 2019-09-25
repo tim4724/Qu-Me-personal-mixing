@@ -1,10 +1,9 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/mixingModel.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
 import 'package:qu_me/widget/quDialog.dart';
 
@@ -16,7 +15,7 @@ class DialogSelectMix extends StatelessWidget {
     final children = mixingModel.availableMixes.map(
       (mix) {
         return Selector<MixingModel, bool>(
-          selector: (context, model) => model.currentMix.id == mix.id,
+          selector: (context, model) => model.currentMix.value.id == mix.id,
           builder: (context, isCurrentMix, child) => QuCheckButton(
             onSelect: () {
               mixingModel.selectMix(mix.id);

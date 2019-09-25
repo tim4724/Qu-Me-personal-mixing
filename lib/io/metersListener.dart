@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:qu_me/core/metersModel.dart';
+import 'package:qu_me/core/model/metersModel.dart';
 
 void listen(RawDatagramSocket socket) {
   final metersModel = MetersModel();

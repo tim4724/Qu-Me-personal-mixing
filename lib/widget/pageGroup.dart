@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/mixingModel.dart';
-import 'package:qu_me/entities/send.dart';
+import 'package:qu_me/core/model/groupModel.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
@@ -20,13 +20,15 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
+  final MixingModel mixingModel = MixingModel();
+
   @override
   Widget build(BuildContext context) {
     return OrientationBuilder(
       builder: (context, orientation) {
         return PlatformScaffold(
           appBar: PlatformAppBar(
-            title: Selector<MixingModel, String>(
+            title: Selector<GroupModel, String>(
                 selector: (_, model) => model.getGroup(widget.groupId).name,
                 builder: (_, title, __) => Text(title)),
             trailingActions: <Widget>[
@@ -55,21 +57,22 @@ class _PageGroupState extends State<PageGroup> {
 
   Widget buildBody(Orientation orientation) {
     bool landscape = orientation == Orientation.landscape;
-    final buildListItem = (_, Send send, i, Animation<double> anim) {
-      return buildFader(anim, send, landscape);
+    final buildListItem = (_, int sendId, i, Animation<double> anim) {
+      return buildFader(anim, sendId, landscape);
     };
-    return Selector<MixingModel, List<Send>>(
-      selector: (_, model) => model.getSendsForGroup(widget.groupId),
-      builder: (_, sends, child) => DeclarativeList(
-        items: MixingModel().getSendsForGroup(widget.groupId),
+    return Selector<GroupModel, List<int>>(
+      selector: (_, model) =>
+          List.from(model.getSendIdsForGroup(widget.groupId)),
+      builder: (_, sendIds, child) => DeclarativeList(
+        items: sendIds,
         itemBuilder: buildListItem,
         removeBuilder: buildListItem,
-        equalityCheck: (a, b) => a.id == b.id,
+        equalityCheck: (a, b) => a == b,
       ),
     );
   }
 
-  Widget buildFader(Animation<double> anim, Send send, bool landscape) {
+  Widget buildFader(Animation<double> anim, int sendId, bool landscape) {
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(
@@ -78,10 +81,8 @@ class _PageGroupState extends State<PageGroup> {
         child: Padding(
           padding: EdgeInsets.all(2.0),
           child: landscape
-              ? VerticalFader(send.id, send.name, send.technicalName,
-                  send.personName, send.color, send.stereo)
-              : HorizontalFader(send.id, send.name, send.technicalName,
-                  send.personName, send.color, send.stereo),
+              ? VerticalFader(mixingModel.getNotifier(sendId))
+              : HorizontalFader(mixingModel.getNotifier(sendId)),
         ),
       ),
     );

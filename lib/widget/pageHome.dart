@@ -2,11 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:provider/provider.dart';
-import 'package:qu_me/core/connectionModel.dart';
-import 'package:qu_me/core/faderModel.dart';
-import 'package:qu_me/core/mixingModel.dart';
-import 'package:qu_me/entities/mix.dart';
+import 'package:qu_me/core/model/connectionModel.dart';
+import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/groupModel.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
@@ -20,7 +19,8 @@ class PageHome extends StatefulWidget {
 
   final connectionModel = ConnectionModel();
   final mixingModel = MixingModel();
-  final faderModel = FaderModel();
+  final faderModel = FaderLevelModel();
+  final groupModel = GroupModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -83,14 +83,14 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  void onWheelChanged(int id, double delta) {
+  void onWheelChanged(int groupId, double delta) {
     if (activeWheel == -1) {
       setState(() {
-        activeWheel = id;
+        activeWheel = groupId;
       });
     }
-    if (activeWheel == id) {
-      final sends = widget.mixingModel.getSendsForGroup(id);
+    if (activeWheel == groupId) {
+      final sends = widget.groupModel.getSendIdsForGroup(groupId);
       widget.faderModel.onTrim(sends, delta);
     }
   }
@@ -168,21 +168,7 @@ class _PageHomeState extends State<PageHome> {
         children: [
           buildMuteButton(),
           Expanded(
-            child: Selector<MixingModel, Mix>(
-              selector: (_, model) {
-                return model.currentMix;
-              },
-              builder: (_, mix, child) {
-                return VerticalFader(
-                  mix.id,
-                  mix.name,
-                  mix.technicalName,
-                  mix.personName,
-                  mix.color,
-                  mix.stereo,
-                );
-              },
-            ),
+            child: VerticalFader(widget.mixingModel.currentMix),
           ),
         ],
       ),
@@ -197,7 +183,7 @@ class _PageHomeState extends State<PageHome> {
       onSelect: () {
         MixingModel().reset();
         ConnectionModel().reset();
-        FaderModel().reset();
+        FaderLevelModel().reset();
         if (platformProvider.platform == TargetPlatform.android) {
           platformProvider.changeToCupertinoPlatform();
         } else {

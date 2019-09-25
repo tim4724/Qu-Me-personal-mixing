@@ -2,10 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/faderModel.dart';
-import 'package:qu_me/core/metersModel.dart';
-import 'package:qu_me/core/connectionModel.dart';
-import 'package:qu_me/core/mixingModel.dart';
+import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/groupModel.dart';
+import 'package:qu_me/core/model/metersModel.dart';
+import 'package:qu_me/core/model/connectionModel.dart';
+import 'package:qu_me/core/model/mixingModel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 
 class MyApp extends StatelessWidget {
@@ -31,8 +32,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(builder: (context) => ConnectionModel()),
+        ChangeNotifierProvider(builder: (context) => GroupModel()),
         ChangeNotifierProvider(builder: (context) => MixingModel()),
-        ChangeNotifierProvider(builder: (context) => FaderModel()),
+        ChangeNotifierProvider(builder: (context) => FaderLevelModel()),
         ChangeNotifierProvider(builder: (context) => MetersModel()),
       ],
       child: PlatformProvider(
