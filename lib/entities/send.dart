@@ -48,30 +48,27 @@ class Send extends FaderInfo {
         personName, faderLinked, panLinked, muteOn);
   }
 
-  Send copyWith(
-      {id,
-      displayId,
-      technicalName,
-      name,
-      color,
-      personName,
-      muteOn,
-      sendType,
-      faderLinked,
-      panLinked}) {
+  @override
+  bool get stereo => sendType == SendType.stereoChannel;
+
+  @override
+  FaderInfo copyWith({
+    String name,
+    String personName,
+    bool muteOn,
+    bool faderLinked,
+    bool panLinked,
+  }) {
     return Send(
-      id ?? this.id,
-      sendType ?? this.sendType,
-      displayId ?? this.displayId,
+      this.id,
+      this.sendType,
+      this.displayId,
       name ?? this.name,
       faderLinked ?? this.faderLinked,
       panLinked ?? this.panLinked,
       muteOn == this.muteOn,
     );
   }
-
-  @override
-  bool get stereo => sendType == SendType.stereoChannel;
 }
 
 enum SendType { monoChannel, stereoChannel, fxReturn, group }

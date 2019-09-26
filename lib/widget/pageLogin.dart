@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
@@ -20,7 +20,7 @@ class PageLogin extends StatefulWidget {
 
 class _PageLoginState extends State<PageLogin> {
   final connectionModel = ConnectionModel();
-  final mixingModel = MixingModel();
+  final mixingModel = MainSendMixModel();
   final mixers = {"Demo": InternetAddress.loopbackIPv4};
   var loading = false;
 
@@ -28,7 +28,7 @@ class _PageLoginState extends State<PageLogin> {
   void initState() {
     super.initState();
     connectionModel.addListener(connectStateChanged);
-    mixingModel.addListener(connectStateChanged);
+    mixingModel.initializedNotifier.addListener(connectStateChanged);
     quFind.findQuMixers((name, address, foundTime) {
       setState(() {
         mixers[name] = address;
@@ -96,9 +96,9 @@ class _PageLoginState extends State<PageLogin> {
   }
 
   void connectStateChanged() {
-    if (connectionModel.initialized && mixingModel.initialized) {
+    if (connectionModel.initialized && mixingModel.initializedNotifier.value) {
       connectionModel.removeListener(connectStateChanged);
-      mixingModel.removeListener(connectStateChanged);
+      mixingModel.initializedNotifier.removeListener(connectStateChanged);
       Navigator.of(context).pushReplacement(
         platformPageRoute(
           builder: (context) => PageHome(),

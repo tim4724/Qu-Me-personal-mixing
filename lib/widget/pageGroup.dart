@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/groupModel.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
@@ -20,7 +20,7 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
-  final MixingModel mixingModel = MixingModel();
+  final MainSendMixModel mixingModel = MainSendMixModel();
 
   @override
   Widget build(BuildContext context) {
@@ -81,8 +81,8 @@ class _PageGroupState extends State<PageGroup> {
         child: Padding(
           padding: EdgeInsets.all(2.0),
           child: landscape
-              ? VerticalFader(mixingModel.getNotifier(sendId))
-              : HorizontalFader(mixingModel.getNotifier(sendId)),
+              ? VerticalFader(mixingModel.getSendNotifierForId(sendId))
+              : HorizontalFader(mixingModel.getSendNotifierForId(sendId)),
         ),
       ),
     );

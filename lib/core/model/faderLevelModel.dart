@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/core/levelConverter.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 
 // TODO is performance good for many listeners?
@@ -22,7 +22,7 @@ class FaderLevelModel extends ChangeNotifier {
   // are related to fader position in the ui
   final _sliderValues = List.filled(60, 0.0);
 
-  final mixingModel = MixingModel();
+  final mixingModel = MainSendMixModel();
   final _dirtySends = Set<int>();
   Timer _networkNotifyTimer;
 

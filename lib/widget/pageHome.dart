@@ -5,7 +5,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
 import 'package:qu_me/core/model/groupModel.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
@@ -13,12 +13,13 @@ import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
+import 'package:qu_me/widget/util/consumerUtil.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
 
   final connectionModel = ConnectionModel();
-  final mixingModel = MixingModel();
+  final mixingModel = MainSendMixModel();
   final faderModel = FaderLevelModel();
   final groupModel = GroupModel();
 
@@ -168,7 +169,12 @@ class _PageHomeState extends State<PageHome> {
         children: [
           buildMuteButton(),
           Expanded(
-            child: VerticalFader(widget.mixingModel.currentMix),
+            child: ProviderWithValueNotifierConsumer.value(
+              valueNotifier: widget.mixingModel.currentMixIdNotifier,
+              builder: (context, mixId, _) => VerticalFader(
+                widget.mixingModel.getMixNotifierForId(mixId),
+              ),
+            ),
           ),
         ],
       ),
@@ -181,7 +187,7 @@ class _PageHomeState extends State<PageHome> {
       child: Text("Mute"),
       selected: platformProvider.platform == TargetPlatform.android,
       onSelect: () {
-        MixingModel().reset();
+        MainSendMixModel().reset();
         ConnectionModel().reset();
         FaderLevelModel().reset();
         if (platformProvider.platform == TargetPlatform.android) {

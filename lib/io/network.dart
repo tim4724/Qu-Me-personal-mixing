@@ -7,7 +7,8 @@ import 'package:async/async.dart';
 import 'package:hex/hex.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/groupModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
@@ -22,7 +23,7 @@ void connect(String name, InternetAddress address) async {
     Future.delayed(Duration(milliseconds: 500), () {
       final mixerModel = ConnectionModel();
       mixerModel.onMixerVersion(MixerType.QU_16, "0");
-      final mixingModel = MixingModel();
+      final mixingModel = MainSendMixModel();
       mixingModel.onScene(buildDemoScene());
     });
   } else {
@@ -32,7 +33,8 @@ void connect(String name, InternetAddress address) async {
 
 void _connect(InternetAddress address) async {
   final connectionModel = ConnectionModel();
-  final mixingModel = MixingModel();
+  final mainSendMixModel = MainSendMixModel();
+  final groupModel = GroupModel();
   final faderModel = FaderLevelModel();
 
   _socket = await Socket.connect(address, 51326);
@@ -53,7 +55,7 @@ void _connect(InternetAddress address) async {
       heartbeat.stop();
       byteStreamController.close();
       connectionModel.reset();
-      mixingModel.reset();
+      mainSendMixModel.reset();
     },
     onError: _onError,
     cancelOnError: false,
@@ -106,7 +108,8 @@ void _connect(InternetAddress address) async {
             }
             break;
           case 0x06:
-            mixingModel.onScene(sceneParser.parse(Uint8List.fromList(data)));
+            mainSendMixModel
+                .onScene(sceneParser.parse(Uint8List.fromList(data)));
             break;
           case 0x07:
             // Don't know what this is...
@@ -137,15 +140,17 @@ void _connect(InternetAddress address) async {
               break;
             case 0x06:
               final muteOn = dspPacket.value == 1;
+              mainSendMixModel.updateFaderInfo(faderId, muteOn: muteOn);
               print("Mute fader $faderId: $muteOn");
               break;
             case 0x09:
               final assignOn = dspPacket.value == 1;
+              groupModel.updateAvailabilitySend(faderId, assignOn);
               print("Assign send $faderId to current Mix: $assignOn");
               break;
-              // TODO name of send/mix
-              // TODO pan
-              //
+            // TODO name of send/mix change
+            // TODO pan changed
+            //
             default:
               print("unexpected valueId: ${dspPacket.valueId}");
               break;

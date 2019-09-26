@@ -4,8 +4,8 @@ import 'package:qu_me/core/findColor.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 
 class Mix extends FaderInfo {
-  // TODO make private
   final MixType mixType;
+  // TODO make private
   final List<double> sendLevelsInDb;
   final List<bool> sendAssigns;
 
@@ -40,24 +40,23 @@ class Mix extends FaderInfo {
   bool get stereo => mixType == MixType.stereo;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-          super == other &&
-              other is Mix &&
-              runtimeType == other.runtimeType &&
-              mixType == other.mixType &&
-              sendLevelsInDb == other.sendLevelsInDb &&
-              sendAssigns == other.sendAssigns;
-
-  @override
-  int get hashCode =>
-      super.hashCode ^
-      mixType.hashCode ^
-      sendLevelsInDb.hashCode ^
-      sendAssigns.hashCode;
-
-
-
+  FaderInfo copyWith({
+    String name,
+    String personName,
+    bool muteOn,
+    List<double> sendLevelsInDb,
+    List<bool> sendAssigns,
+  }) {
+    return Mix(
+      this.id,
+      this.mixType,
+      this.displayId,
+      name ?? this.name,
+      muteOn ?? this.muteOn,
+      sendLevelsInDb ?? this.sendLevelsInDb,
+      sendAssigns ?? this.sendAssigns,
+    );
+  }
 }
 
 enum MixType { mono, stereo }

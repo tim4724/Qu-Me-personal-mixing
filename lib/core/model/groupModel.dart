@@ -15,12 +15,38 @@ class GroupModel extends ChangeNotifier {
     Group(2, "Group 3", "3"),
     Group(3, "Me", "me")
   ];
-  final _assignement = _Assignement();
+  final _assignement = _GroupAssignement();
+  final availableSendIds = List<int>();
 
   GroupModel._internal();
 
+  void setAvailableSends(List<int> availableSendIds) {
+    this.availableSendIds.clear();
+    this.availableSendIds.addAll(availableSendIds);
+
+    // remove send from group if the send is not available anymore
+    for (final sendId in _assignement.getAllSendIds()) {
+      if (!availableSendIds.contains(sendId)) {
+        _assignement.unset(sendId);
+      }
+    }
+    notifyListeners();
+  }
+
+  void updateAvailabilitySend(int sendId, bool available) {
+    if (available && !availableSendIds.contains(sendId)) {
+      availableSendIds.add(sendId);
+      notifyListeners();
+    } else if (!available && availableSendIds.contains(sendId)) {
+      availableSendIds.remove(sendId);
+      // TODO verify that mixer sends unassign messages for both sends...
+      unassignSend(sendId, false);
+      notifyListeners();
+    }
+  }
+
   List<int> getSendIdsForGroup(int groupId) {
-    return UnmodifiableListView(_assignement.getIds(groupId));
+    return UnmodifiableListView(_assignement.getSendIds(groupId));
   }
 
   Group getGroupForSend(int sendId) {
@@ -48,11 +74,11 @@ class GroupModel extends ChangeNotifier {
   }
 
   void unassignSend(int victimId, bool linked) {
-    _assignement.unset(victimId);
     final groupId = _assignement.getGroupId(victimId);
+    _assignement.unset(victimId);
     if (linked && groupId != null) {
       final linkedId = getLinkedId(victimId);
-      final lastId = _assignement.getIds(groupId).last;
+      final lastId = _assignement.getSendIds(groupId).last;
       if (lastId == victimId || lastId == linkedId) {
         // Delay unset, because of animated list bug
         // Bug occures, when two items are removed at the same time,
@@ -79,7 +105,7 @@ class GroupModel extends ChangeNotifier {
   }
 }
 
-class _Assignement {
+class _GroupAssignement {
   final _sendIdsForGroupId = ListMultimap<int, int>();
   final _groupIdForSendId = Map<int, int>();
 
@@ -98,11 +124,15 @@ class _Assignement {
     }
   }
 
-  List<int> getIds(int groupId) {
+  List<int> getSendIds(int groupId) {
     return _sendIdsForGroupId[groupId];
   }
 
   int getGroupId(int sendId) {
     return _groupIdForSendId[sendId];
+  }
+
+  List<int> getAllSendIds() {
+    return _sendIdsForGroupId.values.toList();
   }
 }

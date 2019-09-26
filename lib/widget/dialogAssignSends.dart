@@ -5,23 +5,25 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/groupModel.dart';
-import 'package:qu_me/core/model/mixingModel.dart';
+import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
+import 'package:qu_me/widget/util/consumerUtil.dart';
 
 import 'quDialog.dart';
 
 class DialogAssignSends extends StatelessWidget {
   final int currentGroupId;
-  final GroupModel groupModel = GroupModel();
+  final groupModel = GroupModel();
+  final sendModel = MainSendMixModel();
 
   DialogAssignSends(this.currentGroupId, {Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final content = Selector<MixingModel, List<int>>(
-      selector: (context, model) => model.availableSends,
+    final content = Selector<GroupModel, List<int>>(
+      selector: (context, model) => model.availableSendIds,
       builder: (context, sendIds, child) {
         return Wrap(
           runSpacing: 2.0,
@@ -31,67 +33,60 @@ class DialogAssignSends extends StatelessWidget {
         );
       },
     );
-    final action = PlatformButton(
+    final doneAction = PlatformButton(
       child: Text("Done"),
       androidFlat: (context) => MaterialFlatButtonData(),
       onPressed: () => Navigator.of(context).pop(),
     );
-
     return QuDialog(
       title: 'Assign to ${groupModel.getGroup(currentGroupId).technicalName}',
       content: content,
-      action: action,
+      action: doneAction,
     );
   }
 
   Widget buildSendChild(int sendId) {
-    return Consumer<GroupModel>(
-      builder: (context, model, child) {
-        Group group = model.getGroupForSend(sendId);
-
+    return Selector<GroupModel, Group>(
+      selector: (context, model) => model.getGroupForSend(sendId),
+      builder: (context, group, child) {
         final isInCurrentGroup = group != null && group.id == currentGroupId;
         return Stack(
           overflow: Overflow.visible,
           children: [
-            ChangeNotifierProvider<ValueNotifier<Send>>.value(
-              value: MixingModel().getNotifier(sendId),
-              child: Consumer<ValueNotifier<Send>>(
-                builder: (context, valueNotifier, child) {
-                  final send = valueNotifier.value;
-                  return QuCheckButton(
-                  selected: isInCurrentGroup,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AutoSizeText(
-                        send.name,
-                        minFontSize: 8,
-                        maxLines: 1,
-                        maxFontSize: 16,
-                      ),
-                      AutoSizeText(
-                        send.sendType != SendType.fxReturn
-                            ? send.personName
-                            : send.technicalName,
-                        minFontSize: 8,
-                        maxLines: 1,
-                        maxFontSize: 16,
-                        textScaleFactor: 0.7,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  onSelect: () {
-                    groupModel.toggleSendAssignement(
-                        currentGroupId, send.id, send.faderLinked);
-                  },
-                  margin: EdgeInsets.only(bottom: 6),
-                  padding: EdgeInsets.all(4),
-                  width: 64,
-                  height: 42,
-                );
+            ProviderWithValueNotifierConsumer.value(
+              valueNotifier: sendModel.getSendNotifierForId(sendId),
+              builder: (context, send, child) => QuCheckButton(
+                selected: isInCurrentGroup,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AutoSizeText(
+                      send.name,
+                      minFontSize: 8,
+                      maxLines: 1,
+                      maxFontSize: 16,
+                    ),
+                    AutoSizeText(
+                      send.sendType != SendType.fxReturn
+                          ? send.personName
+                          : send.technicalName,
+                      minFontSize: 8,
+                      maxLines: 1,
+                      maxFontSize: 16,
+                      textScaleFactor: 0.7,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+                onSelect: () {
+                  groupModel.toggleSendAssignement(
+                      currentGroupId, send.id, send.faderLinked);
                 },
+                margin: EdgeInsets.only(bottom: 6),
+                padding: EdgeInsets.all(4),
+                width: 64,
+                height: 42,
               ),
             ),
             Positioned(
