@@ -45,7 +45,7 @@ Scene buildDemoScene() {
   for (int i = 0; i < 3; i++) {
     final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
     sends.add(
-        Send(i + 32, SendType.stereoChannel, i + 1, name, false, false, false));
+        Send(i + 32, SendType.stereoChannel, i + 1, name, false, false, true));
   }
   final fxNames = ["voc", "instr"];
   for (int i = 0; i < 4; i++) {

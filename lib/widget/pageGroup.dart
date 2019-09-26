@@ -20,7 +20,7 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
-  final MainSendMixModel mixingModel = MainSendMixModel();
+  final MainSendMixModel mainSendModel = MainSendMixModel();
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +47,7 @@ class _PageGroupState extends State<PageGroup> {
               ),
             ],
           ),
-          body: SafeArea(
-            child: buildBody(orientation),
-          ),
+          body: SafeArea(child: buildBody(orientation)),
         );
       },
     );
@@ -65,6 +63,7 @@ class _PageGroupState extends State<PageGroup> {
           List.from(model.getSendIdsForGroup(widget.groupId)),
       builder: (_, sendIds, child) => DeclarativeList(
         items: sendIds,
+        scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
         itemBuilder: buildListItem,
         removeBuilder: buildListItem,
         equalityCheck: (a, b) => a == b,
@@ -81,8 +80,8 @@ class _PageGroupState extends State<PageGroup> {
         child: Padding(
           padding: EdgeInsets.all(2.0),
           child: landscape
-              ? VerticalFader(mixingModel.getSendNotifierForId(sendId))
-              : HorizontalFader(mixingModel.getSendNotifierForId(sendId)),
+              ? VerticalFader(mainSendModel.getSendNotifierForId(sendId))
+              : HorizontalFader(mainSendModel.getSendNotifierForId(sendId)),
         ),
       ),
     );
