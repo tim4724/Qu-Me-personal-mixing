@@ -1,6 +1,7 @@
 import 'package:declarative_animated_list/declarative_animated_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
@@ -10,46 +11,67 @@ import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
 
-class PageGroup extends StatefulWidget {
+class PageGroup extends StatelessWidget {
   final int groupId;
+  final groupModel = GroupModel();
+  final mainSendModel = MainSendMixModel();
 
   PageGroup(this.groupId, {Key key}) : super(key: key);
 
   @override
-  _PageGroupState createState() => _PageGroupState();
-}
-
-class _PageGroupState extends State<PageGroup> {
-  final MainSendMixModel mainSendModel = MainSendMixModel();
-
-  @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-      builder: (context, orientation) {
-        return PlatformScaffold(
-          appBar: PlatformAppBar(
-            title: Selector<GroupModel, String>(
-                selector: (_, model) => model.getGroup(widget.groupId).name,
-                builder: (_, title, __) => Text(title)),
-            trailingActions: <Widget>[
-              PlatformButton(
-                padding: EdgeInsets.zero,
-                child: Text('Assign'),
-                androidFlat: (context) => MaterialFlatButtonData(),
-                onPressed: () {
-                  showPlatformDialog(
-                    context: context,
-                    androidBarrierDismissible: true,
-                    builder: (BuildContext context) =>
-                        DialogAssignSends(widget.groupId),
-                  );
-                },
-              ),
-            ],
+    final group = groupModel.getGroup(groupId);
+
+    final textController = TextEditingController.fromValue(
+      TextEditingValue(
+        text: group.name,
+        selection: TextSelection.collapsed(offset: group.name.length),
+      ),
+    );
+
+    Widget titleWidget;
+    if (group.nameUserDefined) {
+      titleWidget = Container(
+        constraints: BoxConstraints(maxWidth: 120),
+        child: PlatformTextField(
+          maxLines: 1,
+          maxLength: 12,
+          android: (context) => MaterialTextFieldData(
+            decoration: InputDecoration(
+              hintText: "Name",
+              counterText: "",
+            ),
           ),
-          body: SafeArea(child: buildBody(orientation)),
-        );
-      },
+          style: TextStyle(color: Color(0xFFFFFFFF)),
+          controller: textController,
+          onChanged: (name) => groupModel.setGroupName(groupId, name),
+        ),
+      );
+    } else {
+      titleWidget = Text(group.name, textAlign: TextAlign.center);
+    }
+
+    return OrientationBuilder(
+      builder: (context, orientation) => PlatformScaffold(
+        appBar: PlatformAppBar(
+          title: titleWidget,
+          trailingActions: <Widget>[
+            PlatformButton(
+              padding: EdgeInsets.zero,
+              child: Text('Assign'),
+              androidFlat: (context) => MaterialFlatButtonData(),
+              onPressed: () {
+                showPlatformDialog(
+                  context: context,
+                  androidBarrierDismissible: true,
+                  builder: (BuildContext context) => DialogAssignSends(groupId),
+                );
+              },
+            ),
+          ],
+        ),
+        body: SafeArea(child: buildBody(orientation)),
+      ),
     );
   }
 
@@ -59,8 +81,7 @@ class _PageGroupState extends State<PageGroup> {
       return buildFader(anim, sendId, landscape);
     };
     return Selector<GroupModel, List<int>>(
-      selector: (_, model) =>
-          List.from(model.getSendIdsForGroup(widget.groupId)),
+      selector: (_, model) => List.from(model.getSendIdsForGroup(groupId)),
       builder: (_, sendIds, child) => DeclarativeList(
         items: sendIds,
         scrollDirection: landscape ? Axis.horizontal : Axis.vertical,

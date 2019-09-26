@@ -10,10 +10,10 @@ class GroupModel extends ChangeNotifier {
   factory GroupModel() => _instance;
 
   final _groups = [
-    Group(0, "Group 1", "1"),
-    Group(1, "Group 2", "2"),
-    Group(2, "Group 3", "3"),
-    Group(3, "Me", "me")
+    Group(0, "Group 1", "1", true),
+    Group(1, "Group 2", "2", true),
+    Group(2, "Group 3", "3", true),
+    Group(3, "Me", "me", false)
   ];
   final _assignement = _GroupAssignement();
   final availableSendIds = List<int>();
@@ -102,6 +102,14 @@ class GroupModel extends ChangeNotifier {
 
   Group getGroup(int id) {
     return _groups[id];
+  }
+
+  void setGroupName(int id, String name) {
+    if (name == null || name.isEmpty) {
+      name = _groups[id].technicalName;
+    }
+    _groups[id].name = name;
+    notifyListeners();
   }
 }
 
