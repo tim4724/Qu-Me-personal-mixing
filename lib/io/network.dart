@@ -200,6 +200,11 @@ void faderChanged(int id, double valueInDb) {
   _socket.add(packet);
 }
 
+void muteOnChanged(int id, bool muteOn) {
+  // TODO: implement
+
+}
+
 void _requestSceneState() {
   if (_socket == null) {
     return;

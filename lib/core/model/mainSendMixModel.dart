@@ -118,6 +118,15 @@ class MainSendMixModel {
     network.mixSelectChanged(id, index);
   }
 
+  void toogleMixMasterMute() {
+    final currentMix = _getCurrentMix();
+    network.muteOnChanged(currentMix.id, !currentMix.muteOn);
+
+    // TODO: Do not set here, wait for network?
+    getMixNotifierForId(currentMix.id).value =
+        currentMix.copyWith(muteOn: !currentMix.muteOn);
+  }
+
   void updateFaderInfo(int id, {String name, String personName, bool muteOn}) {
     final faderInfoNotifier = _getFaderInfoNotifierForId(id);
     faderInfoNotifier.value = faderInfoNotifier.value

@@ -10,7 +10,6 @@ import 'package:qu_me/core/model/faderLevelModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/gestures/dragFader.dart';
-import 'package:qu_me/widget/util/consumerUtil.dart';
 
 enum LevelType { mono, stereo_left, stereo_right }
 
@@ -99,7 +98,7 @@ abstract class _FaderState extends State<Fader> {
     Color bgColor;
     Gradient bgGradient;
     if (faderInfo.muteOn) {
-      // TODO do in roated box? or calculate 45 degrees?
+      // TODO do in rotated box? or calculate exact 45 degrees?
       bgGradient = LinearGradient(
         begin: horizontalFader ? Alignment(0.015, 0) : Alignment(0, 0.015),
         end: horizontalFader ? Alignment(0, 0.05) : Alignment(0.05, 0),
@@ -126,11 +125,9 @@ abstract class _FaderState extends State<Fader> {
 
   @override
   Widget build(BuildContext context) {
-    return ProviderWithValueNotifierConsumer<FaderInfo>.value(
-      valueNotifier: widget._faderInfoNotifier,
-      builder: (context, faderInfo, child) {
-        return buildFader(context, faderInfo);
-      },
+    return ValueListenableBuilder<FaderInfo>(
+      valueListenable: widget._faderInfoNotifier,
+      builder: (context, faderInfo, child) => buildFader(context, faderInfo),
     );
   }
 

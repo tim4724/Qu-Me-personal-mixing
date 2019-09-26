@@ -6,6 +6,7 @@ import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
 import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
@@ -13,13 +14,12 @@ import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageGroup.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
-import 'package:qu_me/widget/util/consumerUtil.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
 
   final connectionModel = ConnectionModel();
-  final mixingModel = MainSendMixModel();
+  final mainSendMixModel = MainSendMixModel();
   final faderModel = FaderLevelModel();
   final groupModel = GroupModel();
 
@@ -107,7 +107,7 @@ class _PageHomeState extends State<PageHome> {
   logout() {
     network.close();
     ConnectionModel().reset();
-    widget.mixingModel.reset();
+    widget.mainSendMixModel.reset();
     final route =
         platformPageRoute(builder: (context) => PageLogin(), context: context);
     Navigator.pushReplacement(context, route);
@@ -163,40 +163,34 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildFaderWithMuteButton() {
+    final mainSendMixModel = widget.mainSendMixModel;
     return Padding(
       padding: EdgeInsets.all(4),
-      child: Column(
-        children: [
-          buildMuteButton(),
-          Expanded(
-            child: ProviderWithValueNotifierConsumer.value(
-              valueNotifier: widget.mixingModel.currentMixIdNotifier,
-              builder: (context, mixId, _) => VerticalFader(
-                widget.mixingModel.getMixNotifierForId(mixId),
+      child: ValueListenableBuilder(
+        valueListenable: mainSendMixModel.currentMixIdNotifier,
+        builder: (context, mixId, _) {
+          final mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
+          return Column(
+            children: [
+              ValueListenableBuilder<FaderInfo>(
+                valueListenable: mixNotifier,
+                builder: (context, info, _) => buildMuteButton(info.muteOn),
               ),
-            ),
-          ),
-        ],
+              Expanded(child: VerticalFader(mixNotifier)),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget buildMuteButton() {
-    final platformProvider = PlatformProvider.of(context);
+  Widget buildMuteButton(bool muteOn) {
     return QuCheckButton(
-      child: Text("Mute"),
-      selected: platformProvider.platform == TargetPlatform.android,
-      onSelect: () {
-        MainSendMixModel().reset();
-        ConnectionModel().reset();
-        FaderLevelModel().reset();
-        if (platformProvider.platform == TargetPlatform.android) {
-          platformProvider.changeToCupertinoPlatform();
-        } else {
-          platformProvider.changeToMaterialPlatform();
-        }
-      },
-      margin: EdgeInsets.all(8),
+      child: Text("Mute", textAlign: TextAlign.center),
+      selected: muteOn,
+      width: 72,
+      onSelect: () => widget.mainSendMixModel.toogleMixMasterMute(),
+      margin: EdgeInsets.only(bottom: 8),
       checkColor: Colors.red,
     );
   }

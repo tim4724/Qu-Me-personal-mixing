@@ -2,12 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
-import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
 import 'package:qu_me/widget/quDialog.dart';
-import 'package:qu_me/widget/util/consumerUtil.dart';
 
 class DialogSelectMix extends StatelessWidget {
   final mixModel = MainSendMixModel();
@@ -22,35 +19,33 @@ class DialogSelectMix extends StatelessWidget {
 
     return QuDialog(
       title: 'Select Mix',
-      content: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<ValueNotifier<List<int>>>.value(
-              value: mixModel.availableMixIdsNotifier),
-          ChangeNotifierProvider<ValueNotifier<int>>.value(
-              value: mixModel.currentMixIdNotifier),
-        ],
-        child: ValueNotifierConsumer<List<int>>(
-          builder: (context, availableMixIds, child) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: availableMixIds
-                  .map(
-                    (id) => ChangeNotifierProvider<ValueNotifier<Mix>>.value(
-                      value: mixModel.getMixNotifierForId(id),
-                      child: MultiValueNotifierConsumer<Mix, int>(
-                          builder: buildItem),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
+      content: ValueListenableBuilder<List<int>>(
+        valueListenable: mixModel.availableMixIdsNotifier,
+        builder: (context, availableMixIds, child) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: buildChildren(availableMixIds),
         ),
       ),
       action: cancelAction,
     );
   }
 
-  Widget buildItem(BuildContext context, Mix mix, int currentMixId, _) {
+  List<Widget> buildChildren(List<int> availableMixIds) {
+    return availableMixIds
+        .map(
+          (id) => AnimatedBuilder(
+            animation: Listenable.merge(
+              [mixModel.currentMixIdNotifier, mixModel.getMixNotifierForId(id)],
+            ),
+            builder: (context, _) => buildItem(context, id),
+          ),
+        )
+        .toList();
+  }
+
+  Widget buildItem(BuildContext context, int id) {
+    final mix = mixModel.getMixNotifierForId(id).value;
+    final currentMixId = mixModel.currentMixIdNotifier.value;
     return QuCheckButton(
       onSelect: () {
         mixModel.selectMix(mix.id);

@@ -21,7 +21,7 @@ class QuCheckButton extends StatefulWidget {
     this.width,
     this.height,
     this.checkColor = Colors.green,
-    this.pressedOpacity = 0.5,
+    this.pressedOpacity = 0.3,
   });
 
   @override

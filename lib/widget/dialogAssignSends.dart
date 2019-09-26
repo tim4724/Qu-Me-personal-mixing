@@ -9,7 +9,6 @@ import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
-import 'package:qu_me/widget/util/consumerUtil.dart';
 
 import 'quDialog.dart';
 
@@ -53,8 +52,8 @@ class DialogAssignSends extends StatelessWidget {
         return Stack(
           overflow: Overflow.visible,
           children: [
-            ProviderWithValueNotifierConsumer.value(
-              valueNotifier: sendModel.getSendNotifierForId(sendId),
+            ValueListenableBuilder<Send>(
+              valueListenable: sendModel.getSendNotifierForId(sendId),
               builder: (context, send, child) => QuCheckButton(
                 selected: isInCurrentGroup,
                 child: Column(
