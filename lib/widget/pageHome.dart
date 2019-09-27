@@ -106,11 +106,12 @@ class _PageHomeState extends State<PageHome> {
 
   logout() {
     network.close();
-    ConnectionModel().reset();
-    widget.mainSendMixModel.reset();
     final route =
         platformPageRoute(builder: (context) => PageLogin(), context: context);
     Navigator.pushReplacement(context, route);
+    ConnectionModel().reset();
+    widget.mainSendMixModel.reset();
+    widget.faderModel.reset();
   }
 
   Widget buildBodyPortrait() {
@@ -166,6 +167,7 @@ class _PageHomeState extends State<PageHome> {
     final mainSendMixModel = widget.mainSendMixModel;
     return Padding(
       padding: EdgeInsets.all(4),
+      // TODO merge listenables?
       child: ValueListenableBuilder(
         valueListenable: mainSendMixModel.currentMixIdNotifier,
         builder: (context, mixId, _) {
@@ -176,7 +178,12 @@ class _PageHomeState extends State<PageHome> {
                 valueListenable: mixNotifier,
                 builder: (context, info, _) => buildMuteButton(info.muteOn),
               ),
-              Expanded(child: VerticalFader(mixNotifier)),
+              Expanded(
+                child: VerticalFader(
+                  mixNotifier,
+                  forceDisplayTechnicalName: true,
+                ),
+              ),
             ],
           );
         },

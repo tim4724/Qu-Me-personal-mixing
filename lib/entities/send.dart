@@ -66,7 +66,7 @@ class Send extends FaderInfo {
       name ?? this.name,
       faderLinked ?? this.faderLinked,
       panLinked ?? this.panLinked,
-      muteOn == this.muteOn,
+      muteOn ?? this.muteOn,
     );
   }
 }

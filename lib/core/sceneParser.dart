@@ -25,6 +25,22 @@ Scene parse(Uint8List data) {
 
   final sends = List<Send>(39);
 
+  // DCA1 Mute: data[24314] == 1
+  // DCA2 Mute: data[24328] == 1
+  // DCA3 Mute: data[24342] == 1
+  // DCA4 Mute: data[24356] == 1
+
+  // Channel one not in any dca: data[214] == 0;
+  // Channel one in dca 1: data[214] == 1;
+  // Channel one in dca 2: data[214] == 2;
+  // Channel one in dca 1+2: data[214] == 3;
+
+  // Mute group 1 mute: data[21480] == 1
+  // Mute group 1 + 2 mute: data[21480] == 3
+  // Channel 1 no mute groups: data[188] == 0
+  // Channel 1 mute-group 1: data[188] == 1
+  // Channel 1 mute-group 1 + 2: data[188] == 3
+
   // Mono input channels 1 - 32
   // Stereo input channels 1 - 3
   // Fx Return 1 - 4
@@ -42,10 +58,9 @@ Scene parse(Uint8List data) {
     // pad: 155
     // id: 183
     // mute: 184
-
+    final muteOn = data[offset + 136] == 1;
     final linked = data[offset + 144] == 1;
     final panLinked = linked && data[offset + 149] >> 3 & 1 == 1;
-    final muteOn = data[offset + 184] == 1;
 
     var name = _readString(data, offset + 156);
 
@@ -74,6 +89,7 @@ Scene parse(Uint8List data) {
   // Mono Mix 1 - 4
   // Stereo Mix 5/6, 7/8, 9/10
   // TODO Mix-Group?
+  // offset 48 + 39 * 192 = 7536
   for (var i = 0, offset = 48 + 39 * blockLen;
       i < mixes.length;
       i++, offset += blockLen) {
@@ -103,8 +119,10 @@ Scene parse(Uint8List data) {
 
     final masterLevelOffset = 7662 + i * 192;
     // TODO PAN
-    // TODO MUTE
-    mixes[i] = Mix(39 + i, type, displayId, name, false, sendLevelsInDb, sendAssigns);
+    final muteOn = data[offset + 136] == 1;
+
+    mixes[i] =
+        Mix(39 + i, type, displayId, name, muteOn, sendLevelsInDb, sendAssigns);
     mixMasterLevels[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
   }
 

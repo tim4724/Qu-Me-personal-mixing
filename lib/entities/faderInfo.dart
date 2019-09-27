@@ -15,4 +15,32 @@ abstract class FaderInfo {
   bool get stereo;
 
   FaderInfo copyWith({String name, String personName, bool muteOn});
+
+  @override
+  String toString() {
+    return 'FaderInfo{id: $id, displayId: $displayId, technicalName: $technicalName, name: $name, color: $color, personName: $personName, muteOn: $muteOn}';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FaderInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          displayId == other.displayId &&
+          technicalName == other.technicalName &&
+          name == other.name &&
+          color == other.color &&
+          personName == other.personName &&
+          muteOn == other.muteOn;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      displayId.hashCode ^
+      technicalName.hashCode ^
+      name.hashCode ^
+      color.hashCode ^
+      personName.hashCode ^
+      muteOn.hashCode;
 }

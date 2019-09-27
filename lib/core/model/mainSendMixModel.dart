@@ -120,11 +120,9 @@ class MainSendMixModel {
 
   void toogleMixMasterMute() {
     final currentMix = _getCurrentMix();
-    network.muteOnChanged(currentMix.id, !currentMix.muteOn);
-
-    // TODO: Do not set here, wait for network?
     getMixNotifierForId(currentMix.id).value =
         currentMix.copyWith(muteOn: !currentMix.muteOn);
+    network.muteOnChanged(currentMix.id, !currentMix.muteOn);
   }
 
   void updateFaderInfo(int id, {String name, String personName, bool muteOn}) {
@@ -178,10 +176,7 @@ class MainSendMixModel {
 
   void reset() {
     initializedNotifier.value = false;
-    _mixNotifiers.clear();
-    _sendNotifierForId.clear();
-    availableMixIdsNotifier.value = List<int>();
-    currentMixIdNotifier.value = null;
+    // TODO: reset all?
   }
 
   Mix _getCurrentMix() {

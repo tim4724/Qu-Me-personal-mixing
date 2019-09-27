@@ -49,71 +49,86 @@ class DialogAssignSends extends StatelessWidget {
       selector: (context, model) => model.getGroupForSend(sendId),
       builder: (context, group, child) {
         final isInCurrentGroup = group != null && group.id == currentGroupId;
-        return Stack(
-          overflow: Overflow.visible,
-          children: [
-            ValueListenableBuilder<Send>(
-              valueListenable: sendModel.getSendNotifierForId(sendId),
-              builder: (context, send, child) => QuCheckButton(
-                selected: isInCurrentGroup,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    AutoSizeText(
-                      send.name,
-                      minFontSize: 8,
-                      maxLines: 1,
-                      maxFontSize: 16,
-                    ),
-                    AutoSizeText(
-                      send.sendType != SendType.fxReturn
-                          ? send.personName
-                          : send.technicalName,
-                      minFontSize: 8,
-                      maxLines: 1,
-                      maxFontSize: 16,
-                      textScaleFactor: 0.7,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                onSelect: () {
-                  groupModel.toggleSendAssignement(
-                      currentGroupId, send.id, send.faderLinked);
-                },
-                margin: EdgeInsets.only(bottom: 6),
-                padding: EdgeInsets.all(4),
-                width: 64,
-                height: 42,
-              ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: IgnorePointer(
-                child: AnimatedOpacity(
-                  child: CircleAvatar(
-                    child: Padding(
-                      padding: EdgeInsets.all(3),
-                      child: AutoSizeText(
-                        group != null ? group.displayId : "",
-                        minFontSize: 8,
-                        maxFontSize: 20,
-                        style: TextStyle(color: Color(0xFFFFFFFF)),
-                      ),
-                    ),
-                    backgroundColor: Colors.grey.withAlpha(220),
-                    radius: 12,
-                  ),
-                  duration: Duration(milliseconds: 200),
-                  opacity: group != null ? 1 : 0,
-                ),
-              ),
-            ),
-          ],
+        return ValueListenableBuilder<Send>(
+          valueListenable: sendModel.getSendNotifierForId(sendId),
+          builder: (context, send, child) => Stack(
+            children: [
+              buildButton(isInCurrentGroup, send),
+              buildAvatar(group, isInCurrentGroup),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget buildAvatar(Group group, bool isInCurrentGroup) {
+    return Positioned(
+      right: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: AnimatedOpacity(
+          child: Container(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(3),
+                child: AutoSizeText(
+                  group != null ? group.displayId : "",
+                  minFontSize: 8,
+                  maxFontSize: 20,
+                  style: TextStyle(color: Color(0xFFFFFFFF)),
+                ),
+              ),
+            ),
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: isInCurrentGroup
+                  ? Colors.green[700].withAlpha(220)
+                  : Colors.grey[700].withAlpha(220),
+              shape: BoxShape.circle,
+            ),
+          ),
+          duration: Duration(milliseconds: 200),
+          opacity: group != null ? 1 : 0,
+        ),
+      ),
+    );
+  }
+
+  Widget buildButton(bool isInCurrentGroup, Send send) {
+    String secondary = send.sendType != SendType.fxReturn
+        ? send.personName
+        : send.technicalName;
+    return QuCheckButton(
+      selected: isInCurrentGroup,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          AutoSizeText(
+            send.name,
+            maxLines: 1,
+            minFontSize: 8,
+            maxFontSize: 16,
+          ),
+          AutoSizeText(
+            secondary,
+            maxLines: 1,
+            minFontSize: 8,
+            maxFontSize: 16,
+            textScaleFactor: 0.7,
+          ),
+        ],
+      ),
+      onSelect: () {
+        groupModel.toggleSendAssignement(
+            currentGroupId, send.id, send.faderLinked);
+      },
+      margin: EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.all(4),
+      width: 64,
+      height: 42,
     );
   }
 }

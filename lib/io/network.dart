@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -116,6 +117,27 @@ void _connect(InternetAddress address) async {
             print("group id: $groupId; dataLen: $dataLen");
             print("data: $data");
             break;
+          case 0x08:
+            // Rename Channel 1 to "Aaaaaa"
+            // data: [0, 0, 65, 97, 97, 97, 97, 0, 0, 0, 0]
+            // Rename Channel 2 to "Bbbbbb"
+            // data: [0, 1, 66, 98, 98, 98, 98, 98, 0, 0, 0]
+            // Rename ST1 to "Cccccc"
+            // data: [0, 32, 67, 99, 99, 99, 99, 99, 0, 0, 0]
+            // Rename FXRet4 to "Dddddd"
+            //data: [0, 38, 68, 100, 100, 100, 100, 100, 0, 0, 0]
+            // Rename FXSend 1 to "Asdf2"
+            // data: [0, 55, 65, 115, 100, 102, 50, 0, 0, 0, 0]
+            // rename mix 1 to "Asdf"
+            // data: [0, 39, 65, 115, 100, 102, 0, 0, 0, 0, 0]
+            // rename mix 9/10 to "Asdf"
+            // data: [0, 45, 65, 115, 100, 102, 0, 0, 0, 0, 0]
+            print("Rename");
+            print("data: $data");
+            final faderId = data[1];
+            final name = ascii.decode(data.sublist(2, data.indexOf(0x00, 2)));
+            mainSendMixModel.updateFaderInfo(faderId, name: name);
+            break;
           default:
             print("unknown packet group id: $groupId; dataLen: $dataLen");
             print("data: $data");
@@ -151,6 +173,36 @@ void _connect(InternetAddress address) async {
             // TODO name of send/mix change
             // TODO pan changed
             //
+            case 0x0F:
+              // Mute Group 1 muteOn->true
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 15, clientId: 0, param1: 255, param2: 0, value 1}
+
+              // Mute Group 1 + 2 muteOn->true
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 15, clientId: 0, param1: 255, param2: 0, value 3}
+
+              // Mute Group 1 + 2 + 3 muteOn->true
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 15, clientId: 0, param1: 255, param2: 0, value 7}
+              break;
+            case 0x16:
+              // DCA 1: muteOn -> true
+              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 1}
+              // DCA 2: muteOn -> true
+              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 206, param2: 0, value 2}
+              // DCA 3: muteOn -> true
+              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
+              //DCA 4: muteOn->true
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 208, param2: 0, value 8}
+              // DCA 1: muteOn -> false
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 0}
+              // DCA 2: muteOn -> false
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 206, param2: 0, value 0}
+              // DCA 3: muteOn -> false
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 0}
+              // DCA 4: muteOn -> false
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 208, param2: 0, value 0}
+              // DCA 3: muteOn -> true
+              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
+              break;
             default:
               print("unexpected valueId: ${dspPacket.valueId}");
               break;
@@ -201,8 +253,29 @@ void faderChanged(int id, double valueInDb) {
 }
 
 void muteOnChanged(int id, bool muteOn) {
-  // TODO: implement
-
+  // Mix 1 mute on:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x01 0x00
+  // Mix 1 mute off:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x00 0x00
+  // Mix 9/10 mute on:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x01 0x00
+  // Mix 9/10 mute off:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x00 0x00
+  final packet = [
+    0x7F, // System Packet
+    0x03, // Group Id
+    0x08, // Len
+    0x00, // Len
+    0x04, //
+    0x04, //
+    0x06,
+    0x00,
+    id,
+    0x07,
+    muteOn ? 0x01 : 0x00,
+    0x00
+  ];
+  _socket.add(packet);
 }
 
 void _requestSceneState() {

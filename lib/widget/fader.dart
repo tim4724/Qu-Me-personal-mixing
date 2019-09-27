@@ -14,20 +14,29 @@ import 'package:qu_me/gestures/dragFader.dart';
 enum LevelType { mono, stereo_left, stereo_right }
 
 abstract class Fader extends StatefulWidget {
+  final bool forceDisplayTechnicalName;
   final ValueNotifier<FaderInfo> _faderInfoNotifier;
 
-  Fader(this._faderInfoNotifier, {Key key}) : super(key: key);
+  Fader(this._faderInfoNotifier,
+      {this.forceDisplayTechnicalName = false, Key key})
+      : super(key: key);
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(ValueNotifier<FaderInfo> faderInfo) : super(faderInfo);
+  HorizontalFader(ValueNotifier<FaderInfo> faderInfo,
+      {bool forceDisplayTechnicalName = false, Key key})
+      : super(faderInfo,
+            forceDisplayTechnicalName: forceDisplayTechnicalName, key: key);
 
   @override
   State<StatefulWidget> createState() => _HorizontalFaderState();
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(ValueNotifier<FaderInfo> faderInfo) : super(faderInfo);
+  VerticalFader(ValueNotifier<FaderInfo> faderInfo,
+      {bool forceDisplayTechnicalName = false, Key key})
+      : super(faderInfo,
+            forceDisplayTechnicalName: forceDisplayTechnicalName, key: key);
 
   @override
   State<StatefulWidget> createState() => _VerticalFaderState();
@@ -77,21 +86,20 @@ abstract class _FaderState extends State<Fader> {
   }
 
   Widget faderLabel(FaderInfo info) {
-    if (!active) {
-      final secondary =
-          info.personName != null ? info.personName : info.technicalName;
-      return _FaderLabel(info.name, secondary, info.color, active);
+    String primary;
+    String secondary;
+    if (widget.forceDisplayTechnicalName) {
+      primary = info.technicalName;
+      secondary = info.personName;
+    } else {
+      primary = info.name;
+      if (active) {
+        secondary = info.technicalName;
+      } else {
+        secondary = info.personName;
+      }
     }
-    return Selector<FaderLevelModel, String>(
-      selector: (_, model) {
-        final db = model.getValueInDb(info.id);
-        return (db >= 0.1 ? "+" : "") + "${db.toStringAsFixed(1)}db";
-      },
-      builder: (_, dbValue, child) {
-        return _FaderLabel(dbValue, info.technicalName, info.color, active,
-            textAlignPrimary: TextAlign.end);
-      },
-    );
+    return _FaderLabel(primary, secondary, info.color, active);
   }
 
   BoxDecoration decoration(FaderInfo faderInfo) {
@@ -127,7 +135,10 @@ abstract class _FaderState extends State<Fader> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<FaderInfo>(
       valueListenable: widget._faderInfoNotifier,
-      builder: (context, faderInfo, child) => buildFader(context, faderInfo),
+      builder: (context, faderInfo, child) {
+        print("build fader: $faderInfo");
+        return buildFader(context, faderInfo);
+      },
     );
   }
 

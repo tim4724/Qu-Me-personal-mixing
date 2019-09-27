@@ -4,6 +4,21 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
+class QuConfirmDialog extends StatelessWidget {
+  final String title;
+  final Widget content;
+  final Widget action;
+
+  QuConfirmDialog({this.title, this.content, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return QuConfirmDialog(
+
+    );
+  }
+}
+
 class QuDialog extends StatelessWidget {
   final String title;
   final Widget content;
