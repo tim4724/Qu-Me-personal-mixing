@@ -12,6 +12,7 @@ import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/mixer.dart';
+import 'package:qu_me/entities/mutableGroup.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/metersListener.dart' as metersListener;
@@ -132,8 +133,7 @@ void _connect(InternetAddress address) async {
             // data: [0, 39, 65, 115, 100, 102, 0, 0, 0, 0, 0]
             // rename mix 9/10 to "Asdf"
             // data: [0, 45, 65, 115, 100, 102, 0, 0, 0, 0, 0]
-            print("Rename");
-            print("data: $data");
+            print("Rename data: $data");
             final faderId = data[1];
             final name = ascii.decode(data.sublist(2, data.indexOf(0x00, 2)));
             mainSendMixModel.updateFaderInfo(faderId, name: name);
@@ -153,6 +153,10 @@ void _connect(InternetAddress address) async {
 
         if (dspPacket.targetGroup == 4) {
           final faderId = dspPacket.param1;
+
+          // TODO: MuteGroup Assignement changed
+          // TODO: DCA Assignement changed
+          // TODO: Pan changed
           switch (dspPacket.valueId) {
             case 0x0a:
             case 0x07:
@@ -162,7 +166,7 @@ void _connect(InternetAddress address) async {
               break;
             case 0x06:
               final muteOn = dspPacket.value == 1;
-              mainSendMixModel.updateFaderInfo(faderId, muteOn: muteOn);
+              mainSendMixModel.updateFaderInfo(faderId, explicitMuteOn: muteOn);
               print("Mute fader $faderId: $muteOn");
               break;
             case 0x09:
@@ -170,9 +174,6 @@ void _connect(InternetAddress address) async {
               groupModel.updateAvailabilitySend(faderId, assignOn);
               print("Assign send $faderId to current Mix: $assignOn");
               break;
-            // TODO name of send/mix change
-            // TODO pan changed
-            //
             case 0x0F:
               // Mute Group 1 muteOn->true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 15, clientId: 0, param1: 255, param2: 0, value 1}
@@ -182,15 +183,25 @@ void _connect(InternetAddress address) async {
 
               // Mute Group 1 + 2 + 3 muteOn->true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 15, clientId: 0, param1: 255, param2: 0, value 7}
+
+              for (int muteGroupId = 0; muteGroupId < 4; muteGroupId++) {
+                final muteOn = (dspPacket.value >> muteGroupId) & 0x01 == 0x01;
+                final type = MutableGroupType.muteGroup;
+                mainSendMixModel.updateMutableGroup(muteGroupId, type, muteOn);
+              }
               break;
             case 0x16:
+              final dcaGroupId = faderId - 205;
+              final type = MutableGroupType.dca;
+              final muteOn = dspPacket.value != 0;
+              mainSendMixModel.updateMutableGroup(dcaGroupId, type, muteOn);
               // DCA 1: muteOn -> true
-              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 1}
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 1}
               // DCA 2: muteOn -> true
-              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 206, param2: 0, value 2}
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 206, param2: 0, value 2}
               // DCA 3: muteOn -> true
-              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
-              //DCA 4: muteOn->true
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
+              // DCA 4: muteOn->true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 208, param2: 0, value 8}
               // DCA 1: muteOn -> false
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 0}
@@ -201,7 +212,7 @@ void _connect(InternetAddress address) async {
               // DCA 4: muteOn -> false
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 208, param2: 0, value 0}
               // DCA 3: muteOn -> true
-              //DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
+              // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
               break;
             default:
               print("unexpected valueId: ${dspPacket.valueId}");

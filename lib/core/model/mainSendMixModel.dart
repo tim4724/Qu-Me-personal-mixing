@@ -3,9 +3,11 @@ import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/mixer.dart';
+import 'package:qu_me/entities/mutableGroup.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
+import 'package:quiver/collection.dart';
 
 import 'faderLevelModel.dart';
 import 'groupModel.dart';
@@ -18,19 +20,28 @@ class MainSendMixModel {
   // Not so sure if the list of available mix-ids can change,
   // yet we wrap the list in a changeNotifier
   final availableMixIdsNotifier = ValueNotifier<List<int>>(List<int>());
+
   final _mixNotifiers = List<ValueNotifier<Mix>>();
 
   // TODO: Move to groupModel?
   final _sendNotifierForId = List<ValueNotifier<Send>>();
+
   final currentMixIdNotifier = ValueNotifier<int>(null);
 
   final initializedNotifier = ValueNotifier<bool>(false);
 
+  final _availableMutableGroups =
+      ListMultimap<MutableGroupType, MuteableGroup>();
+
   MainSendMixModel._internal();
 
   void onScene(Scene scene) {
-    _updateMixes(scene.mixes);
+    _availableMutableGroups.clear();
+    for (final group in scene.allMutableGroups) {
+      _availableMutableGroups.add(group.type, group);
+    }
 
+    _updateMixes(scene.mixes);
     _updateSends(scene.sends);
 
     final currentMix = _getCurrentMix();
@@ -121,44 +132,105 @@ class MainSendMixModel {
   void toogleMixMasterMute() {
     final currentMix = _getCurrentMix();
     getMixNotifierForId(currentMix.id).value =
-        currentMix.copyWith(muteOn: !currentMix.muteOn);
-    network.muteOnChanged(currentMix.id, !currentMix.muteOn);
+        currentMix.copyWith(explicitMuteOn: !currentMix.explicitMuteOn);
+    network.muteOnChanged(currentMix.id, !currentMix.explicitMuteOn);
   }
 
-  void updateFaderInfo(int id, {String name, String personName, bool muteOn}) {
+  void updateMutableGroup(int groupId, MutableGroupType type, bool muteOn) {
+    final oldGroup = _availableMutableGroups[type][groupId];
+    if (oldGroup.muteOn == muteOn) {
+      return;
+    }
+
+    final newGroup = MuteableGroup(groupId, type, muteOn);
+    _availableMutableGroups[type][groupId] = newGroup;
+    for (final sendNotifier in _sendNotifierForId) {
+      _updateMutableGroup(sendNotifier.value, newGroup);
+    }
+    for (final mixNotifier in _mixNotifiers) {
+      _updateMutableGroup(mixNotifier.value, newGroup);
+    }
+  }
+
+  void _updateMutableGroup(FaderInfo faderInfo, MuteableGroup newGroup) {
+    if (faderInfo.mutableGroups
+        .any((grp) => grp.id == newGroup.id && grp.type == newGroup.type)) {
+      final mutableGroups = Set<MuteableGroup>.from(faderInfo.mutableGroups)
+        ..removeWhere((grp) {
+          return grp.id == newGroup.id && grp.type == newGroup.type;
+        })
+        ..add(newGroup);
+      updateFaderInfo(faderInfo.id, mutableGroups: mutableGroups);
+    }
+  }
+
+  void changeMutableGroupAssignement(
+      int groupId, MutableGroupType type, int faderId, bool assignOn) {
+    final faderInfo = _getFaderInfo(faderId);
+    final mutableGroups = Set<MuteableGroup>.from(faderInfo.mutableGroups)
+      ..removeWhere((group) => group.id == groupId && group.type == type);
+    if (assignOn) {
+      mutableGroups.add(_availableMutableGroups[type][groupId]);
+    }
+    updateFaderInfo(faderId, mutableGroups: mutableGroups);
+  }
+
+  void updateFaderInfo(int id,
+      {String name,
+      String personName,
+      bool explicitMuteOn,
+      Set<MuteableGroup> mutableGroups}) {
     final faderInfoNotifier = _getFaderInfoNotifierForId(id);
-    faderInfoNotifier.value = faderInfoNotifier.value
-        .copyWith(name: name, personName: personName, muteOn: muteOn);
+    faderInfoNotifier.value = faderInfoNotifier.value.copyWith(
+      name: name,
+      personName: personName,
+      explicitMuteOn: explicitMuteOn,
+      mutableGroups: mutableGroups,
+    );
   }
 
-  void updateSend(
-    int id, {
-    String name,
-    String personName,
-    bool muteOn,
-    bool faderLinked,
-    bool panLinked,
-  }) {
+  void updateSend(int id,
+      {String name,
+      String personName,
+      bool explicitMuteOn,
+      Set<MuteableGroup> mutableGroups,
+      bool faderLinked,
+      bool panLinked}) {
     final sendNotifier = getSendNotifierForId(id);
-    sendNotifier.value = sendNotifier.value
-        .copyWith(faderLinked: faderLinked, panLinked: panLinked);
+    sendNotifier.value = sendNotifier.value.copyWith(
+      name: name,
+      personName: personName,
+      explicitMuteOn: explicitMuteOn,
+      mutableGroups: mutableGroups,
+      faderLinked: faderLinked,
+      panLinked: panLinked,
+    );
   }
 
-  void updateMix(
-    int id, {
-    String name,
-    String personName,
-    bool muteOn,
-    List<double> sendLevelsInDb,
-    List<bool> sendAssigns,
-  }) {
+  void updateMix(int id,
+      {String name,
+      String personName,
+      bool explicitMuteOn,
+      Set<MuteableGroup> mutableGroups,
+      List<double> sendLevelsInDb,
+      List<bool> sendAssigns}) {
     final mixNotifier = getMixNotifierForId(id);
-    mixNotifier.value = mixNotifier.value
-        .copyWith(sendLevelsInDb: sendLevelsInDb, sendAssigns: sendAssigns);
+    mixNotifier.value = mixNotifier.value.copyWith(
+      name: name,
+      personName: personName,
+      explicitMuteOn: explicitMuteOn,
+      sendLevelsInDb: sendLevelsInDb,
+      sendAssigns: sendAssigns,
+      mutableGroups: mutableGroups,
+    );
   }
 
   Send getSend(int id) {
     return _sendNotifierForId[id].value;
+  }
+
+  FaderInfo _getFaderInfo(int id) {
+    return _getFaderInfoNotifierForId(id).value;
   }
 
   ValueNotifier<FaderInfo> _getFaderInfoNotifierForId(int id) {

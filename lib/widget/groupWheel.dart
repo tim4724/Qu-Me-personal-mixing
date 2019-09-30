@@ -159,9 +159,7 @@ class _GroupWheelState extends State<GroupWheel> {
         child: Text(
           "Nothing Assigned\nDouble Tap",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFFA0A0A0),
-          ),
+          style: TextStyle(color: Color(0xFFA0A0A0)),
         ),
       ),
     );

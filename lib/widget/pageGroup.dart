@@ -51,24 +51,29 @@ class PageGroup extends StatelessWidget {
       titleWidget = Text(group.name, textAlign: TextAlign.center);
     }
 
+    List<Widget> trailingActions;
+    if (group.assignmentUserDefined) {
+      trailingActions = [
+        PlatformButton(
+          padding: EdgeInsets.zero,
+          child: Text('Assign'),
+          androidFlat: (context) => MaterialFlatButtonData(),
+          onPressed: () {
+            showPlatformDialog(
+              context: context,
+              androidBarrierDismissible: true,
+              builder: (BuildContext context) => DialogAssignSends(groupId),
+            );
+          },
+        ),
+      ];
+    }
+
     return OrientationBuilder(
       builder: (context, orientation) => PlatformScaffold(
         appBar: PlatformAppBar(
           title: titleWidget,
-          trailingActions: <Widget>[
-            PlatformButton(
-              padding: EdgeInsets.zero,
-              child: Text('Assign'),
-              androidFlat: (context) => MaterialFlatButtonData(),
-              onPressed: () {
-                showPlatformDialog(
-                  context: context,
-                  androidBarrierDismissible: true,
-                  builder: (BuildContext context) => DialogAssignSends(groupId),
-                );
-              },
-            ),
-          ],
+          trailingActions: trailingActions,
         ),
         body: SafeArea(child: buildBody(orientation)),
       ),

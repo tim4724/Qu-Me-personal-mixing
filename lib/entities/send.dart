@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:qu_me/core/findColor.dart';
 import 'package:qu_me/entities/faderInfo.dart';
+import 'package:qu_me/entities/mutableGroup.dart';
 
 class Send extends FaderInfo {
   final SendType sendType;
@@ -10,20 +11,30 @@ class Send extends FaderInfo {
   final bool panLinked;
 
   Send._internal(
-      int id,
-      this.sendType,
-      int displayId,
-      String technicalName,
-      String name,
-      Color color,
-      String personName,
-      this.faderLinked,
-      this.panLinked,
-      bool muteOn)
-      : super(id, displayId, technicalName, name, color, personName, muteOn);
+    int id,
+    this.sendType,
+    int displayId,
+    String technicalName,
+    String name,
+    Color color,
+    String personName,
+    bool explicitMuteOn,
+    Set<MuteableGroup> mutableGroups,
+    this.faderLinked,
+    this.panLinked,
+  ) : super(id, displayId, technicalName, name, color, personName,
+            explicitMuteOn, mutableGroups);
 
-  factory Send(int id, SendType type, int displayId, String name,
-      bool faderLinked, bool panLinked, bool muteOn) {
+  factory Send(
+    int id,
+    SendType type,
+    int displayId,
+    String name,
+    bool explicitMuteOn,
+    Set<MuteableGroup> mutableGroups,
+    bool faderLinked,
+    bool panLinked,
+  ) {
     String technicalName;
     switch (type) {
       case SendType.monoChannel:
@@ -45,7 +56,7 @@ class Send extends FaderInfo {
     final color = findColor(name);
     final personName = "Tim";
     return Send._internal(id, type, displayId, technicalName, name, color,
-        personName, faderLinked, panLinked, muteOn);
+        personName, explicitMuteOn, mutableGroups, faderLinked, panLinked);
   }
 
   @override
@@ -55,7 +66,8 @@ class Send extends FaderInfo {
   FaderInfo copyWith({
     String name,
     String personName,
-    bool muteOn,
+    bool explicitMuteOn,
+    Set<MuteableGroup> mutableGroups,
     bool faderLinked,
     bool panLinked,
   }) {
@@ -64,9 +76,10 @@ class Send extends FaderInfo {
       this.sendType,
       this.displayId,
       name ?? this.name,
+      explicitMuteOn ?? this.explicitMuteOn,
+      mutableGroups ?? this.mutableGroups,
       faderLinked ?? this.faderLinked,
       panLinked ?? this.panLinked,
-      muteOn ?? this.muteOn,
     );
   }
 }

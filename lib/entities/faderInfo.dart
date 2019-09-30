@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/entities/mutableGroup.dart';
 
 abstract class FaderInfo {
   final int id; // global id
@@ -7,40 +8,29 @@ abstract class FaderInfo {
   final String name; // user defined name
   final Color color;
   final String personName; // name of the musician
-  final bool muteOn;
+  final bool explicitMuteOn; // Explicitly muted
+  final Set<MuteableGroup> mutableGroups; // TODO unmodiviable
 
-  FaderInfo(this.id, this.displayId, this.technicalName, this.name, this.color,
-      this.personName, this.muteOn);
+  FaderInfo(
+    this.id,
+    this.displayId,
+    this.technicalName,
+    this.name,
+    this.color,
+    this.personName,
+    this.explicitMuteOn,
+    this.mutableGroups,
+  );
 
   bool get stereo;
 
-  FaderInfo copyWith({String name, String personName, bool muteOn});
+  // Either explicitly muted or muted through a group
+  bool get muted => explicitMuteOn || mutableGroups.any((group) => group.muteOn);
 
-  @override
-  String toString() {
-    return 'FaderInfo{id: $id, displayId: $displayId, technicalName: $technicalName, name: $name, color: $color, personName: $personName, muteOn: $muteOn}';
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FaderInfo &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          displayId == other.displayId &&
-          technicalName == other.technicalName &&
-          name == other.name &&
-          color == other.color &&
-          personName == other.personName &&
-          muteOn == other.muteOn;
-
-  @override
-  int get hashCode =>
-      id.hashCode ^
-      displayId.hashCode ^
-      technicalName.hashCode ^
-      name.hashCode ^
-      color.hashCode ^
-      personName.hashCode ^
-      muteOn.hashCode;
+  FaderInfo copyWith({
+    String name,
+    String personName,
+    bool explicitMuteOn,
+    Set<MuteableGroup> mutableGroups,
+  });
 }

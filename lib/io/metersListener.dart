@@ -31,8 +31,7 @@ void listen(RawDatagramSocket socket) {
           return;
         }
 
-
-        // TODO use correct meter source (post-preamp, post-eq, post-comp)
+        // TODO use correct meter source (post-preamp, post-eq, post-comp, ...)
 
         final data = packet.sublist(4);
         for (var offset = 10;

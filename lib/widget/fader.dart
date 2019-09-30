@@ -16,17 +16,20 @@ enum LevelType { mono, stereo_left, stereo_right }
 abstract class Fader extends StatefulWidget {
   final bool forceDisplayTechnicalName;
   final ValueNotifier<FaderInfo> _faderInfoNotifier;
+  final Function doubleTap;
 
   Fader(this._faderInfoNotifier,
-      {this.forceDisplayTechnicalName = false, Key key})
+      {this.forceDisplayTechnicalName = false, this.doubleTap, Key key})
       : super(key: key);
 }
 
 class HorizontalFader extends Fader {
   HorizontalFader(ValueNotifier<FaderInfo> faderInfo,
-      {bool forceDisplayTechnicalName = false, Key key})
+      {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
       : super(faderInfo,
-            forceDisplayTechnicalName: forceDisplayTechnicalName, key: key);
+            forceDisplayTechnicalName: forceDisplayTechnicalName,
+            doubleTap: doubleTap,
+            key: key);
 
   @override
   State<StatefulWidget> createState() => _HorizontalFaderState();
@@ -34,9 +37,11 @@ class HorizontalFader extends Fader {
 
 class VerticalFader extends Fader {
   VerticalFader(ValueNotifier<FaderInfo> faderInfo,
-      {bool forceDisplayTechnicalName = false, Key key})
+      {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
       : super(faderInfo,
-            forceDisplayTechnicalName: forceDisplayTechnicalName, key: key);
+            forceDisplayTechnicalName: forceDisplayTechnicalName,
+            doubleTap: doubleTap,
+            key: key);
 
   @override
   State<StatefulWidget> createState() => _VerticalFaderState();
@@ -60,12 +65,26 @@ abstract class _FaderState extends State<Fader> {
   _FaderState(this.horizontalFader) {
     gestures[MultiTapGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
-            () => MultiTapGestureRecognizer(), (recognizer) {
-      recognizer
-        ..onTapDown = ((pointer, details) => onPointerStart())
-        ..onTapCancel = ((pointer) => onPointerStop())
-        ..onTapUp = (pointer, details) => onPointerStop();
-    });
+      () => MultiTapGestureRecognizer(),
+      (recognizer) {
+        recognizer
+          ..onTapDown = ((pointer, details) => onPointerStart())
+          ..onTapCancel = ((pointer) => onPointerStop())
+          ..onTapUp = ((pointer, details) => onPointerStop());
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.doubleTap != null) {
+      gestures[DoubleTapGestureRecognizer] =
+          GestureRecognizerFactoryWithHandlers<DoubleTapGestureRecognizer>(
+        () => DoubleTapGestureRecognizer(),
+        (recognizer) => recognizer.onDoubleTap = widget.doubleTap,
+      );
+    }
   }
 
   void onPointerStart() {
@@ -86,11 +105,16 @@ abstract class _FaderState extends State<Fader> {
   }
 
   Widget faderLabel(FaderInfo info) {
+    final active = this.active;
     String primary;
     String secondary;
     if (widget.forceDisplayTechnicalName) {
       primary = info.technicalName;
-      secondary = info.personName;
+      if (active) {
+        secondary = info.personName;
+      } else {
+        secondary = info.name;
+      }
     } else {
       primary = info.name;
       if (active) {
@@ -105,7 +129,7 @@ abstract class _FaderState extends State<Fader> {
   BoxDecoration decoration(FaderInfo faderInfo) {
     Color bgColor;
     Gradient bgGradient;
-    if (faderInfo.muteOn) {
+    if (faderInfo.muted) {
       // TODO do in rotated box? or calculate exact 45 degrees?
       bgGradient = LinearGradient(
         begin: horizontalFader ? Alignment(0.015, 0) : Alignment(0, 0.015),
@@ -172,7 +196,7 @@ class _HorizontalFaderState extends _FaderState {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: _FaderSlider(
-                    faderInfo.id, active, faderInfo.stereo, faderInfo.muteOn,
+                    faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
                     key: keyFaderSlider),
               ),
             ),
@@ -212,8 +236,8 @@ class _VerticalFaderState extends _FaderState {
                 quarterTurns: 3,
                 child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    child: _FaderSlider(faderInfo.id, active, faderInfo.stereo,
-                        faderInfo.muteOn,
+                    child: _FaderSlider(
+                        faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
                         key: keyFaderSlider)),
               ),
             ),
@@ -283,9 +307,9 @@ class _FaderSlider extends StatelessWidget {
   final int id;
   final bool active;
   final bool stereo;
-  final bool muteOn;
+  final bool muted;
 
-  _FaderSlider(this.id, this.active, this.stereo, this.muteOn, {Key key})
+  _FaderSlider(this.id, this.active, this.stereo, this.muted, {Key key})
       : super(key: key);
 
   @override
@@ -305,41 +329,39 @@ class _FaderSlider extends StatelessWidget {
                   const BorderRadius.all(const Radius.circular(radius)),
             ),
             child: Stack(
-                overflow: Overflow.visible,
-                children: [0, 1, 2, 3]
-                    .map<Widget>((i) => _LevelLabel(levelTexts[i],
-                        levelStops[i] * width, levelFractionalOffset[i]))
-                    .toList()
-                      ..add(
-                        muteOn
-                            ? Positioned(
-                                left: width / 2,
-                                top: height / 2,
-                                child: FractionalTranslation(
-                                  translation: Offset(-0.5, -0.5),
-                                  child: Text(
-                                    "Mute",
-                                    overflow: TextOverflow.visible,
-                                    textScaleFactor: 2,
-                                    style: TextStyle(
-                                      color: Color(0x90FF0000),
-                                    ),
+              overflow: Overflow.visible,
+              children: [0, 1, 2, 3]
+                  .map<Widget>((i) => _LevelLabel(levelTexts[i],
+                      levelStops[i] * width, levelFractionalOffset[i]))
+                  .toList()
+                    ..add(
+                      muted
+                          ? Positioned(
+                              left: width / 2,
+                              top: height / 2,
+                              child: FractionalTranslation(
+                                translation: Offset(-0.5, -0.5),
+                                child: Text(
+                                  "Mute",
+                                  overflow: TextOverflow.visible,
+                                  textScaleFactor: 2,
+                                  style: TextStyle(
+                                    color: Color(0x90FF0000),
                                   ),
                                 ),
-                              )
-                            : Container(),
-                      )
-                      ..insertAll(0, _getLevelIndicator(0.5, width, height))
-                      ..add(
-                        Selector<FaderLevelModel, double>(
-                          selector: (_, model) {
-                            return model.getSliderValue(id);
-                          },
-                          builder: (_, sliderValue, child) {
-                            return _FaderKnop(sliderValue * width, active);
-                          },
-                        ),
-                      )),
+                              ),
+                            )
+                          : Container(),
+                    )
+                    ..insertAll(0, _getLevelIndicator(0.5, width, height))
+                    ..add(
+                      Selector<FaderLevelModel, double>(
+                        selector: (_, model) => model.getSliderValue(id),
+                        builder: (_, sliderValue, child) =>
+                            _FaderKnop(sliderValue * width, active),
+                      ),
+                    ),
+            ),
           );
         },
       ),

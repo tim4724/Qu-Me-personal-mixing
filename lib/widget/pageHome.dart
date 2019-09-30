@@ -176,12 +176,18 @@ class _PageHomeState extends State<PageHome> {
             children: [
               ValueListenableBuilder<FaderInfo>(
                 valueListenable: mixNotifier,
-                builder: (context, info, _) => buildMuteButton(info.muteOn),
+                builder: (context, info, _) => buildMuteButton(info.explicitMuteOn),
               ),
               Expanded(
                 child: VerticalFader(
                   mixNotifier,
                   forceDisplayTechnicalName: true,
+                  doubleTap: () => Navigator.of(context).push(
+                    platformPageRoute<void>(
+                      builder: (context) => PageGroup(4),
+                      context: context,
+                    ),
+                  ),
                 ),
               ),
             ],

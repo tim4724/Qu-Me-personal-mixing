@@ -10,10 +10,11 @@ class GroupModel extends ChangeNotifier {
   factory GroupModel() => _instance;
 
   final _groups = [
-    Group(0, "Group 1", "1", true),
-    Group(1, "Group 2", "2", true),
-    Group(2, "Group 3", "3", true),
-    Group(3, "Me", "me", false)
+    Group(0, "Group 1", "1", true, true),
+    Group(1, "Group 2", "2", true, true),
+    Group(2, "Group 3", "3", true, true),
+    Group(3, "Me", "me", false, true),
+    Group(4, "All", "", false, false)
   ];
   final _assignement = _GroupAssignement();
   final availableSendIds = List<int>();
@@ -46,6 +47,10 @@ class GroupModel extends ChangeNotifier {
   }
 
   List<int> getSendIdsForGroup(int groupId) {
+    if (groupId == 4) {
+      // This group contains all available sends
+      return UnmodifiableListView(availableSendIds);
+    }
     return UnmodifiableListView(_assignement.getSendIds(groupId));
   }
 

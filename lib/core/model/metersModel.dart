@@ -21,4 +21,8 @@ class MetersModel extends ChangeNotifier {
   void onNewMeterLevel(int id, double levelInDb) {
     _levelsInDb[id] = levelInDb;
   }
+
+  void doNotifyListener() {
+    super.notifyListeners();
+  }
 }
