@@ -357,8 +357,7 @@ class _FaderSlider extends StatelessWidget {
                     ..add(
                       Selector<FaderLevelModel, double>(
                         selector: (_, model) => model.getSliderValue(id),
-                        builder: (_, sliderValue, child) =>
-                            _FaderKnop(sliderValue * width, active),
+                        builder: (_, sliderValue, child) => _FaderKnop(sliderValue * width, active),
                       ),
                     ),
             ),

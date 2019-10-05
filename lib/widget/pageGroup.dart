@@ -11,16 +11,23 @@ import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
 
-class PageGroup extends StatelessWidget {
+class PageGroup extends StatefulWidget {
   final int groupId;
-  final groupModel = GroupModel();
-  final mainSendModel = MainSendMixModel();
 
   PageGroup(this.groupId, {Key key}) : super(key: key);
 
   @override
+  _PageGroupState createState() => _PageGroupState();
+}
+
+class _PageGroupState extends State<PageGroup> {
+  final groupModel = GroupModel();
+  final mainSendModel = MainSendMixModel();
+  bool panMode = false;
+
+  @override
   Widget build(BuildContext context) {
-    final group = groupModel.getGroup(groupId);
+    final group = groupModel.getGroup(widget.groupId);
 
     final textController = TextEditingController.fromValue(
       TextEditingValue(
@@ -44,7 +51,7 @@ class PageGroup extends StatelessWidget {
           ),
           style: TextStyle(color: Color(0xFFFFFFFF)),
           controller: textController,
-          onChanged: (name) => groupModel.setGroupName(groupId, name),
+          onChanged: (name) => groupModel.setGroupName(widget.groupId, name),
         ),
       );
     } else {
@@ -62,7 +69,8 @@ class PageGroup extends StatelessWidget {
             showPlatformDialog(
               context: context,
               androidBarrierDismissible: true,
-              builder: (BuildContext context) => DialogAssignSends(groupId),
+              builder: (BuildContext context) =>
+                  DialogAssignSends(widget.groupId),
             );
           },
         ),
@@ -75,7 +83,8 @@ class PageGroup extends StatelessWidget {
           title: titleWidget,
           trailingActions: trailingActions,
         ),
-        body: SafeArea(child: buildBody(orientation)),
+        iosContentPadding: orientation == Orientation.landscape,
+        body: buildBody(orientation),
       ),
     );
   }
@@ -86,18 +95,41 @@ class PageGroup extends StatelessWidget {
       return buildFader(anim, sendId, landscape);
     };
     return Selector<GroupModel, List<int>>(
-      selector: (_, model) => List.from(model.getSendIdsForGroup(groupId)),
-      builder: (_, sendIds, child) => DeclarativeList(
-        items: sendIds,
-        scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
-        itemBuilder: buildListItem,
-        removeBuilder: buildListItem,
-        equalityCheck: (a, b) => a == b,
-      ),
+      selector: (_, model) {
+        // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
+        // the equality comparison does not compare the elements of the two lists.
+        return List.from(model.getSendIdsForGroup(widget.groupId));
+      },
+      builder: (_, sendIds, child) {
+        return DeclarativeList(
+          items: [-1]..addAll(sendIds),
+          scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
+          itemBuilder: buildListItem,
+          removeBuilder: buildListItem,
+          equalityCheck: (a, b) => a == b,
+        );
+      },
     );
   }
 
   Widget buildFader(Animation<double> anim, int sendId, bool landscape) {
+    if (sendId == -1) {
+      return CupertinoSegmentedControl(
+        children: {
+          false: Text("Level"),
+          true: Text("Panorama"),
+        },
+        groupValue: panMode,
+        padding: EdgeInsets.all(8),
+        unselectedColor: Color(0xFF000000),
+        onValueChanged: (key) {
+          setState(() {
+            panMode = key;
+          });
+        },
+      );
+    }
+
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(

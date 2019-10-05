@@ -159,6 +159,7 @@ void _connect(InternetAddress address) async {
           // TODO: Pan changed
           switch (dspPacket.valueId) {
             case 0x0a:
+            // ???
             case 0x07:
               final valueInDb = (dspPacket.value / 256.0 - 128.0);
               faderModel.onNewFaderLevel(faderId, valueInDb);
@@ -190,6 +191,12 @@ void _connect(InternetAddress address) async {
                 mainSendMixModel.updateMutableGroup(muteGroupId, type, muteOn);
               }
               break;
+            case 0x0D:
+              final muteGroupId = dspPacket.param2;
+              final assignOn = dspPacket.value == 1;
+              mainSendMixModel.changeMutableGroupAssignement(
+                  muteGroupId, MutableGroupType.muteGroup, faderId, assignOn);
+              break;
             case 0x16:
               final dcaGroupId = faderId - 205;
               final type = MutableGroupType.dca;
@@ -213,6 +220,12 @@ void _connect(InternetAddress address) async {
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 208, param2: 0, value 0}
               // DCA 3: muteOn -> true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 207, param2: 0, value 4}
+              break;
+            case 0x17:
+              final dcaGroupId = dspPacket.param2;
+              final assignOn = dspPacket.value == 1;
+              mainSendMixModel.changeMutableGroupAssignement(
+                  dcaGroupId, MutableGroupType.dca, faderId, assignOn);
               break;
             default:
               print("unexpected valueId: ${dspPacket.valueId}");

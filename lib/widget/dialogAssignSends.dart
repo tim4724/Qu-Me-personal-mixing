@@ -22,8 +22,13 @@ class DialogAssignSends extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Selector<GroupModel, List<int>>(
-      selector: (context, model) => model.availableSendIds,
+      selector: (_, model) {
+        // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
+        // the equality comparison does not compare the elements of the two lists.
+        return List.from(model.availableSendIds);
+      },
       builder: (context, sendIds, child) {
+        // TODO is not refreshed
         return Wrap(
           runSpacing: 2.0,
           spacing: 8.0,

@@ -37,10 +37,11 @@ class GroupModel extends ChangeNotifier {
   void updateAvailabilitySend(int sendId, bool available) {
     if (available && !availableSendIds.contains(sendId)) {
       availableSendIds.add(sendId);
+      availableSendIds.sort();
       notifyListeners();
     } else if (!available && availableSendIds.contains(sendId)) {
       availableSendIds.remove(sendId);
-      // TODO verify that mixer sends unassign messages for both sends...
+      // TODO: maybe keep it, but filter everytime requested?
       unassignSend(sendId, false);
       notifyListeners();
     }

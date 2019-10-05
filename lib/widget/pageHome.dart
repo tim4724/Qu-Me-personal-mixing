@@ -67,13 +67,12 @@ class _PageHomeState extends State<PageHome> {
                       },
                     )
                   ]),
-              body: SafeArea(
-                child: OrientationBuilder(
-                  builder: (context, orientation) {
-                    final land = orientation == Orientation.landscape;
-                    return land ? buildBodyLandscape() : buildBodyPortrait();
-                  },
-                ),
+              iosContentPadding: true,
+              body: OrientationBuilder(
+                builder: (context, orientation) =>
+                    orientation == Orientation.landscape
+                        ? buildBodyLandscape()
+                        : buildBodyPortrait(),
               ),
             ),
             opacity: activeWheel != -1 ? 0.4 : 1,
@@ -176,7 +175,8 @@ class _PageHomeState extends State<PageHome> {
             children: [
               ValueListenableBuilder<FaderInfo>(
                 valueListenable: mixNotifier,
-                builder: (context, info, _) => buildMuteButton(info.explicitMuteOn),
+                builder: (context, info, _) =>
+                    buildMuteButton(info.explicitMuteOn),
               ),
               Expanded(
                 child: VerticalFader(

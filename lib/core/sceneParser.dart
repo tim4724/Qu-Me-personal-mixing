@@ -34,7 +34,7 @@ Scene parse(Uint8List data) {
   // DCA3 Mute: data[24342] == 1
   // DCA4 Mute: data[24356] == 1
   for (int i = 0; i < allDcaGroups.length; i++) {
-    final muteOn = (24314 + i * 14) == 1;
+    final muteOn = (data[24314 + i * 14]) == 1;
     allDcaGroups[i] = MuteableGroup(i, MutableGroupType.dca, muteOn);
   }
   // Channel one not in any dca: data[214] == 0;
@@ -71,11 +71,11 @@ Scene parse(Uint8List data) {
     // id: 183
     // mute: 184
     final muteOn = data[offset + 136] == 1;
-    final muteGroupData = data[140];
+    final muteGroupData = data[offset + 140];
     final linked = data[offset + 144] == 1;
     final panLinked = linked && data[offset + 149] >> 3 & 1 == 1;
     var name = _readString(data, offset + 156);
-    final dcaData = data[166];
+    final dcaData = data[offset + 166];
 
     SendType type;
     int displayId;
@@ -113,9 +113,9 @@ Scene parse(Uint8List data) {
       i < mixes.length;
       i++, offset += blockLen) {
     final muteOn = data[offset + 136] == 1;
-    final muteGroupData = data[140];
+    final muteGroupData = data[offset + 140];
     final name = _readString(data, offset + 156);
-    final dcaData = data[166];
+    final dcaData = data[offset + 166];
 
     final type = i < 4 ? MixType.mono : MixType.stereo;
     final displayId = i < 4 ? i + 1 : 2 * i - 3;
@@ -156,7 +156,8 @@ Scene parse(Uint8List data) {
     final name = _readString(data, offset + 156);
   }
   */
-  final mutableGroups = allDcaGroups..addAll(allMuteGroups);
+  final mutableGroups = List<MuteableGroup>.from(allDcaGroups, growable: true)
+    ..addAll(allMuteGroups);
   return Scene(sends, mixes, mixMasterLevels, mutableGroups);
 }
 

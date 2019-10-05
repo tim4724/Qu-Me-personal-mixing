@@ -25,7 +25,6 @@ class MyApp extends StatelessWidget {
       accentTextTheme: Typography.whiteCupertino,
     ),
   );
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
