@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/model/groupModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
@@ -107,7 +107,7 @@ class _GroupWheelState extends State<GroupWheel> {
       }),
     };
 
-    return Selector<GroupModel, MapEntry<Group, int>>(
+    return Selector<SendGroupModel, MapEntry<SendGroup, int>>(
       selector: (context, model) =>
           MapEntry(model.getGroup(id), model.getSendIdsForGroup(id).length),
       builder: (context, pair, child) {

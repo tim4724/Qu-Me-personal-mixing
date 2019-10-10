@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:qu_me/core/findColor.dart';
+import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
-import 'package:qu_me/entities/mutableGroup.dart';
 
 class Mix extends FaderInfo {
   final MixType mixType;
@@ -17,7 +17,7 @@ class Mix extends FaderInfo {
     int displayId,
     String name,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     List<double> sendLevelsInDb,
     List<bool> sendAssigns,
   ) {
@@ -30,7 +30,7 @@ class Mix extends FaderInfo {
     final color = findColor(name);
     final personName = "Tim";
     return Mix._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, mutableGroups, sendLevelsInDb, sendAssigns);
+        personName, explicitMuteOn, controlGroups, sendLevelsInDb, sendAssigns);
   }
 
   Mix._internal(
@@ -42,11 +42,11 @@ class Mix extends FaderInfo {
     Color color,
     String personName,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     this.sendLevelsInDb,
     this.sendAssigns,
   ) : super(id, displayId, technicalName, name, color, personName,
-            explicitMuteOn, mutableGroups);
+            explicitMuteOn, controlGroups);
 
   @override
   bool get stereo => mixType == MixType.stereo;
@@ -56,7 +56,7 @@ class Mix extends FaderInfo {
     String name,
     String personName,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     List<double> sendLevelsInDb,
     List<bool> sendAssigns,
   }) {
@@ -66,7 +66,7 @@ class Mix extends FaderInfo {
       this.displayId,
       name ?? this.name,
       explicitMuteOn ?? this.explicitMuteOn,
-      mutableGroups ?? this.mutableGroups,
+      controlGroups ?? this.controlGroups,
       sendLevelsInDb ?? this.sendLevelsInDb,
       sendAssigns ?? this.sendAssigns,
     );

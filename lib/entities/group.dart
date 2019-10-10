@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-class Group {
+class SendGroup {
   final int id;
   final String technicalName; // the not user defined name for group
   final String displayId; // short id of the group
@@ -10,7 +10,7 @@ class Group {
   String name; // user defined name
   Color color;
 
-  Group(this.id, this.technicalName, this.displayId, this.nameUserDefined,
+  SendGroup(this.id, this.technicalName, this.displayId, this.nameUserDefined,
       this.assignmentUserDefined) {
     name = technicalName;
     color = Color(0xFF000000);

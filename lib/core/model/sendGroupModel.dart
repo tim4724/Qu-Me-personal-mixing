@@ -4,22 +4,22 @@ import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:quiver/collection.dart';
 
-class GroupModel extends ChangeNotifier {
-  static final GroupModel _instance = GroupModel._internal();
+class SendGroupModel extends ChangeNotifier {
+  static final SendGroupModel _instance = SendGroupModel._internal();
 
-  factory GroupModel() => _instance;
+  factory SendGroupModel() => _instance;
 
   final _groups = [
-    Group(0, "Group 1", "1", true, true),
-    Group(1, "Group 2", "2", true, true),
-    Group(2, "Group 3", "3", true, true),
-    Group(3, "Me", "me", false, true),
-    Group(4, "All", "", false, false)
+    SendGroup(0, "Group 1", "1", true, true),
+    SendGroup(1, "Group 2", "2", true, true),
+    SendGroup(2, "Group 3", "3", true, true),
+    SendGroup(3, "Me", "me", false, true),
+    SendGroup(4, "All", "", false, false)
   ];
   final _assignement = _GroupAssignement();
   final availableSendIds = List<int>();
 
-  GroupModel._internal();
+  SendGroupModel._internal();
 
   void setAvailableSends(List<int> availableSendIds) {
     this.availableSendIds.clear();
@@ -55,7 +55,7 @@ class GroupModel extends ChangeNotifier {
     return UnmodifiableListView(_assignement.getSendIds(groupId));
   }
 
-  Group getGroupForSend(int sendId) {
+  SendGroup getGroupForSendId(int sendId) {
     final groupId = _assignement.getGroupId(sendId);
     if (groupId != null) {
       return getGroup(groupId);
@@ -89,6 +89,7 @@ class GroupModel extends ChangeNotifier {
         // Delay unset, because of animated list bug
         // Bug occures, when two items are removed at the same time,
         // and one of them is the last item in list
+        // TODO: This workaround is not prefect yet
         Future.delayed(Duration(milliseconds: 32), () {
           _assignement.unset(linkedId);
           notifyListeners();
@@ -104,9 +105,7 @@ class GroupModel extends ChangeNotifier {
     return sendId % 2 == 0 ? sendId + 1 : sendId - 1;
   }
 
-  // TODO setter for group name
-
-  Group getGroup(int id) {
+  SendGroup getGroup(int id) {
     return _groups[id];
   }
 

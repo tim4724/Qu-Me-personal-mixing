@@ -14,19 +14,20 @@ import 'package:qu_me/gestures/dragFader.dart';
 enum LevelType { mono, stereo_left, stereo_right }
 
 abstract class Fader extends StatefulWidget {
+  final bool pan;
   final bool forceDisplayTechnicalName;
   final ValueNotifier<FaderInfo> _faderInfoNotifier;
   final Function doubleTap;
 
-  Fader(this._faderInfoNotifier,
+  Fader(this._faderInfoNotifier, this.pan,
       {this.forceDisplayTechnicalName = false, this.doubleTap, Key key})
       : super(key: key);
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(ValueNotifier<FaderInfo> faderInfo,
+  HorizontalFader(ValueNotifier<FaderInfo> faderInfo, bool pan,
       {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
-      : super(faderInfo,
+      : super(faderInfo, pan,
             forceDisplayTechnicalName: forceDisplayTechnicalName,
             doubleTap: doubleTap,
             key: key);
@@ -36,9 +37,9 @@ class HorizontalFader extends Fader {
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(ValueNotifier<FaderInfo> faderInfo,
+  VerticalFader(ValueNotifier<FaderInfo> faderInfo, pan,
       {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
-      : super(faderInfo,
+      : super(faderInfo, pan,
             forceDisplayTechnicalName: forceDisplayTechnicalName,
             doubleTap: doubleTap,
             key: key);
@@ -195,9 +196,11 @@ class _HorizontalFaderState extends _FaderState {
               gestures: gestures,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: _FaderSlider(
-                    faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
-                    key: keyFaderSlider),
+                child: !widget.pan
+                    ? _LevelSlider(
+                        faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
+                        key: keyFaderSlider)
+                    : _PanSlider(faderInfo.muted, active, key: keyFaderSlider),
               ),
             ),
           ),
@@ -235,10 +238,13 @@ class _VerticalFaderState extends _FaderState {
               child: RotatedBox(
                 quarterTurns: 3,
                 child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    child: _FaderSlider(
-                        faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
-                        key: keyFaderSlider)),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                  child: !widget.pan
+                      ? _LevelSlider(faderInfo.id, active, faderInfo.stereo,
+                          faderInfo.muted, key: keyFaderSlider)
+                      : _PanSlider(faderInfo.muted, active,
+                          key: keyFaderSlider),
+                ),
               ),
             ),
           ),
@@ -296,10 +302,67 @@ class _FaderLabel extends StatelessWidget {
   }
 }
 
-class _FaderSlider extends StatelessWidget {
+class _PanSlider extends StatelessWidget {
+  static const radius = 9.0;
+  final bool muted;
+  final bool active;
+
+  const _PanSlider(this.muted, this.active, {Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
+
+          return Container(
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[600],
+              borderRadius:
+                  const BorderRadius.all(const Radius.circular(radius)),
+            ),
+            child: Stack(
+              overflow: Overflow.visible,
+              children: List<Widget>()
+                ..add(_Label("Left", 0, 0, 8))
+                ..add(_Label("Right", width, -1, -8))
+                ..add(
+                  muted
+                      ? Positioned(
+                          left: width / 2,
+                          top: height / 2,
+                          child: FractionalTranslation(
+                            translation: Offset(-0.5, -0.5),
+                            child: Text(
+                              "Mute",
+                              overflow: TextOverflow.visible,
+                              textScaleFactor: 2,
+                              style: TextStyle(
+                                color: Color(0x90FF0000),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
+                )
+                ..add(_FaderKnop(0.5 * width, active)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LevelSlider extends StatelessWidget {
   static const stop = convertFromDbValue;
   static const levelTexts = ["-inf", "-30", "-10", "0"];
-  static const levelFractionalOffset = [0.1, -0.5, -0.5, -0.5];
+  static const levelFractionalOffset = [0.0, -0.5, -0.5, -0.5];
+  static const levelAbsoluteOffset = [8.0, 0.0, 0.0, 0.0];
   static const colors = [Colors.green, Colors.green, Colors.yellow, Colors.red];
   static const radius = 9.0;
   static final levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];
@@ -309,7 +372,7 @@ class _FaderSlider extends StatelessWidget {
   final bool stereo;
   final bool muted;
 
-  _FaderSlider(this.id, this.active, this.stereo, this.muted, {Key key})
+  _LevelSlider(this.id, this.active, this.stereo, this.muted, {Key key})
       : super(key: key);
 
   @override
@@ -331,8 +394,11 @@ class _FaderSlider extends StatelessWidget {
             child: Stack(
               overflow: Overflow.visible,
               children: [0, 1, 2, 3]
-                  .map<Widget>((i) => _LevelLabel(levelTexts[i],
-                      levelStops[i] * width, levelFractionalOffset[i]))
+                  .map<Widget>((i) => _Label(
+                      levelTexts[i],
+                      levelStops[i] * width,
+                      levelFractionalOffset[i],
+                      levelAbsoluteOffset[i]))
                   .toList()
                     ..add(
                       muted
@@ -357,7 +423,8 @@ class _FaderSlider extends StatelessWidget {
                     ..add(
                       Selector<FaderLevelModel, double>(
                         selector: (_, model) => model.getSliderValue(id),
-                        builder: (_, sliderValue, child) => _FaderKnop(sliderValue * width, active),
+                        builder: (_, sliderValue, child) =>
+                            _FaderKnop(sliderValue * width, active),
                       ),
                     ),
             ),
@@ -443,7 +510,7 @@ class _LevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const radius = _FaderSlider.radius;
+    const radius = _LevelSlider.radius;
     final levelPos = max((1 - level) * width, radius);
     var yOffset = 0.0;
     BorderRadius borderRadius;
@@ -484,13 +551,15 @@ class _LevelIndicator extends StatelessWidget {
   }
 }
 
-class _LevelLabel extends StatelessWidget {
+class _Label extends StatelessWidget {
   static const textColor = Color.fromARGB(196, 0, 0, 0);
   final String text;
   final double position;
   final double fractionalOffset;
+  final double absoluteOffset;
 
-  const _LevelLabel(this.text, this.position, this.fractionalOffset);
+  const _Label(
+      this.text, this.position, this.fractionalOffset, this.absoluteOffset);
 
   @override
   Widget build(BuildContext context) {
@@ -500,10 +569,13 @@ class _LevelLabel extends StatelessWidget {
       top: 0,
       child: Center(
         child: FractionalTranslation(
-          translation: Offset(fractionalOffset, 0),
-          child: Text(
-            text,
-            style: const TextStyle(inherit: false, color: textColor),
+          translation: Offset(fractionalOffset, 0.0),
+          child: Transform.translate(
+            offset: Offset(absoluteOffset, 0.0),
+            child: Text(
+              text,
+              style: const TextStyle(inherit: false, color: textColor),
+            ),
           ),
         ),
       ),

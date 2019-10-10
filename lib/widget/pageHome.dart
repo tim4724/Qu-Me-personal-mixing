@@ -4,8 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
-import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
@@ -21,7 +21,7 @@ class PageHome extends StatefulWidget {
   final connectionModel = ConnectionModel();
   final mainSendMixModel = MainSendMixModel();
   final faderModel = FaderLevelModel();
-  final groupModel = GroupModel();
+  final groupModel = SendGroupModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -181,6 +181,7 @@ class _PageHomeState extends State<PageHome> {
               Expanded(
                 child: VerticalFader(
                   mixNotifier,
+                  false,
                   forceDisplayTechnicalName: true,
                   doubleTap: () => Navigator.of(context).push(
                     platformPageRoute<void>(

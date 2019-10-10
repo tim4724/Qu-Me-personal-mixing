@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
@@ -21,7 +22,7 @@ class PageGroup extends StatefulWidget {
 }
 
 class _PageGroupState extends State<PageGroup> {
-  final groupModel = GroupModel();
+  final groupModel = SendGroupModel();
   final mainSendModel = MainSendMixModel();
   bool panMode = false;
 
@@ -94,7 +95,7 @@ class _PageGroupState extends State<PageGroup> {
     final buildListItem = (_, int sendId, i, Animation<double> anim) {
       return buildFader(anim, sendId, landscape);
     };
-    return Selector<GroupModel, List<int>>(
+    return Selector<SendGroupModel, List<int>>(
       selector: (_, model) {
         // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
         // the equality comparison does not compare the elements of the two lists.
@@ -123,12 +124,15 @@ class _PageGroupState extends State<PageGroup> {
         padding: EdgeInsets.all(8),
         unselectedColor: Color(0xFF000000),
         onValueChanged: (key) {
-          setState(() {
+          setState( () {
             panMode = key;
           });
         },
       );
     }
+
+    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
+    bool showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
 
     return FadeTransition(
       opacity: anim,
@@ -138,8 +142,10 @@ class _PageGroupState extends State<PageGroup> {
         child: Padding(
           padding: EdgeInsets.all(2.0),
           child: landscape
-              ? VerticalFader(mainSendModel.getSendNotifierForId(sendId))
-              : HorizontalFader(mainSendModel.getSendNotifierForId(sendId)),
+              ? VerticalFader(sendNotifier, panMode,
+                  forceDisplayTechnicalName: showTechnicalName)
+              : HorizontalFader(sendNotifier, panMode,
+                  forceDisplayTechnicalName: showTechnicalName),
         ),
       ),
     );

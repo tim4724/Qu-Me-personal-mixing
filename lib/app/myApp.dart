@@ -4,8 +4,8 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
-import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 
 class MyApp extends StatelessWidget {
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: ConnectionModel()),
-        ChangeNotifierProvider.value(value: GroupModel()),
+        ChangeNotifierProvider.value(value: SendGroupModel()),
         ChangeNotifierProvider.value(value: FaderLevelModel()),
         ChangeNotifierProvider.value(value: MetersModel()),
       ],

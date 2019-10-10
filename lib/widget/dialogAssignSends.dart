@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
@@ -14,16 +14,17 @@ import 'quDialog.dart';
 
 class DialogAssignSends extends StatelessWidget {
   final int currentGroupId;
-  final groupModel = GroupModel();
+  final groupModel = SendGroupModel();
   final sendModel = MainSendMixModel();
 
   DialogAssignSends(this.currentGroupId, {Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final content = Selector<GroupModel, List<int>>(
+    final content = Selector<SendGroupModel, List<int>>(
       selector: (_, model) {
-        // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
+        // TODO: Lists are, by default, only equal to themselves.
+        // Even if other is also a list,
         // the equality comparison does not compare the elements of the two lists.
         return List.from(model.availableSendIds);
       },
@@ -50,8 +51,8 @@ class DialogAssignSends extends StatelessWidget {
   }
 
   Widget buildSendChild(int sendId) {
-    return Selector<GroupModel, Group>(
-      selector: (context, model) => model.getGroupForSend(sendId),
+    return Selector<SendGroupModel, SendGroup>(
+      selector: (context, model) => model.getGroupForSendId(sendId),
       builder: (context, group, child) {
         final isInCurrentGroup = group != null && group.id == currentGroupId;
         return ValueListenableBuilder<Send>(
@@ -67,7 +68,7 @@ class DialogAssignSends extends StatelessWidget {
     );
   }
 
-  Widget buildAvatar(Group group, bool isInCurrentGroup) {
+  Widget buildAvatar(SendGroup group, bool isInCurrentGroup) {
     return Positioned(
       right: 0,
       bottom: 0,
@@ -102,9 +103,16 @@ class DialogAssignSends extends StatelessWidget {
   }
 
   Widget buildButton(bool isInCurrentGroup, Send send) {
-    String secondary = send.sendType != SendType.fxReturn
-        ? send.personName
-        : send.technicalName;
+    String primary;
+    String secondary;
+    if (send.sendType != SendType.fxReturn) {
+      primary = send.name;
+      secondary = send.personName;
+    } else {
+      primary = send.technicalName;
+      secondary = send.name;
+    }
+
     return QuCheckButton(
       selected: isInCurrentGroup,
       child: Column(
@@ -112,7 +120,7 @@ class DialogAssignSends extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           AutoSizeText(
-            send.name,
+            primary,
             maxLines: 1,
             minFontSize: 8,
             maxFontSize: 16,
@@ -126,10 +134,11 @@ class DialogAssignSends extends StatelessWidget {
           ),
         ],
       ),
-      onSelect: () {
-        groupModel.toggleSendAssignement(
-            currentGroupId, send.id, send.faderLinked);
-      },
+      onSelect: () => groupModel.toggleSendAssignement(
+        currentGroupId,
+        send.id,
+        send.faderLinked,
+      ),
       margin: EdgeInsets.only(bottom: 6),
       padding: EdgeInsets.all(4),
       width: 64,

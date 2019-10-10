@@ -1,32 +1,30 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/mix.dart';
-import 'package:qu_me/entities/mutableGroup.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 
-Uint8List lastSceneData = Uint8List(0);
+Uint8List _lastSceneData = Uint8List(0);
+const _blockLen = 192;
 
 Scene parse(Uint8List data) {
-  final dif = compare(lastSceneData, data);
+  final dif = compare(_lastSceneData, data);
   print("Scene dif");
   for (var index in dif) {
-    print(
-        "index: $index \t oldValue: ${lastSceneData[index]} \t newValue: ${data[index]}");
+    print("index: $index \t oldValue: ${_lastSceneData[index]} "
+        "\t newValue: ${data[index]}");
   }
   print("");
 
-  lastSceneData = data;
+  _lastSceneData = data;
   final sceneId = data[3];
   final sceneName = _readString(data, 12);
   print("Parsing scene \"$sceneName\" ($sceneId)");
 
-  final allDcaGroups = List<MuteableGroup>(4);
-  final allMuteGroups = List<MuteableGroup>(4);
-
-  final blockLen = 192;
-
+  final allDcaGroups = List<ControlGroup>(4);
+  final allMuteGroups = List<ControlGroup>(4);
   final sends = List<Send>(39);
 
   // DCA1 Mute: data[24314] == 1
@@ -35,7 +33,7 @@ Scene parse(Uint8List data) {
   // DCA4 Mute: data[24356] == 1
   for (int i = 0; i < allDcaGroups.length; i++) {
     final muteOn = (data[24314 + i * 14]) == 1;
-    allDcaGroups[i] = MuteableGroup(i, MutableGroupType.dca, muteOn);
+    allDcaGroups[i] = ControlGroup(i, ControlGroupType.dca, muteOn);
   }
   // Channel one not in any dca: data[214] == 0;
   // Channel one in dca 1: data[214] == 1;
@@ -47,7 +45,7 @@ Scene parse(Uint8List data) {
   final muteGroupMuteData = data[21480];
   for (int i = 0; i < allMuteGroups.length; i++) {
     final muteOn = muteGroupMuteData >> i & 0x01 == 1;
-    allMuteGroups[i] = MuteableGroup(i, MutableGroupType.muteGroup, muteOn);
+    allMuteGroups[i] = ControlGroup(i, ControlGroupType.muteGroup, muteOn);
   }
   // Channel 1 no mute groups: data[188] == 0
   // Channel 1 mute-group 1: data[188] == 1
@@ -57,7 +55,7 @@ Scene parse(Uint8List data) {
   // Stereo input channels 1 - 3
   // Fx Return 1 - 4
   // TODO: Group?
-  for (var i = 0, offset = 48; i < sends.length; i++, offset += blockLen) {
+  for (var i = 0, offset = 48; i < sends.length; i++, offset += _blockLen) {
     // hpf, gate, eq, compressor: byte 0 - 120
     // fader???: 121 - 123
     // main send (or master if mix?): 126 - 128
@@ -91,15 +89,15 @@ Scene parse(Uint8List data) {
       if (name == null || name.isEmpty) {
         // if fx Return is not named, use the name of fx send
         // TODO: only for fx 1 + 2 ????
-        name = _readString(data, offset + 156 + (blockLen * 20));
+        name = _readString(data, offset + 156 + (_blockLen * 20));
       }
     }
 
-    final mutableGroups = getMuteableAssignement(
+    final controlGroups = getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
 
     sends[i] = Send(
-        i, type, displayId, name, muteOn, mutableGroups, linked, panLinked);
+        i, type, displayId, name, muteOn, controlGroups, linked, panLinked);
   }
 
   final mixes = List<Mix>(7);
@@ -109,9 +107,9 @@ Scene parse(Uint8List data) {
   // Stereo Mix 5/6, 7/8, 9/10
   // TODO Mix-Group?
   // offset 48 + 39 * 192 = 7536
-  for (var i = 0, offset = 48 + 39 * blockLen;
+  for (var i = 0, offset = 48 + 39 * _blockLen;
       i < mixes.length;
-      i++, offset += blockLen) {
+      i++, offset += _blockLen) {
     final muteOn = data[offset + 136] == 1;
     final muteGroupData = data[offset + 140];
     final name = _readString(data, offset + 156);
@@ -120,7 +118,7 @@ Scene parse(Uint8List data) {
     final type = i < 4 ? MixType.mono : MixType.stereo;
     final displayId = i < 4 ? i + 1 : 2 * i - 3;
 
-    final mutableGroups = getMuteableAssignement(
+    final controlGroups = getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
 
     // channel 1 send mix 1 = _readUint16(data, 11872) / 256.0 - 128.0;
@@ -143,7 +141,7 @@ Scene parse(Uint8List data) {
     }
     // TODO PAN
 
-    mixes[i] = Mix(39 + i, type, displayId, name, muteOn, mutableGroups,
+    mixes[i] = Mix(39 + i, type, displayId, name, muteOn, controlGroups,
         sendLevelsInDb, sendAssigns);
 
     final masterLevelOffset = 7662 + i * 192;
@@ -156,12 +154,11 @@ Scene parse(Uint8List data) {
     final name = _readString(data, offset + 156);
   }
   */
-  final mutableGroups = List<MuteableGroup>.from(allDcaGroups, growable: true)
-    ..addAll(allMuteGroups);
-  return Scene(sends, mixes, mixMasterLevels, mutableGroups);
+  final controlGroups = [...allDcaGroups, ...allMuteGroups];
+  return Scene(sends, mixes, mixMasterLevels, controlGroups);
 }
 
-Set<T> getMuteableAssignement<T>(int val, val2, List<T> all, List<T> all2) {
+Set<T> getControlGroupAssignement<T>(int val, val2, List<T> all, List<T> all2) {
   final result = Set<T>();
   for (int i = 0; i < all.length; i++) {
     if ((val >> i) & 0x01 == 0x01) {

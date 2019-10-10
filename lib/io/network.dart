@@ -8,11 +8,11 @@ import 'package:async/async.dart';
 import 'package:hex/hex.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelModel.dart';
-import 'package:qu_me/core/model/groupModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
+import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/mixer.dart';
-import 'package:qu_me/entities/mutableGroup.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/metersListener.dart' as metersListener;
@@ -36,7 +36,7 @@ void connect(String name, InternetAddress address) async {
 void _connect(InternetAddress address) async {
   final connectionModel = ConnectionModel();
   final mainSendMixModel = MainSendMixModel();
-  final groupModel = GroupModel();
+  final groupModel = SendGroupModel();
   final faderModel = FaderLevelModel();
 
   _socket = await Socket.connect(address, 51326);
@@ -187,21 +187,21 @@ void _connect(InternetAddress address) async {
 
               for (int muteGroupId = 0; muteGroupId < 4; muteGroupId++) {
                 final muteOn = (dspPacket.value >> muteGroupId) & 0x01 == 0x01;
-                final type = MutableGroupType.muteGroup;
-                mainSendMixModel.updateMutableGroup(muteGroupId, type, muteOn);
+                final type = ControlGroupType.muteGroup;
+                mainSendMixModel.updateControlGroup(muteGroupId, type, muteOn);
               }
               break;
             case 0x0D:
               final muteGroupId = dspPacket.param2;
               final assignOn = dspPacket.value == 1;
-              mainSendMixModel.changeMutableGroupAssignement(
-                  muteGroupId, MutableGroupType.muteGroup, faderId, assignOn);
+              mainSendMixModel.updateControlGroupAssignment(
+                  muteGroupId, ControlGroupType.muteGroup, faderId, assignOn);
               break;
             case 0x16:
               final dcaGroupId = faderId - 205;
-              final type = MutableGroupType.dca;
+              final type = ControlGroupType.dca;
               final muteOn = dspPacket.value != 0;
-              mainSendMixModel.updateMutableGroup(dcaGroupId, type, muteOn);
+              mainSendMixModel.updateControlGroup(dcaGroupId, type, muteOn);
               // DCA 1: muteOn -> true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 1}
               // DCA 2: muteOn -> true
@@ -224,8 +224,8 @@ void _connect(InternetAddress address) async {
             case 0x17:
               final dcaGroupId = dspPacket.param2;
               final assignOn = dspPacket.value == 1;
-              mainSendMixModel.changeMutableGroupAssignement(
-                  dcaGroupId, MutableGroupType.dca, faderId, assignOn);
+              mainSendMixModel.updateControlGroupAssignment(
+                  dcaGroupId, ControlGroupType.dca, faderId, assignOn);
               break;
             default:
               print("unexpected valueId: ${dspPacket.valueId}");

@@ -6,6 +6,7 @@ import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/network.dart' as network;
 
 // TODO is performance good for many listeners?
+// Probably a BehaviourSubject with stream is better in this case
 class FaderLevelModel extends ChangeNotifier {
   static final FaderLevelModel _instance = FaderLevelModel._internal();
 
@@ -15,7 +16,7 @@ class FaderLevelModel extends ChangeNotifier {
   // -128.0 equals "-inf" as far as the qu mixer is concerned
   // However the level in this model can go lower than -128.0
   // The reason is to keep the proportion between sends the same
-  // if trim reduces the level
+  // if trim reduces the level of a group of sends
   final _levelsInDb = List.filled(60, -128.0);
 
   // These are in range from 0.0 to 1.0 and

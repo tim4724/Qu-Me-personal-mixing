@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:qu_me/core/findColor.dart';
+import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
-import 'package:qu_me/entities/mutableGroup.dart';
 
 class Send extends FaderInfo {
   final SendType sendType;
@@ -19,11 +19,11 @@ class Send extends FaderInfo {
     Color color,
     String personName,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     this.faderLinked,
     this.panLinked,
   ) : super(id, displayId, technicalName, name, color, personName,
-            explicitMuteOn, mutableGroups);
+            explicitMuteOn, controlGroups);
 
   factory Send(
     int id,
@@ -31,7 +31,7 @@ class Send extends FaderInfo {
     int displayId,
     String name,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     bool faderLinked,
     bool panLinked,
   ) {
@@ -56,7 +56,7 @@ class Send extends FaderInfo {
     final color = findColor(name);
     final personName = "Tim";
     return Send._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, mutableGroups, faderLinked, panLinked);
+        personName, explicitMuteOn, controlGroups, faderLinked, panLinked);
   }
 
   @override
@@ -67,7 +67,7 @@ class Send extends FaderInfo {
     String name,
     String personName,
     bool explicitMuteOn,
-    Set<MuteableGroup> mutableGroups,
+    Set<ControlGroup> controlGroups,
     bool faderLinked,
     bool panLinked,
   }) {
@@ -77,7 +77,7 @@ class Send extends FaderInfo {
       this.displayId,
       name ?? this.name,
       explicitMuteOn ?? this.explicitMuteOn,
-      mutableGroups ?? this.mutableGroups,
+      controlGroups ?? this.controlGroups,
       faderLinked ?? this.faderLinked,
       panLinked ?? this.panLinked,
     );

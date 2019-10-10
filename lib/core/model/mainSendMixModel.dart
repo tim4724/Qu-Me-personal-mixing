@@ -1,16 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
+import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/mixer.dart';
-import 'package:qu_me/entities/mutableGroup.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:quiver/collection.dart';
 
 import 'faderLevelModel.dart';
-import 'groupModel.dart';
+import 'sendGroupModel.dart';
 
 class MainSendMixModel {
   static final MainSendMixModel _instance = MainSendMixModel._internal();
@@ -30,33 +30,33 @@ class MainSendMixModel {
 
   final initializedNotifier = ValueNotifier<bool>(false);
 
-  final _availableMutableGroups =
-      ListMultimap<MutableGroupType, MuteableGroup>();
+  final _availableControlGroups =
+      ListMultimap<ControlGroupType, ControlGroup>();
 
   MainSendMixModel._internal();
 
   void onScene(Scene scene) {
-    _availableMutableGroups.clear();
-    for (final group in scene.allMutableGroups) {
-      _availableMutableGroups.add(group.type, group);
+    _availableControlGroups.clear();
+    for (final group in scene.controlGroups) {
+      _availableControlGroups.add(group.type, group);
     }
 
-    _updateMixes(scene.mixes);
-    _updateSends(scene.sends);
+    _initMixes(scene.mixes);
+    _initSends(scene.sends);
 
     final currentMix = _getCurrentMix();
     // TODO: What if ConnectionModel is not initialized
     final mixerType = ConnectionModel().type;
     // TODO: in which class to parse available sends?
-    _updateAvailableSends(scene.sends, currentMix, mixerType);
+    _initAvailableSends(scene.sends, currentMix, mixerType);
 
     // TODO: in which class to update fader leves
-    _updateFaderLevels(currentMix, scene.mixesLevelInDb);
+    _initFaderLevels(currentMix, scene.mixesLevelInDb);
 
     initializedNotifier.value = true;
   }
 
-  void _updateMixes(List<Mix> mixes) {
+  void _initMixes(List<Mix> mixes) {
     // Init mix list
     _mixNotifiers.length = mixes.length;
     for (int i = 0; i < mixes.length; i++) {
@@ -78,7 +78,7 @@ class MainSendMixModel {
     }
   }
 
-  void _updateSends(List<Send> sends) {
+  void _initSends(List<Send> sends) {
     _sendNotifierForId.length = sends.length;
     for (final send in sends) {
       if (_sendNotifierForId[send.id] == null) {
@@ -88,7 +88,7 @@ class MainSendMixModel {
     }
   }
 
-  void _updateAvailableSends(List<Send> sends, Mix currentMix, int mixerType) {
+  void _initAvailableSends(List<Send> sends, Mix currentMix, int mixerType) {
     final availableSends = List<int>();
     if (mixerType == MixerType.QU_16) {
       for (Send send in sends) {
@@ -103,10 +103,10 @@ class MainSendMixModel {
         availableSends.add(send.id);
       }
     }
-    GroupModel().setAvailableSends(availableSends);
+    SendGroupModel().setAvailableSends(availableSends);
   }
 
-  void _updateFaderLevels(Mix currentMix, List<double> mixesLevelInDb) {
+  void _initFaderLevels(Mix currentMix, List<double> mixesLevelInDb) {
     // Init fader levels based on current mix
     final faderModel = FaderLevelModel();
     if (currentMixIdNotifier != null) {
@@ -136,56 +136,56 @@ class MainSendMixModel {
     network.muteOnChanged(currentMix.id, !currentMix.explicitMuteOn);
   }
 
-  void updateMutableGroup(int groupId, MutableGroupType type, bool muteOn) {
-    final oldGroup = _availableMutableGroups[type][groupId];
+  void updateControlGroup(int groupId, ControlGroupType type, bool muteOn) {
+    final oldGroup = _availableControlGroups[type][groupId];
     if (oldGroup.muteOn == muteOn) {
       return;
     }
 
-    final newGroup = MuteableGroup(groupId, type, muteOn);
-    _availableMutableGroups[type][groupId] = newGroup;
+    final newControlGroup = ControlGroup(groupId, type, muteOn);
+    _availableControlGroups[type][groupId] = newControlGroup;
     for (final sendNotifier in _sendNotifierForId) {
-      _updateMutableGroup(sendNotifier.value, newGroup);
+      _updateControlGroup(sendNotifier.value, newControlGroup);
     }
     for (final mixNotifier in _mixNotifiers) {
-      _updateMutableGroup(mixNotifier.value, newGroup);
+      _updateControlGroup(mixNotifier.value, newControlGroup);
     }
   }
 
-  void _updateMutableGroup(FaderInfo faderInfo, MuteableGroup newGroup) {
-    if (faderInfo.mutableGroups
+  void _updateControlGroup(FaderInfo faderInfo, ControlGroup newGroup) {
+    if (faderInfo.controlGroups
         .any((grp) => grp.id == newGroup.id && grp.type == newGroup.type)) {
-      final mutableGroups = Set<MuteableGroup>.from(faderInfo.mutableGroups)
+      final controlGroups = Set<ControlGroup>.from(faderInfo.controlGroups)
         ..removeWhere((grp) {
           return grp.id == newGroup.id && grp.type == newGroup.type;
         })
         ..add(newGroup);
-      updateFaderInfo(faderInfo.id, mutableGroups: mutableGroups);
+      updateFaderInfo(faderInfo.id, controlGroups: controlGroups);
     }
   }
 
-  void changeMutableGroupAssignement(
-      int groupId, MutableGroupType type, int faderId, bool assignOn) {
+  void updateControlGroupAssignment(
+      int groupId, ControlGroupType type, int faderId, bool assignOn) {
     final faderInfo = _getFaderInfo(faderId);
-    final mutableGroups = Set<MuteableGroup>.from(faderInfo.mutableGroups)
+    final controlGroups = Set<ControlGroup>.from(faderInfo.controlGroups)
       ..removeWhere((group) => group.id == groupId && group.type == type);
     if (assignOn) {
-      mutableGroups.add(_availableMutableGroups[type][groupId]);
+      controlGroups.add(_availableControlGroups[type][groupId]);
     }
-    updateFaderInfo(faderId, mutableGroups: mutableGroups);
+    updateFaderInfo(faderId, controlGroups: controlGroups);
   }
 
   void updateFaderInfo(int id,
       {String name,
       String personName,
       bool explicitMuteOn,
-      Set<MuteableGroup> mutableGroups}) {
+      Set<ControlGroup> controlGroups}) {
     final faderInfoNotifier = _getFaderInfoNotifierForId(id);
     faderInfoNotifier.value = faderInfoNotifier.value.copyWith(
       name: name,
       personName: personName,
       explicitMuteOn: explicitMuteOn,
-      mutableGroups: mutableGroups,
+      controlGroups: controlGroups,
     );
   }
 
@@ -193,7 +193,7 @@ class MainSendMixModel {
       {String name,
       String personName,
       bool explicitMuteOn,
-      Set<MuteableGroup> mutableGroups,
+      Set<ControlGroup> controlGroups,
       bool faderLinked,
       bool panLinked}) {
     final sendNotifier = getSendNotifierForId(id);
@@ -201,7 +201,7 @@ class MainSendMixModel {
       name: name,
       personName: personName,
       explicitMuteOn: explicitMuteOn,
-      mutableGroups: mutableGroups,
+      controlGroups: controlGroups,
       faderLinked: faderLinked,
       panLinked: panLinked,
     );
@@ -211,7 +211,7 @@ class MainSendMixModel {
       {String name,
       String personName,
       bool explicitMuteOn,
-      Set<MuteableGroup> mutableGroups,
+      Set<ControlGroup> controlGroups,
       List<double> sendLevelsInDb,
       List<bool> sendAssigns}) {
     final mixNotifier = getMixNotifierForId(id);
@@ -221,7 +221,7 @@ class MainSendMixModel {
       explicitMuteOn: explicitMuteOn,
       sendLevelsInDb: sendLevelsInDb,
       sendAssigns: sendAssigns,
-      mutableGroups: mutableGroups,
+      controlGroups: controlGroups,
     );
   }
 
