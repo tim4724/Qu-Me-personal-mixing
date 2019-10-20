@@ -4,9 +4,8 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
 import 'package:qu_me/core/levelConverter.dart';
-import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/gestures/dragFader.dart';
@@ -55,9 +54,9 @@ abstract class _FaderState extends State<Fader> {
       const Color.fromARGB(255, 42, 42, 42);
   static final Color backgroundColor =
       backgroundActiveColor.withAlpha(inActiveAlpha);
+  final _levelPanModel = FaderLevelPanModel();
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
-  final FaderLevelModel faderModel = FaderLevelModel();
   final bool horizontalFader;
   var activePointers = 0;
 
@@ -95,10 +94,14 @@ abstract class _FaderState extends State<Fader> {
   void onDragUpdate(double delta) {
     final id = widget._faderInfoNotifier.value.id;
     final sliderWidth = keyFaderSlider.currentContext.size.width;
-    final deltaNormalized = (delta / (sliderWidth - 16));
-    final currentSliderValue = faderModel.getSliderValue(id);
-    final newSliderValue = currentSliderValue + deltaNormalized;
-    faderModel.onNewSliderValue(id, newSliderValue);
+    final deltaNormalized = (delta / (sliderWidth));
+    if (widget.pan) {
+      final currentSliderValue = _levelPanModel.getPanSlider(id);
+      _levelPanModel.onNewPanSlider(id, currentSliderValue + deltaNormalized);
+    } else {
+      final currentSliderValue = _levelPanModel.getLevelSLider(id);
+      _levelPanModel.onNewLevelSlider(id, currentSliderValue + deltaNormalized);
+    }
   }
 
   void onPointerStop() {
@@ -111,18 +114,10 @@ abstract class _FaderState extends State<Fader> {
     String secondary;
     if (widget.forceDisplayTechnicalName) {
       primary = info.technicalName;
-      if (active) {
-        secondary = info.personName;
-      } else {
-        secondary = info.name;
-      }
+      secondary = active ? info.personName : info.name;
     } else {
       primary = info.name;
-      if (active) {
-        secondary = info.technicalName;
-      } else {
-        secondary = info.personName;
-      }
+      secondary = active ? info.technicalName : info.personName;
     }
     return _FaderLabel(primary, secondary, info.color, active);
   }
@@ -131,7 +126,6 @@ abstract class _FaderState extends State<Fader> {
     Color bgColor;
     Gradient bgGradient;
     if (faderInfo.muted) {
-      // TODO do in rotated box? or calculate exact 45 degrees?
       bgGradient = LinearGradient(
         begin: horizontalFader ? Alignment(0.015, 0) : Alignment(0, 0.015),
         end: horizontalFader ? Alignment(0, 0.05) : Alignment(0.05, 0),
@@ -168,6 +162,20 @@ abstract class _FaderState extends State<Fader> {
   }
 
   Widget buildFader(BuildContext context, FaderInfo faderInfo);
+
+  Widget buildSlider(BuildContext context, FaderInfo faderInfo) {
+    return AnimatedSwitcher(
+        key: keyFaderSlider,
+        child: RawGestureDetector(
+            key: ValueKey(widget.pan),
+            behavior: HitTestBehavior.opaque,
+            gestures: gestures,
+            child: widget.pan
+                ? _PanSlider(faderInfo.id, faderInfo.muted, active)
+                : _LevelSlider(
+                    faderInfo.id, active, faderInfo.stereo, faderInfo.muted)),
+        duration: const Duration(milliseconds: 400));
+  }
 }
 
 class _HorizontalFaderState extends _FaderState {
@@ -190,20 +198,7 @@ class _HorizontalFaderState extends _FaderState {
       child: Row(
         children: [
           faderLabel(faderInfo),
-          Expanded(
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.opaque,
-              gestures: gestures,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: !widget.pan
-                    ? _LevelSlider(
-                        faderInfo.id, active, faderInfo.stereo, faderInfo.muted,
-                        key: keyFaderSlider)
-                    : _PanSlider(faderInfo.muted, active, key: keyFaderSlider),
-              ),
-            ),
-          ),
+          Expanded(child: buildSlider(context, faderInfo)),
         ],
         crossAxisAlignment: CrossAxisAlignment.stretch,
       ),
@@ -232,19 +227,11 @@ class _VerticalFaderState extends _FaderState {
         children: [
           faderLabel(faderInfo),
           Expanded(
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.opaque,
-              gestures: gestures,
+            child: Padding(
+              padding: EdgeInsets.only(left: 8, right: 8),
               child: RotatedBox(
                 quarterTurns: 3,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                  child: !widget.pan
-                      ? _LevelSlider(faderInfo.id, active, faderInfo.stereo,
-                          faderInfo.muted, key: keyFaderSlider)
-                      : _PanSlider(faderInfo.muted, active,
-                          key: keyFaderSlider),
-                ),
+                child: buildSlider(context, faderInfo),
               ),
             ),
           ),
@@ -304,15 +291,17 @@ class _FaderLabel extends StatelessWidget {
 
 class _PanSlider extends StatelessWidget {
   static const radius = 9.0;
+  final _levelPanModel = FaderLevelPanModel();
+  final int id;
   final bool muted;
   final bool active;
 
-  const _PanSlider(this.muted, this.active, {Key key}) : super(key: key);
+  _PanSlider(this.id, this.muted, this.active, {Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.fromLTRB(20, 18, 20, 18),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
@@ -349,7 +338,12 @@ class _PanSlider extends StatelessWidget {
                         )
                       : Container(),
                 )
-                ..add(_FaderKnop(0.5 * width, active)),
+                ..add(StreamBuilder(
+                  initialData: _levelPanModel.getPanSlider(id),
+                  stream: _levelPanModel.getPanStreamForId(id),
+                  builder: (context, snapshot) =>
+                      _FaderKnop(snapshot.data * width, active),
+                )),
             ),
           );
         },
@@ -367,6 +361,7 @@ class _LevelSlider extends StatelessWidget {
   static const radius = 9.0;
   static final levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];
   static final gradientStops = [stop(-128), stop(-5), stop(0), stop(10)];
+  final _levelPanModel = FaderLevelPanModel();
   final int id;
   final bool active;
   final bool stereo;
@@ -378,7 +373,7 @@ class _LevelSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.fromLTRB(20, 18, 20, 18),
       child: LayoutBuilder(
         builder: (context, constraints) {
           var width = constraints.maxWidth;
@@ -419,12 +414,13 @@ class _LevelSlider extends StatelessWidget {
                             )
                           : Container(),
                     )
-                    ..insertAll(0, _getLevelIndicator(0.5, width, height))
+                    ..insertAll(0, _getLevelIndicator(width, height))
                     ..add(
-                      Selector<FaderLevelModel, double>(
-                        selector: (_, model) => model.getSliderValue(id),
-                        builder: (_, sliderValue, child) =>
-                            _FaderKnop(sliderValue * width, active),
+                      StreamBuilder(
+                        initialData: _levelPanModel.getLevelSLider(id),
+                        stream: _levelPanModel.getLevelStreamForId(id),
+                        builder: (context, snapshot) =>
+                            _FaderKnop(snapshot.data * width, active),
                       ),
                     ),
             ),
@@ -434,29 +430,35 @@ class _LevelSlider extends StatelessWidget {
     );
   }
 
-  List<Widget> _getLevelIndicator(double level, double width, double height) {
-    // TODO: check mix is mono
+  List<Widget> _getLevelIndicator(double width, double height) {
     if (stereo) {
       return [
-        Selector<MetersModel, double>(selector: (_, model) {
-          return model.getMeterValue(id);
-        }, builder: (_, level, child) {
-          return _LevelIndicator.left(level, width, height / 2.0);
-        }),
-        Selector<MetersModel, double>(selector: (_, model) {
-          return model.getMeterValue(id % 2 == 0 ? id + 1 : id - 1);
-        }, builder: (_, level, child) {
-          return _LevelIndicator.right(level, width, height / 2.0);
-        }),
+        StreamBuilder<List<double>>(
+          initialData: MetersModel.levelsInDb,
+          builder: (context, snapshot) {
+            final level = convertFromDbValue(snapshot.data[id]);
+            return _LevelIndicator.left(level, width, height / 2.0);
+          },
+        ),
+        StreamBuilder<List<double>>(
+          initialData: MetersModel.levelsInDb,
+          builder: (context, snapshot) {
+            final level = convertFromDbValue(snapshot.data[id + 1]);
+            return _LevelIndicator.right(level, width, height / 2.0);
+          },
+        ),
+      ];
+    } else {
+      return [
+        StreamBuilder<List<double>>(
+          initialData: MetersModel.levelsInDb,
+          builder: (context, snapshot) {
+            final level = convertFromDbValue(snapshot.data[id]);
+            return _LevelIndicator.mono(level, width);
+          },
+        ),
       ];
     }
-    return [
-      Selector<MetersModel, double>(selector: (_, model) {
-        return model.getMeterValue(id);
-      }, builder: (_, level, child) {
-        return _LevelIndicator.mono(level, width);
-      })
-    ];
   }
 }
 

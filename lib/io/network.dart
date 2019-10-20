@@ -7,7 +7,7 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:hex/hex.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
-import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/core/sceneParser.dart' as sceneParser;
@@ -15,10 +15,11 @@ import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
-import 'package:qu_me/io/metersListener.dart' as metersListener;
+import 'package:qu_me/io/networkMetersListener.dart' as metersListener;
 
 Socket _socket;
 int _currentMixIndex = -1;
+final _levelPanModel = FaderLevelPanModel();
 
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
@@ -37,7 +38,6 @@ void _connect(InternetAddress address) async {
   final connectionModel = ConnectionModel();
   final mainSendMixModel = MainSendMixModel();
   final groupModel = SendGroupModel();
-  final faderModel = FaderLevelModel();
 
   _socket = await Socket.connect(address, 51326);
   _socket.setOption(SocketOption.tcpNoDelay, true);
@@ -162,7 +162,7 @@ void _connect(InternetAddress address) async {
             // ???
             case 0x07:
               final valueInDb = (dspPacket.value / 256.0 - 128.0);
-              faderModel.onNewFaderLevel(faderId, valueInDb);
+              _levelPanModel.onNewFaderLevel(faderId, valueInDb);
               print("Fader value: ${dspPacket.value}");
               break;
             case 0x06:

@@ -124,7 +124,7 @@ class _PageGroupState extends State<PageGroup> {
         padding: EdgeInsets.all(8),
         unselectedColor: Color(0xFF000000),
         onValueChanged: (key) {
-          setState( () {
+          setState(() {
             panMode = key;
           });
         },

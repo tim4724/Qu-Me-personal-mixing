@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
-import 'package:qu_me/core/model/faderLevelModel.dart';
+import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -18,10 +18,10 @@ import 'package:qu_me/widget/quCheckButton.dart';
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
 
-  final connectionModel = ConnectionModel();
-  final mainSendMixModel = MainSendMixModel();
-  final faderModel = FaderLevelModel();
-  final groupModel = SendGroupModel();
+  final _connectionModel = ConnectionModel();
+  final _mainSendMixModel = MainSendMixModel();
+  final _groupModel = SendGroupModel();
+  final _levelPanModel = FaderLevelPanModel();
 
   @override
   _PageHomeState createState() => _PageHomeState();
@@ -43,7 +43,7 @@ class _PageHomeState extends State<PageHome> {
           AnimatedOpacity(
             child: PlatformScaffold(
               appBar: PlatformAppBar(
-                  title: Text(widget.connectionModel.name),
+                  title: Text(widget._connectionModel.name),
                   ios: (context) => CupertinoNavigationBarData(
                         leading: CupertinoButton(
                           padding: EdgeInsets.zero,
@@ -90,8 +90,8 @@ class _PageHomeState extends State<PageHome> {
       });
     }
     if (activeWheel == groupId) {
-      final sends = widget.groupModel.getSendIdsForGroup(groupId);
-      widget.faderModel.onTrim(sends, delta);
+      final sends = widget._groupModel.getSendIdsForGroup(groupId);
+      widget._levelPanModel.onTrim(sends, delta);
     }
   }
 
@@ -109,8 +109,8 @@ class _PageHomeState extends State<PageHome> {
         platformPageRoute(builder: (context) => PageLogin(), context: context);
     Navigator.pushReplacement(context, route);
     ConnectionModel().reset();
-    widget.mainSendMixModel.reset();
-    widget.faderModel.reset();
+    widget._mainSendMixModel.reset();
+    widget._levelPanModel.reset();
   }
 
   Widget buildBodyPortrait() {
@@ -163,7 +163,7 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildFaderWithMuteButton() {
-    final mainSendMixModel = widget.mainSendMixModel;
+    final mainSendMixModel = widget._mainSendMixModel;
     return Padding(
       padding: EdgeInsets.all(4),
       // TODO merge listenables?
@@ -203,7 +203,7 @@ class _PageHomeState extends State<PageHome> {
       child: Text("Mute", textAlign: TextAlign.center),
       selected: muteOn,
       width: 72,
-      onSelect: () => widget.mainSendMixModel.toogleMixMasterMute(),
+      onSelect: () => widget._mainSendMixModel.toogleMixMasterMute(),
       margin: EdgeInsets.only(bottom: 8),
       checkColor: Colors.red,
     );

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:qu_me/core/model/metersModel.dart';
 
 void listen(RawDatagramSocket socket) {
-  final metersModel = MetersModel();
   socket.listen(
     (e) {
       final dg = socket.receive();
@@ -40,9 +39,9 @@ void listen(RawDatagramSocket socket) {
           final meter = _getUint16(data, offset);
           // TODO range is -110 to +10
           final meterDb = (meter / 256.0 - 128.0);
-          metersModel.onNewMeterLevel(id, meterDb);
+          MetersModel.levelsInDb[id] = meterDb;
         }
-        metersModel.notifyListeners(); // TODO fix
+        MetersModel.notifyStreamListeners();
       }
     },
     onError: (e) {

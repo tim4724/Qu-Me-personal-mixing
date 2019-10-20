@@ -9,7 +9,7 @@ import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:quiver/collection.dart';
 
-import 'faderLevelModel.dart';
+import 'faderLevelPanModel.dart';
 import 'sendGroupModel.dart';
 
 class MainSendMixModel {
@@ -19,7 +19,7 @@ class MainSendMixModel {
 
   // Not so sure if the list of available mix-ids can change,
   // yet we wrap the list in a changeNotifier
-  final availableMixIdsNotifier = ValueNotifier<List<int>>(List<int>());
+  final availableMixIdsNotifier = ValueNotifier(List<int>());
 
   final _mixNotifiers = List<ValueNotifier<Mix>>();
 
@@ -32,6 +32,8 @@ class MainSendMixModel {
 
   final _availableControlGroups =
       ListMultimap<ControlGroupType, ControlGroup>();
+
+  final _levelPanModel = FaderLevelPanModel();
 
   MainSendMixModel._internal();
 
@@ -108,18 +110,17 @@ class MainSendMixModel {
 
   void _initFaderLevels(Mix currentMix, List<double> mixesLevelInDb) {
     // Init fader levels based on current mix
-    final faderModel = FaderLevelModel();
     if (currentMixIdNotifier != null) {
       for (int i = 0; i < currentMix.sendLevelsInDb.length; i++) {
-        faderModel.onNewFaderLevel(i, currentMix.sendLevelsInDb[i]);
+        _levelPanModel.onNewFaderLevel(i, currentMix.sendLevelsInDb[i]);
       }
     } else {
-      faderModel.reset();
+      _levelPanModel.reset();
     }
 
     // Init master fader levels
     for (int i = 0; i < mixesLevelInDb.length; i++) {
-      faderModel.onNewFaderLevel(i + 39, mixesLevelInDb[i]);
+      _levelPanModel.onNewFaderLevel(i + 39, mixesLevelInDb[i]);
     }
   }
 
