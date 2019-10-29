@@ -7,6 +7,8 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
+import 'package:qu_me/entities/group.dart';
+import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
 
@@ -86,44 +88,76 @@ class _PageGroupState extends State<PageGroup> {
           android: (context) => MaterialAppBarData(),
           ios: (context) => CupertinoNavigationBarData(),
         ),
-        body: buildBody(orientation),
+        body: buildBody(orientation, group),
       ),
     );
   }
 
-  Widget buildBody(Orientation orientation) {
-    bool landscape = orientation == Orientation.landscape;
-    final buildListItem = (_, int sendId, i, Animation<double> anim) {
-      return buildFader(anim, sendId, landscape);
-    };
+  Widget buildBody(Orientation orientation, SendGroup group) {
+    final landscape = orientation == Orientation.landscape;
+    final stereoMix = mainSendModel.getCurrentMix().mixType == MixType.stereo;
+
+    EdgeInsets listWidgetPadding;
+    if (stereoMix) {
+      if (landscape) {
+        listWidgetPadding = EdgeInsets.only(left: 32);
+      } else {
+        listWidgetPadding = EdgeInsets.only(top: 32);
+      }
+    }
+    final scrollDirection = landscape ? Axis.horizontal : Axis.vertical;
+
+    ValueWidgetBuilder<List<int>> listBuilder;
+    if (group.assignmentUserDefined) {
+      // Group assignment can change, therefore use this animated list
+      final buildListItem = (context, int sendId, i, Animation<double> anim) {
+        return buildAnimatedFader(anim, sendId, landscape);
+      };
+      listBuilder = (BuildContext context, List<int> sendIds, Widget child) {
+        return DeclarativeList(
+          padding: listWidgetPadding,
+          items: sendIds,
+          scrollDirection: scrollDirection,
+          itemBuilder: buildListItem,
+          removeBuilder: buildListItem,
+        );
+      };
+    } else {
+      listBuilder = (BuildContext context, List<int> sendIds, Widget child) {
+        return ListView.builder(
+          padding: listWidgetPadding,
+          scrollDirection: scrollDirection,
+          itemCount: sendIds.length,
+          itemBuilder: (BuildContext context, int index) {
+            return buildFader(sendIds[index], landscape);
+          },
+        );
+      };
+    }
+
+    final listWidget = Selector<SendGroupModel, List<int>>(
+      selector: (_, model) {
+        // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
+        // the equality comparison does not compare the elements of the two lists.
+        return List.from(model.getSendIdsForGroup(widget.groupId));
+      },
+      builder: listBuilder,
+    );
+
+    if (!stereoMix) {
+      return listWidget;
+    }
+
     return Stack(
       children: [
-        Selector<SendGroupModel, List<int>>(
-          selector: (_, model) {
-            // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
-            // the equality comparison does not compare the elements of the two lists.
-            return List.from(model.getSendIdsForGroup(widget.groupId));
-          },
-          builder: (_, sendIds, child) {
-            return DeclarativeList(
-              padding: landscape
-                  ? EdgeInsets.only(left: 32)
-                  : EdgeInsets.only(top: 32),
-              items: sendIds,
-              scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
-              itemBuilder: buildListItem,
-              removeBuilder: buildListItem,
-              equalityCheck: (a, b) => a == b,
-            );
-          },
-        ),
+        listWidget,
         RotatedBox(
           child: Container(
             height: 32,
             width: double.maxFinite,
             color: Color(0xFF111111),
             // TODO: make custom segmented control
-            child: CupertinoSegmentedControl(
+            child: CupertinoSegmentedControl<bool>(
               children: {
                 false: Text("Level"),
                 true: Text("Panorama"),
@@ -133,7 +167,7 @@ class _PageGroupState extends State<PageGroup> {
               borderColor: Theme.of(context).accentColor,
               selectedColor: Theme.of(context).accentColor.withAlpha(148),
               padding: EdgeInsets.fromLTRB(2, 0, 2, 0),
-              onValueChanged: (key) {
+              onValueChanged: (bool key) {
                 setState(() => panMode = key);
               },
             ),
@@ -144,24 +178,28 @@ class _PageGroupState extends State<PageGroup> {
     );
   }
 
-  Widget buildFader(Animation<double> anim, int sendId, bool landscape) {
-    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
-    bool showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
-
+  Widget buildAnimatedFader(
+      Animation<double> anim, int sendId, bool landscape) {
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(
         sizeFactor: anim,
         axisAlignment: 0.0,
-        child: Padding(
-          padding: EdgeInsets.all(2.0),
-          child: landscape
-              ? VerticalFader(sendNotifier, panMode,
-                  forceDisplayTechnicalName: showTechnicalName)
-              : HorizontalFader(sendNotifier, panMode,
-                  forceDisplayTechnicalName: showTechnicalName),
-        ),
+        child: buildFader(sendId, landscape),
       ),
+    );
+  }
+
+  Widget buildFader(int sendId, bool landscape) {
+    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
+    final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
+    return Padding(
+      padding: EdgeInsets.all(2.0),
+      child: landscape
+          ? VerticalFader(sendNotifier, panMode,
+              forceDisplayTechnicalName: showTechnicalName)
+          : HorizontalFader(sendNotifier, panMode,
+              forceDisplayTechnicalName: showTechnicalName),
     );
   }
 }

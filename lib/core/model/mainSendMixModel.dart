@@ -46,7 +46,7 @@ class MainSendMixModel {
     _initMixes(scene.mixes);
     _initSends(scene.sends);
 
-    final currentMix = _getCurrentMix();
+    final currentMix = getCurrentMix();
     // TODO: What if ConnectionModel is not initialized
     final mixerType = ConnectionModel().type;
     // TODO: in which class to parse available sends?
@@ -132,7 +132,7 @@ class MainSendMixModel {
   }
 
   void toogleMixMasterMute() {
-    final currentMix = _getCurrentMix();
+    final currentMix = getCurrentMix();
     getMixNotifierForId(currentMix.id).value =
         currentMix.copyWith(explicitMuteOn: !currentMix.explicitMuteOn);
     network.muteOnChanged(currentMix.id, !currentMix.explicitMuteOn);
@@ -253,7 +253,7 @@ class MainSendMixModel {
     // TODO: reset all?
   }
 
-  Mix _getCurrentMix() {
+  Mix getCurrentMix() {
     return getMixNotifierForId(currentMixIdNotifier.value).value;
   }
 }

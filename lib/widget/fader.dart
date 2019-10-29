@@ -406,7 +406,7 @@ class _LevelSlider extends StatelessWidget {
                                 child: Text(
                                   "Mute",
                                   overflow: TextOverflow.visible,
-                                  textScaleFactor: 1,
+                                  textScaleFactor: 2,
                                   style: TextStyle(
                                     color: Color(0x90FF0000),
                                   ),
