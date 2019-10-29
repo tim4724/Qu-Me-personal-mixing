@@ -1,9 +1,10 @@
 import 'dart:ui';
 
 const _colors = [
-  Color.fromARGB(255, 0, 0, 0),
+  Color(0xFF323232),
   Color.fromARGB(255, 222, 67, 31),
   Color.fromARGB(255, 67, 31, 222),
+  Color(0xFFC9C9C9),
   Color.fromARGB(255, 196, 196, 196),
   Color.fromARGB(255, 210, 222, 31),
 ];

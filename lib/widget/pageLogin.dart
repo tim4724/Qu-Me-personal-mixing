@@ -45,9 +45,10 @@ class _PageLoginState extends State<PageLogin> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Placeholder(
-              fallbackHeight: 100,
-              fallbackWidth: 100,
+            Container(
+              width: 100,
+              height: 100,
+              child: Placeholder(),
             ),
             Padding(
               padding: EdgeInsets.all(16),
@@ -125,9 +126,9 @@ class _MixerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 2, bottom: 2),
-      child: QuCheckButton(
+      child: QuCheckButton.simpleText(
+        name,
         selected: selected,
-        child: Text(name, textAlign: TextAlign.center),
         onSelect: () => selectedCallback(name),
       ),
     );

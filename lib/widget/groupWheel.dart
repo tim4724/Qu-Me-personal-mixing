@@ -11,7 +11,7 @@ import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
-import 'package:qu_me/widget/pageGroup.dart';
+import 'package:qu_me/widget/pageSends.dart';
 
 typedef WheelSelected = Function(int id);
 typedef WheelDragUpdate = Function(int id, double delta);
@@ -33,8 +33,8 @@ class GroupWheel extends StatefulWidget {
 }
 
 class _GroupWheelState extends State<GroupWheel> {
-  final Color backgroundColor = Color.fromARGB(255, 42, 42, 42);
-  final Color backgroundActiveColor = Color.fromARGB(255, 38, 38, 38);
+  final Color backgroundColor = Color(0xFF010101);
+  final Color backgroundActiveColor = Color(0xFF111111);
   final keyWheel = GlobalKey();
   var activePointers = 0;
   var wheelDragDelta = 0.0;
@@ -85,9 +85,10 @@ class _GroupWheelState extends State<GroupWheel> {
     });
   }
 
+  bool get active => activePointers > 0;
+
   @override
   Widget build(BuildContext context) {
-    bool active = activePointers > 0;
     var gestures = {
       VerticalFaderDragRecognizer:
           GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
@@ -116,30 +117,32 @@ class _GroupWheelState extends State<GroupWheel> {
         return Container(
           width: 72,
           decoration: BoxDecoration(
-            color: active ? backgroundActiveColor : backgroundColor,
-            borderRadius: BorderRadius.all(Radius.circular(2)),
-            border: Border.all(color: group.color, width: 1),
+            color: active && sendsCount <= 0
+                ? backgroundActiveColor
+                : backgroundColor,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            border: Border.all(color: Color(0xFF9A9A9A), width: 1),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _GroupLabel(group.name, group.color),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: RawGestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    gestures: sendsCount > 0
-                        ? gestures
-                        : {
-                            MultiTapGestureRecognizer:
-                                gestures[MultiTapGestureRecognizer]
-                          },
+          child: RawGestureDetector(
+            behavior: HitTestBehavior.opaque,
+            gestures: sendsCount > 0
+                ? gestures
+                : {
+                    MultiTapGestureRecognizer:
+                        gestures[MultiTapGestureRecognizer]
+                  },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _GroupLabel(group.name, group.color.withAlpha(148)),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
                     child: buildWheelArea(sendsCount),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -149,13 +152,12 @@ class _GroupWheelState extends State<GroupWheel> {
   Widget buildWheelArea(int sendsCount) {
     if (sendsCount > 0) {
       return CustomPaint(
-        painter: _Wheel(wheelDragDelta, shadowOverlay),
+        painter: _Wheel(wheelDragDelta, shadowOverlay, active),
         key: keyWheel,
       );
     }
     return Container(
-      color: Color(0xFF111111),
-      child: Center(
+      child: const Center(
         child: Text(
           "Nothing Assigned\nDouble Tap",
           textAlign: TextAlign.center,
@@ -192,12 +194,14 @@ class _GroupLabel extends StatelessWidget {
 }
 
 class _Wheel extends CustomPainter {
-  static const baseColor = Color.fromARGB(255, 180, 180, 180);
+  static const baseColor = Color.fromARGB(196, 180, 180, 180);
+  static const baseColorActive = Color.fromARGB(255, 180, 180, 180);
   static const carveColor = Color.fromARGB(255, 21, 21, 21);
   final double offset;
   final ui.Image shadowOverlay;
+  final bool active;
 
-  const _Wheel(this.offset, this.shadowOverlay);
+  const _Wheel(this.offset, this.shadowOverlay, this.active);
 
   @override
   void paint(Canvas canvas, Size maxSize) {
@@ -224,7 +228,7 @@ class _Wheel extends CustomPainter {
     const carveHeight = 3.0;
     const minCarveOffset = 7.0;
     const maxCarveOffset = 12.0;
-    var paint = Paint()..color = baseColor;
+    var paint = Paint()..color = active ? baseColorActive : baseColor;
 
     // clear the canvas area with the base grey color
     canvas.drawRect(Offset.zero & size, paint);
@@ -235,13 +239,13 @@ class _Wheel extends CustomPainter {
 
     while (drawOffset < size.height) {
       // offset to center on a scale from 0 to 1
-      var offToCenter = (1 - 2 * drawOffset / size.height).abs();
+      final offToCenter = (1 - 2 * drawOffset / size.height).abs();
 
       // calculate the top and bottom of the next carve in the wheel
-      var t = max(drawOffset, 0.0);
-      var h = carveHeight.toDouble();
+      final t = max(drawOffset, 0.0);
+      var h = carveHeight;
       h = ui.lerpDouble(h, h * minCarveOffset / maxCarveOffset, offToCenter);
-      var b = min(size.height, drawOffset + h);
+      final b = min(size.height, drawOffset + h);
 
       // draw the carving
       canvas.drawRect(Rect.fromLTRB(0, t, size.width, b), paint);
@@ -254,7 +258,8 @@ class _Wheel extends CustomPainter {
   @override
   bool shouldRepaint(_Wheel oldDelegate) {
     return oldDelegate.offset != offset ||
-        oldDelegate.shadowOverlay == null && shadowOverlay != null;
+        oldDelegate.shadowOverlay == null && shadowOverlay != null ||
+        oldDelegate.active != this.active;
   }
 
   Size sizeOf(ui.Image img) {

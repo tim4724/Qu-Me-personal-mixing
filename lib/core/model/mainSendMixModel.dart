@@ -53,7 +53,7 @@ class MainSendMixModel {
     _initAvailableSends(scene.sends, currentMix, mixerType);
 
     // TODO: in which class to update fader leves
-    _initFaderLevels(currentMix, scene.mixesLevelInDb);
+    _initFaderLevelsAndPans(currentMix, scene.mixesLevelInDb);
 
     initializedNotifier.value = true;
   }
@@ -108,11 +108,12 @@ class MainSendMixModel {
     SendGroupModel().setAvailableSends(availableSends);
   }
 
-  void _initFaderLevels(Mix currentMix, List<double> mixesLevelInDb) {
+  void _initFaderLevelsAndPans(Mix currentMix, List<double> mixesLevelInDb) {
     // Init fader levels based on current mix
     if (currentMixIdNotifier != null) {
       for (int i = 0; i < currentMix.sendLevelsInDb.length; i++) {
         _levelPanModel.onNewFaderLevel(i, currentMix.sendLevelsInDb[i]);
+        _levelPanModel.onNewFaderPan(i, currentMix.sendPans[i] ?? 37);
       }
     } else {
       _levelPanModel.reset();

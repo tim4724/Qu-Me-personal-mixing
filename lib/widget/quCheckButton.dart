@@ -13,16 +13,39 @@ class QuCheckButton extends StatefulWidget {
   final double pressedOpacity;
 
   QuCheckButton({
-    this.selected,
+    this.selected = false,
     this.child,
     this.onSelect,
-    this.margin = const EdgeInsets.all(0),
-    this.padding = const EdgeInsets.all(8),
+    this.margin = const EdgeInsets.all(0.0),
+    this.padding = const EdgeInsets.all(8.0),
     this.width,
     this.height,
     this.checkColor = Colors.green,
     this.pressedOpacity = 0.3,
   });
+
+  QuCheckButton.simpleText(
+    String text, {
+    selected = false,
+    onSelect,
+    margin = const EdgeInsets.all(0.0),
+    padding = const EdgeInsets.all(8.0),
+    width,
+    height,
+    checkColor = Colors.green,
+    pressedOpacity = 0.3,
+  })  : child = Text(
+          text,
+          textAlign: TextAlign.center,
+        ),
+        selected = selected,
+        onSelect = onSelect,
+        margin = margin,
+        padding = padding,
+        width = width ?? null,
+        height = height ?? null,
+        checkColor = checkColor,
+        pressedOpacity = pressedOpacity;
 
   @override
   _QuCheckButtonState createState() => _QuCheckButtonState();

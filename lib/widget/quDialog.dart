@@ -13,9 +13,7 @@ class QuConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return QuConfirmDialog(
-
-    );
+    return QuConfirmDialog();
   }
 }
 
@@ -30,10 +28,11 @@ class QuDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return PlatformWidget(
       android: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF010101),
         title: Text(title),
         content: SingleChildScrollView(child: content),
         actions: [action],
-        contentPadding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       ),
       ios: (context) => QuCupertinoDialog(
         title: Text(title),
@@ -45,7 +44,7 @@ class QuDialog extends StatelessWidget {
 }
 
 class QuCupertinoDialog extends CupertinoPopupSurface {
-  static const Color _kDialogColor = Color(0xC0000000);
+  static const Color _kDialogColor = Color(0x80000000);
   static const double _kDialogCornerRadius = 12.0;
   static const double _kBlurAmount = 20.0;
   final Widget title;
@@ -62,7 +61,7 @@ class QuCupertinoDialog extends CupertinoPopupSurface {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(36, 12, 36, 12),
+      padding: const EdgeInsets.fromLTRB(36, 12, 36, 12),
       child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(_kDialogCornerRadius),
@@ -76,16 +75,16 @@ class QuCupertinoDialog extends CupertinoPopupSurface {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     if (title != null)
-                      Padding(padding: EdgeInsets.all(16), child: title),
+                      Padding(padding: const EdgeInsets.all(16), child: title),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                       child: child,
                     ),
                     if (action != null) action
                   ],
                 ),
               ),
-              physics: ClampingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
             ),
           ),
         ),

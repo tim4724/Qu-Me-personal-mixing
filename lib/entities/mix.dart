@@ -9,6 +9,7 @@ class Mix extends FaderInfo {
 
   // TODO make private?
   final List<double> sendLevelsInDb;
+  final List<int> sendPans;
   final List<bool> sendAssigns;
 
   factory Mix(
@@ -19,6 +20,7 @@ class Mix extends FaderInfo {
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
     List<double> sendLevelsInDb,
+    List<int> sendPans,
     List<bool> sendAssigns,
   ) {
     String technicalName;
@@ -30,7 +32,7 @@ class Mix extends FaderInfo {
     final color = findColor(name);
     final personName = "Tim";
     return Mix._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, controlGroups, sendLevelsInDb, sendAssigns);
+        personName, explicitMuteOn, controlGroups, sendLevelsInDb, sendPans, sendAssigns);
   }
 
   Mix._internal(
@@ -44,6 +46,7 @@ class Mix extends FaderInfo {
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
     this.sendLevelsInDb,
+    this.sendPans,
     this.sendAssigns,
   ) : super(id, displayId, technicalName, name, color, personName,
             explicitMuteOn, controlGroups);
@@ -58,6 +61,7 @@ class Mix extends FaderInfo {
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
     List<double> sendLevelsInDb,
+    List<int> sendPans,
     List<bool> sendAssigns,
   }) {
     return Mix(
@@ -68,6 +72,7 @@ class Mix extends FaderInfo {
       explicitMuteOn ?? this.explicitMuteOn,
       controlGroups ?? this.controlGroups,
       sendLevelsInDb ?? this.sendLevelsInDb,
+      sendPans ?? this.sendPans,
       sendAssigns ?? this.sendAssigns,
     );
   }

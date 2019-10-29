@@ -83,8 +83,9 @@ class _PageGroupState extends State<PageGroup> {
         appBar: PlatformAppBar(
           title: titleWidget,
           trailingActions: trailingActions,
+          android: (context) => MaterialAppBarData(),
+          ios: (context) => CupertinoNavigationBarData(),
         ),
-        iosContentPadding: orientation == Orientation.landscape,
         body: buildBody(orientation),
       ),
     );
@@ -95,42 +96,55 @@ class _PageGroupState extends State<PageGroup> {
     final buildListItem = (_, int sendId, i, Animation<double> anim) {
       return buildFader(anim, sendId, landscape);
     };
-    return Selector<SendGroupModel, List<int>>(
-      selector: (_, model) {
-        // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
-        // the equality comparison does not compare the elements of the two lists.
-        return List.from(model.getSendIdsForGroup(widget.groupId));
-      },
-      builder: (_, sendIds, child) {
-        return DeclarativeList(
-          items: [-1]..addAll(sendIds),
-          scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
-          itemBuilder: buildListItem,
-          removeBuilder: buildListItem,
-          equalityCheck: (a, b) => a == b,
-        );
-      },
+    return Stack(
+      children: [
+        Selector<SendGroupModel, List<int>>(
+          selector: (_, model) {
+            // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
+            // the equality comparison does not compare the elements of the two lists.
+            return List.from(model.getSendIdsForGroup(widget.groupId));
+          },
+          builder: (_, sendIds, child) {
+            return DeclarativeList(
+              padding: landscape
+                  ? EdgeInsets.only(left: 32)
+                  : EdgeInsets.only(top: 32),
+              items: sendIds,
+              scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
+              itemBuilder: buildListItem,
+              removeBuilder: buildListItem,
+              equalityCheck: (a, b) => a == b,
+            );
+          },
+        ),
+        RotatedBox(
+          child: Container(
+            height: 32,
+            width: double.maxFinite,
+            color: Color(0xFF111111),
+            // TODO: make custom segmented control
+            child: CupertinoSegmentedControl(
+              children: {
+                false: Text("Level"),
+                true: Text("Panorama"),
+              },
+              groupValue: panMode,
+              unselectedColor: Color(0xFF111111),
+              borderColor: Theme.of(context).accentColor,
+              selectedColor: Theme.of(context).accentColor.withAlpha(148),
+              padding: EdgeInsets.fromLTRB(2, 0, 2, 0),
+              onValueChanged: (key) {
+                setState(() => panMode = key);
+              },
+            ),
+          ),
+          quarterTurns: landscape ? 3 : 0,
+        )
+      ],
     );
   }
 
   Widget buildFader(Animation<double> anim, int sendId, bool landscape) {
-    if (sendId == -1) {
-      return CupertinoSegmentedControl(
-        children: {
-          false: Text("Level"),
-          true: Text("Panorama"),
-        },
-        groupValue: panMode,
-        padding: EdgeInsets.all(8),
-        unselectedColor: Color(0xFF000000),
-        onValueChanged: (key) {
-          setState(() {
-            panMode = key;
-          });
-        },
-      );
-    }
-
     final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
     bool showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
 

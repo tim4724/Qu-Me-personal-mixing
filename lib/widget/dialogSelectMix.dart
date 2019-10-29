@@ -55,11 +55,26 @@ class DialogSelectMix extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          SizedBox(width: 75, child: Text("${mix.technicalName}", maxLines: 1)),
-          Text(mix.name, textAlign: TextAlign.center, maxLines: 1),
           SizedBox(
             width: 75,
-            child: Text("Tim", textAlign: TextAlign.end, maxLines: 1),
+            child: Text(
+              "${mix.technicalName}",
+              maxLines: 1,
+            ),
+          ),
+          Text(
+            mix.name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            textScaleFactor: 0.8,
+          ),
+          SizedBox(
+            width: 75,
+            child: Text(
+              "Tim",
+              textAlign: TextAlign.end,
+              maxLines: 1,
+            ),
           ),
         ],
       ),

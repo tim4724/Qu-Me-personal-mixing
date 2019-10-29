@@ -9,18 +9,22 @@ import 'package:qu_me/widget/pageLogin.dart';
 class MyApp extends StatelessWidget {
   static final themeData = ThemeData(
     brightness: Brightness.dark,
+    // e.g. ios appbar buttons
     primarySwatch: Colors.blue,
-    primaryColor: Colors.grey.shade900,
+    // e.g. android AppBar Background Color
+    primaryColor: Color(0xFF111111),
+    scaffoldBackgroundColor: Color(0xFF010101),
+    // e.g. android progress bar
     accentColor: Colors.blue,
-    textTheme: Typography.whiteMountainView,
-    primaryTextTheme: Typography.whiteMountainView,
   );
+
   static final cupertinoThemeData = MaterialBasedCupertinoThemeData(
-    materialTheme: ThemeData(
-      brightness: Brightness.dark,
-      textTheme: Typography.whiteCupertino,
+    materialTheme: themeData.copyWith(
       primaryTextTheme: Typography.whiteCupertino,
       accentTextTheme: Typography.whiteCupertino,
+      cupertinoOverrideTheme: CupertinoThemeData(
+        barBackgroundColor: Color(0xFF111111),
+      ),
     ),
   );
 
@@ -32,7 +36,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: SendGroupModel()),
       ],
       child: PlatformProvider(
-        initialPlatform: TargetPlatform.iOS,
+        initialPlatform: TargetPlatform.android,
         builder: (context) => PlatformApp(
           title: 'QU ME',
           localizationsDelegates: const <LocalizationsDelegate<dynamic>>[

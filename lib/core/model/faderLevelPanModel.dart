@@ -36,8 +36,6 @@ class FaderLevelPanModel {
   FaderLevelPanModel._internal() {
     _levelStream = _levelController.stream.asBroadcastStream();
     _panStream = _panController.stream.asBroadcastStream();
-    _levelStream.listen((id) => _dirtyNetworkLevelIds.add(id));
-    _panStream.listen((id) => _dirtyNetworkPanIds.add(id));
   }
 
   void onNewLevelSlider(int id, double sliderValue) {
@@ -45,6 +43,7 @@ class FaderLevelPanModel {
     _levelSlider[id] = sliderValue;
     _levelsInDb[id] = convertToDbValue(sliderValue);
     _levelController.add(id);
+    _dirtyNetworkLevelIds.add(id);
     _notifyNetwork();
   }
 
@@ -76,6 +75,7 @@ class FaderLevelPanModel {
       _levelsInDb[sendId] = (_levelsInDb[sendId] + deltaInDb);
       _levelSlider[sendId] = convertFromDbValue(_levelsInDb[sendId]);
       _levelController.add(sendId);
+      _dirtyNetworkLevelIds.add(sendId);
     }
     _notifyNetwork();
   }
@@ -84,6 +84,7 @@ class FaderLevelPanModel {
     sliderValue = sliderValue.clamp(0.0, 1.0);
     _panSlider[id] = sliderValue;
     _panController.add(id);
+    _dirtyNetworkPanIds.add(id);
     _notifyNetwork();
   }
 
@@ -91,6 +92,11 @@ class FaderLevelPanModel {
     _levelsInDb[id] = levelInDb.clamp(-128.0, 10.0);
     _levelSlider[id] = convertFromDbValue(levelInDb);
     _levelController.add(id);
+  }
+
+  void onNewFaderPan(int id, int pan) {
+    _panSlider[id] = pan.clamp(0, 74).toDouble() / 74.0;
+    _panController.add(id);
   }
 
   void reset() {
@@ -120,10 +126,6 @@ class FaderLevelPanModel {
     return _panSlider[id];
   }
 
-  double getLevelInDb(int id) {
-    return _levelsInDb[id];
-  }
-
   Stream<double> _getStreamForId(int id, Stream source, List<double> values) {
     return source.transform(StreamTransformer<int, double>.fromHandlers(
       handleData: (int value, EventSink<double> sink) {
@@ -140,9 +142,13 @@ class FaderLevelPanModel {
       final minInterval = (_dirtyNetworkLevelIds.length ~/ 8 + 1) * 5;
       _networkNotifyTimer = Timer(Duration(milliseconds: minInterval), () {
         for (var id in _dirtyNetworkLevelIds) {
-          network.faderChanged(id, _levelsInDb[id].clamp(-128.0, 10.0));
+          // the level in db can go lower than -128.0 => clamp the value
+          network.faderLevelChanged(id, _levelsInDb[id].clamp(-128.0, 10.0));
         }
-        // TODO: pans?!
+        for (var id in _dirtyNetworkPanIds) {
+          network.faderPanChanged(id, (_panSlider[id] * 74.0).toInt());
+        }
+        _dirtyNetworkPanIds.clear();
         _dirtyNetworkLevelIds.clear();
       });
     }

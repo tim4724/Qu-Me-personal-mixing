@@ -49,7 +49,7 @@ class VerticalFader extends Fader {
 
 abstract class _FaderState extends State<Fader> {
   static const borderRadius = BorderRadius.all(const Radius.circular(4));
-  static const int inActiveAlpha = 148;
+  static const int inActiveAlpha = 127;
   static const Color backgroundActiveColor =
       const Color.fromARGB(255, 42, 42, 42);
   static final Color backgroundColor =
@@ -93,7 +93,7 @@ abstract class _FaderState extends State<Fader> {
 
   void onDragUpdate(double delta) {
     final id = widget._faderInfoNotifier.value.id;
-    final sliderWidth = keyFaderSlider.currentContext.size.width;
+    final sliderWidth = keyFaderSlider.currentContext.size.width - 40;
     final deltaNormalized = (delta / (sliderWidth));
     if (widget.pan) {
       final currentSliderValue = _levelPanModel.getPanSlider(id);
@@ -378,9 +378,9 @@ class _LevelSlider extends StatelessWidget {
         builder: (context, constraints) {
           var width = constraints.maxWidth;
           var height = constraints.maxHeight;
-
           return Container(
             height: height,
+            width: width,
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: colors, stops: gradientStops),
               borderRadius:
@@ -395,6 +395,7 @@ class _LevelSlider extends StatelessWidget {
                       levelFractionalOffset[i],
                       levelAbsoluteOffset[i]))
                   .toList()
+                    ..insertAll(0, _getLevelIndicator(width, height))
                     ..add(
                       muted
                           ? Positioned(
@@ -405,7 +406,7 @@ class _LevelSlider extends StatelessWidget {
                                 child: Text(
                                   "Mute",
                                   overflow: TextOverflow.visible,
-                                  textScaleFactor: 2,
+                                  textScaleFactor: 1,
                                   style: TextStyle(
                                     color: Color(0x90FF0000),
                                   ),
@@ -414,8 +415,8 @@ class _LevelSlider extends StatelessWidget {
                             )
                           : Container(),
                     )
-                    ..insertAll(0, _getLevelIndicator(width, height))
                     ..add(
+                      // TODO: if linked, base on left channel!
                       StreamBuilder(
                         initialData: _levelPanModel.getLevelSLider(id),
                         stream: _levelPanModel.getLevelStreamForId(id),

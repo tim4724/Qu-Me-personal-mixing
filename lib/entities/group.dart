@@ -13,6 +13,6 @@ class SendGroup {
   SendGroup(this.id, this.technicalName, this.displayId, this.nameUserDefined,
       this.assignmentUserDefined) {
     name = technicalName;
-    color = Color(0xFF000000);
+    color = Color(0xFF424242);
   }
 }

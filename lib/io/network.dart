@@ -141,6 +141,19 @@ void _connect(InternetAddress address) async {
           default:
             print("unknown packet group id: $groupId; dataLen: $dataLen");
             print("data: $data");
+            // TODO: remember to change level and pan....
+            // Channel 3 mix 7/8:
+            // Link off completely
+            // unknown packet group id: 9; dataLen: 10
+            // data: [0, 3, 0, 0, 0, 0, 255, 255, 255, 255]
+
+            // Link on completely:
+            // I/flutter (12681): unknown packet group id: 9; dataLen: 10
+            //I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 255, 255, 255]
+
+            // link off pan:
+           // I/flutter (12681): unknown packet group id: 9; dataLen: 10
+          // I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 247, 255, 255]
             break;
         }
         break;
@@ -153,16 +166,13 @@ void _connect(InternetAddress address) async {
 
         if (dspPacket.targetGroup == 4) {
           final faderId = dspPacket.param1;
-
-          // TODO: MuteGroup Assignement changed
-          // TODO: DCA Assignement changed
-          // TODO: Pan changed
           switch (dspPacket.valueId) {
             case 0x0a:
             // ???
             case 0x07:
               final valueInDb = (dspPacket.value / 256.0 - 128.0);
               _levelPanModel.onNewFaderLevel(faderId, valueInDb);
+              //TODO on "link" level needs to change maybe
               print("Fader value: ${dspPacket.value}");
               break;
             case 0x06:
@@ -174,6 +184,15 @@ void _connect(InternetAddress address) async {
               final assignOn = dspPacket.value == 1;
               groupModel.updateAvailabilitySend(faderId, assignOn);
               print("Assign send $faderId to current Mix: $assignOn");
+              break;
+            case 0x0C:
+              // Pan changed
+              // Value == 0 => left
+              // Value == 74 => right
+              // Value == 38 => center
+              print("Pan Fader ${dspPacket.param1 + 1} ${dspPacket.value}");
+              //TODO on "link pan" pan needs to change maybe
+              _levelPanModel.onNewFaderPan(faderId, dspPacket.value);
               break;
             case 0x0F:
               // Mute Group 1 muteOn->true
@@ -253,7 +272,7 @@ Uint8List _fromUint16(int value) {
   return Uint8List.fromList([value, value >> 8]);
 }
 
-void faderChanged(int id, double valueInDb) {
+void faderLevelChanged(int id, double valueInDb) {
   if (_socket == null || _currentMixIndex == -1) {
     return;
   }
@@ -273,10 +292,41 @@ void faderChanged(int id, double valueInDb) {
     param2
   ];
   packet.addAll(_fromUint16(value));
+  print("Set level $id $value");
   _socket.add(packet);
 }
 
+void faderPanChanged(int id, int value) {
+  if (_socket == null || _currentMixIndex == -1) {
+    return;
+  }
+
+  // TODO: Do something useful
+  /*
+  final valueId = id < 39 ? 0x0a : 0x07;
+  final param2 = id < 39 ? _currentMixIndex : 0x07;
+  final packet = [
+    0x7F, // System Packet
+    0x03, // Group Id
+    0x08, // Len
+    0x00, // Len
+    0x04, //
+    0x04, //
+    valueId,
+    0x00,
+    id,
+    param2
+  ];
+  packet.addAll(_fromUint16(value));
+  print("Set level $id $value");
+  _socket.add(packet);
+  */
+}
+
 void muteOnChanged(int id, bool muteOn) {
+  if (_socket == null) {
+    return;
+  }
   // Mix 1 mute on:
   // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x01 0x00
   // Mix 1 mute off:

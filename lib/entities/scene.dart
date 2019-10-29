@@ -47,14 +47,14 @@ Scene buildDemoScene() {
     final name = i < names.length ? names[i] : "CH ${i + 1}";
     sends.add(
       Send(i, SendType.monoChannel, i + 1, name, false, Set<ControlGroup>(),
-          name.startsWith("Drums") || name.startsWith("Keys"), false),
+          name.startsWith("Drums") || name.startsWith("Keys"), i > 14),
     );
   }
   final stereoNames = ["PC", "Handy", "Atmo"];
   for (int i = 0; i < 3; i++) {
     final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
     sends.add(
-      Send(i + 32, SendType.stereoChannel, i + 1, name, true,
+      Send(i + 32, SendType.stereoChannel, i + 1, name, i < 2,
           Set<ControlGroup>(), false, false),
     );
   }
@@ -68,19 +68,19 @@ Scene buildDemoScene() {
   }
   final mixes = [
     Mix(0x27, MixType.mono, 1, "Voc 1", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x28, MixType.mono, 2, "Voc 2", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x29, MixType.mono, 3, "Voc 3", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x2A, MixType.mono, 4, "Voc 4", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x2B, MixType.stereo, 5, "Key", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x2C, MixType.stereo, 7, "Bass", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
     Mix(0x2D, MixType.stereo, 9, "Drum", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, true)),
+        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
   ];
 
   return Scene(
