@@ -70,7 +70,12 @@ class _QuCheckButtonState extends State<QuCheckButton> {
             width: widget.width,
             height: widget.height,
             padding: widget.padding,
-            child: widget.child,
+            child: DefaultTextStyle(
+                style: TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 14.0
+                ),
+                child: widget.child),
             decoration: BoxDecoration(
               color: widget.selected ? widget.checkColor : Colors.grey,
               borderRadius: const BorderRadius.all(Radius.circular(4)),

@@ -45,7 +45,7 @@ class DialogAssignSends extends StatelessWidget {
     );
     return QuDialog(
       title: 'Assign to ${groupModel.getGroup(currentGroupId).technicalName}',
-      content: content,
+      body: content,
       action: doneAction,
     );
   }
@@ -130,7 +130,7 @@ class DialogAssignSends extends StatelessWidget {
             maxLines: 1,
             minFontSize: 8,
             maxFontSize: 16,
-            textScaleFactor: 0.7,
+            textScaleFactor: 0.8,
           ),
         ],
       ),

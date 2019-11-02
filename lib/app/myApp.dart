@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -16,13 +18,12 @@ class MyApp extends StatelessWidget {
     scaffoldBackgroundColor: Color(0xFF010101),
     // e.g. android progress bar
     accentColor: Colors.blue,
+    dialogBackgroundColor:
+        Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
   );
-
   static final cupertinoThemeData = MaterialBasedCupertinoThemeData(
     materialTheme: themeData.copyWith(
-      primaryTextTheme: Typography.whiteCupertino,
-      accentTextTheme: Typography.whiteCupertino,
-      cupertinoOverrideTheme: CupertinoThemeData(
+      cupertinoOverrideTheme: const CupertinoThemeData(
         barBackgroundColor: Color(0xFF111111),
       ),
     ),
@@ -35,17 +36,18 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: ConnectionModel()),
         ChangeNotifierProvider.value(value: SendGroupModel()),
       ],
-      child: PlatformProvider(
-        initialPlatform: TargetPlatform.android,
-        builder: (context) => PlatformApp(
-          title: 'QU ME',
-          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-            DefaultMaterialLocalizations.delegate,
-            DefaultWidgetsLocalizations.delegate,
-          ],
-          android: (context) => MaterialAppData(theme: themeData),
-          ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
-          home: PageLogin(),
+      child: Theme(
+        data: themeData,
+        child: PlatformProvider(
+          builder: (context) => PlatformApp(
+            title: 'QU ME',
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              DefaultMaterialLocalizations.delegate,
+              DefaultWidgetsLocalizations.delegate,
+            ],
+            ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
+            home: PageLogin(),
+          ),
         ),
       ),
     );

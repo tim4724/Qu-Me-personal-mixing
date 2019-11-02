@@ -173,17 +173,17 @@ class _PageHomeState extends State<PageHome> {
         builder: (context, mixId, _) {
           final mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
           return Column(
-            children: [ 
+            children: [
               QuCheckButton.simpleText(
                 "Switch Platform",
                 width: 72.0,
                 onSelect: () {
                   ConnectionModel().reset();
                   final platformProvider = PlatformProvider.of(context);
-                  if (platformProvider.platform == TargetPlatform.android) {
-                    platformProvider.changeToCupertinoPlatform();
-                  } else {
+                  if (platformProvider.platform != TargetPlatform.android) {
                     platformProvider.changeToMaterialPlatform();
+                  } else {
+                    platformProvider.changeToCupertinoPlatform();
                   }
                 },
                 margin: EdgeInsets.only(bottom: 8.0),
@@ -194,16 +194,20 @@ class _PageHomeState extends State<PageHome> {
                     buildMuteButton(info.explicitMuteOn),
               ),
               Expanded(
-                child: VerticalFader(
-                  mixNotifier,
-                  false,
-                  forceDisplayTechnicalName: true,
-                  doubleTap: () => Navigator.of(context).push(
-                    platformPageRoute<void>(
-                      builder: (context) => PageGroup(4),
-                      context: context,
+                child: AnimatedSwitcher(
+                  child: VerticalFader(
+                    mixNotifier,
+                    false,
+                    forceDisplayTechnicalName: true,
+                    doubleTap: () => Navigator.of(context).push(
+                      platformPageRoute<void>(
+                        builder: (context) => PageGroup(4),
+                        context: context,
+                      ),
                     ),
+                    key: ValueKey(mixNotifier.value.id),
                   ),
+                  duration: Duration(milliseconds: 400),
                 ),
               ),
             ],

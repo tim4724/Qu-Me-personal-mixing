@@ -19,12 +19,17 @@ class DialogSelectMix extends StatelessWidget {
 
     return QuDialog(
       title: 'Select Mix',
-      content: ValueListenableBuilder<List<int>>(
+      body: ValueListenableBuilder<List<int>>(
         valueListenable: mixModel.availableMixIdsNotifier,
-        builder: (context, availableMixIds, child) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: buildChildren(availableMixIds),
-        ),
+        builder: (context, availableMixIds, child) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: buildChildren(availableMixIds),
+            ),
+          );
+        },
       ),
       action: cancelAction,
     );
@@ -60,13 +65,14 @@ class DialogSelectMix extends StatelessWidget {
             child: Text(
               "${mix.technicalName}",
               maxLines: 1,
+              textScaleFactor: 1.2,
             ),
           ),
           Text(
             mix.name,
             textAlign: TextAlign.center,
             maxLines: 1,
-            textScaleFactor: 0.8,
+            textScaleFactor: 1,
           ),
           SizedBox(
             width: 75,
@@ -74,11 +80,12 @@ class DialogSelectMix extends StatelessWidget {
               "Tim",
               textAlign: TextAlign.end,
               maxLines: 1,
+              textScaleFactor: 1,
             ),
           ),
         ],
       ),
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(top: 4.0, bottom: 4.0),
     );
   }
 }
