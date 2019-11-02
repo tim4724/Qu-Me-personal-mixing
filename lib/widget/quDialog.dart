@@ -38,15 +38,9 @@ class QuMaterialDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                child: Text(
-                  title,
-                  style: (theme.textTheme.title),
-                ),
-              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Text(title, style: (theme.textTheme.title)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -54,11 +48,13 @@ class QuMaterialDialog extends StatelessWidget {
             ),
             if (action != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ButtonTheme.bar(
-                  child: ButtonBar(
-                    children: [action],
-                  ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: ButtonTheme(
+                  textTheme: ButtonTextTheme.accent,
+                  child: action,
                 ),
               ),
           ],
