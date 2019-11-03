@@ -15,57 +15,25 @@ class QuDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PlatformWidget(
-      android: (context) => QuMaterialDialog(title, body, action),
+      android: (context) => buildMaterialDialog(),
       ios: (context) => QuCupertinoDialog(title, body, action),
     );
   }
-}
 
-/// AlertDialog uses InstrinsicWidth for its content which I do not like.
-class QuMaterialDialog extends StatelessWidget {
-  final String title;
-  final Widget body;
-  final Widget action;
-
-  QuMaterialDialog(this.title, this.body, this.action, {Key key})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Dialog(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Text(title, style: (theme.textTheme.title)),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: body,
-            ),
-            if (action != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: ButtonTheme(
-                  textTheme: ButtonTextTheme.accent,
-                  child: action,
-                ),
-              ),
-          ],
-        ),
+  Widget buildMaterialDialog() {
+    return AlertDialog(
+      title: Text(title),
+      content: SingleChildScrollView(child: body),
+      contentPadding: EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0),
+      actions: <Widget>[action],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(4.0)),
       ),
     );
   }
 }
 
 class QuCupertinoDialog extends StatelessWidget {
-  //  static const Color _kDialogColor = Color(0x80000000);
   final String title;
   final Widget body;
   final Widget action;
@@ -77,28 +45,30 @@ class QuCupertinoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(36, 12, 36, 12),
+      padding: const EdgeInsets.fromLTRB(36, 36, 36, 24),
       child: Center(
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(12),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               color: theme.dialogBackgroundColor,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    if (title != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16, bottom: 8),
-                        child: Text(title, style: (theme.textTheme.title)),
-                      ),
-                    body,
-                    if (action != null) action
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (title != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                      child: Text(title, style: (theme.textTheme.title)),
+                    ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: body,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
+                  ),
+                  if (action != null) action
+                ],
               ),
             ),
           ),

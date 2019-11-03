@@ -22,8 +22,8 @@ class DialogSelectMix extends StatelessWidget {
       body: ValueListenableBuilder<List<int>>(
         valueListenable: mixModel.availableMixIdsNotifier,
         builder: (context, availableMixIds, child) {
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 300.0),
+          return SizedBox(
+            width: 300,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: buildChildren(availableMixIds),

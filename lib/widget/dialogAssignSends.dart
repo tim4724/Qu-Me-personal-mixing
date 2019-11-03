@@ -28,11 +28,10 @@ class DialogAssignSends extends StatelessWidget {
         // the equality comparison does not compare the elements of the two lists.
         return List.from(model.availableSendIds);
       },
-      builder: (context, sendIds, child) {
-        // TODO is not refreshed
+      builder: (BuildContext context, List<int> sendIds, _) {
         return Wrap(
           runSpacing: 2.0,
-          spacing: 8.0,
+          spacing: 4.0,
           alignment: WrapAlignment.spaceEvenly,
           children: sendIds.map((sendId) => buildSendChild(sendId)).toList(),
         );
