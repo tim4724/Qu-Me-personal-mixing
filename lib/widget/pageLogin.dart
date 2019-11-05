@@ -40,6 +40,7 @@ class _PageLoginState extends State<PageLogin> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return PlatformScaffold(
       body: Center(
         child: Column(
@@ -54,7 +55,6 @@ class _PageLoginState extends State<PageLogin> {
               padding: EdgeInsets.all(16),
               child: Text(
                 widget.title,
-                style: TextStyle(color: Color(0xFFFFFFFF)),
               ),
             ),
             Stack(
@@ -65,7 +65,7 @@ class _PageLoginState extends State<PageLogin> {
                   height: 200,
                   width: 200,
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 21, 21, 21),
+                    color: theme.cardColor,
                     borderRadius: const BorderRadius.all(Radius.circular(8)),
                   ),
                   child: ListView.builder(

@@ -81,7 +81,6 @@ class DialogAssignSends extends StatelessWidget {
                   group != null ? group.displayId : "",
                   minFontSize: 8,
                   maxFontSize: 20,
-                  style: TextStyle(color: Color(0xFFFFFFFF)),
                 ),
               ),
             ),

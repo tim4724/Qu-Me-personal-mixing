@@ -180,10 +180,10 @@ class _PageHomeState extends State<PageHome> {
                 onSelect: () {
                   ConnectionModel().reset();
                   final platformProvider = PlatformProvider.of(context);
-                  if (platformProvider.platform != TargetPlatform.android) {
-                    platformProvider.changeToMaterialPlatform();
-                  } else {
+                  if (platformProvider.platform != TargetPlatform.iOS) {
                     platformProvider.changeToCupertinoPlatform();
+                  } else {
+                    platformProvider.changeToMaterialPlatform();
                   }
                 },
                 margin: EdgeInsets.only(bottom: 8.0),

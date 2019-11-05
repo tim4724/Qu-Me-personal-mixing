@@ -39,6 +39,7 @@ class _PageGroupState extends State<PageGroup> {
       ),
     );
 
+    final theme = Theme.of(context);
     Widget titleWidget;
     if (group.nameUserDefined) {
       titleWidget = Container(
@@ -52,7 +53,8 @@ class _PageGroupState extends State<PageGroup> {
               counterText: "",
             ),
           ),
-          style: TextStyle(color: Color(0xFFFFFFFF)),
+          // Needed because on IOS-Platformwidget hardcodes the color black
+          style: theme.textTheme.subhead,
           controller: textController,
           onChanged: (name) => groupModel.setGroupName(widget.groupId, name),
         ),

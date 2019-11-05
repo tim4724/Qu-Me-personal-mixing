@@ -33,8 +33,6 @@ class GroupWheel extends StatefulWidget {
 }
 
 class _GroupWheelState extends State<GroupWheel> {
-  final Color backgroundColor = Color(0xFF010101);
-  final Color backgroundActiveColor = Color(0xFF111111);
   final keyWheel = GlobalKey();
   var activePointers = 0;
   var wheelDragDelta = 0.0;
@@ -108,18 +106,21 @@ class _GroupWheelState extends State<GroupWheel> {
       }),
     };
 
+    final theme = Theme.of(context);
     return Selector<SendGroupModel, MapEntry<SendGroup, int>>(
-      selector: (context, model) =>
-          MapEntry(model.getGroup(id), model.getSendIdsForGroup(id).length),
-      builder: (context, pair, child) {
+      selector: (BuildContext context, SendGroupModel model) {
+        return MapEntry(
+            model.getGroup(id), model.getSendIdsForGroup(id).length);
+      },
+      builder: (BuildContext context, MapEntry<SendGroup, int> pair, _) {
         final group = pair.key;
         final sendsCount = pair.value;
         return Container(
           width: 72,
           decoration: BoxDecoration(
             color: active && sendsCount <= 0
-                ? backgroundActiveColor
-                : backgroundColor,
+                ? theme.primaryColor // TODO: primaryColor is not optimal...
+                : theme.scaffoldBackgroundColor,
             borderRadius: const BorderRadius.all(Radius.circular(4)),
             border: Border.all(color: Color(0xFF9A9A9A), width: 1),
           ),
@@ -138,7 +139,7 @@ class _GroupWheelState extends State<GroupWheel> {
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: buildWheelArea(sendsCount),
+                    child: buildWheelArea(context, sendsCount),
                   ),
                 ),
               ],
@@ -149,19 +150,20 @@ class _GroupWheelState extends State<GroupWheel> {
     );
   }
 
-  Widget buildWheelArea(int sendsCount) {
+  Widget buildWheelArea(BuildContext context, int sendsCount) {
     if (sendsCount > 0) {
       return CustomPaint(
         painter: _Wheel(wheelDragDelta, shadowOverlay, active),
         key: keyWheel,
       );
     }
+    final theme = Theme.of(context);
     return Container(
-      child: const Center(
+      child: Center(
         child: Text(
           "Nothing Assigned\nDouble Tap",
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFFA0A0A0)),
+          style: theme.textTheme.caption,
         ),
       ),
     );
@@ -186,7 +188,6 @@ class _GroupLabel extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.fade,
-          style: TextStyle(color: Color(0xFFFFFFFF)),
         ),
       ),
     );

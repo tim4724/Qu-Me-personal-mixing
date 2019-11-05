@@ -317,32 +317,27 @@ class _PanSlider extends StatelessWidget {
             child: Stack(
               overflow: Overflow.visible,
               children: List<Widget>()
-                ..add(_Label("Left", 0, 0, 8))
-                ..add(_Label("Right", width, -1, -8))
+                ..add(_buildZeroMarker(width / 2, -12))
+                ..add(_buildZeroMarker(width / 2, height + 4))
                 ..add(
-                  muted
-                      ? Positioned(
-                          left: width / 2,
-                          top: height / 2,
-                          child: FractionalTranslation(
-                            translation: Offset(-0.5, -0.5),
-                            child: Text(
-                              "Mute",
-                              overflow: TextOverflow.visible,
-                              textScaleFactor: 2,
-                              style: TextStyle(
-                                color: Color(0x90FF0000),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Container(),
-                )
+                    _Label("Center", width / 2, height / 2, Offset(-0.5, -0.5)))
+                ..add(_Label("Left", 8, height / 2, Offset(0, -0.5)))
+                ..add(_Label("Right", width - 8, height / 2, Offset(-1, -0.5)))
+                ..add(muted
+                    ? _buildMuteLabel(width / 2, height / 2)
+                    : Container())
                 ..add(StreamBuilder(
                   initialData: _levelPanModel.getPanSlider(id),
                   stream: _levelPanModel.getPanStreamForId(id),
-                  builder: (context, snapshot) =>
-                      _FaderKnop(snapshot.data * width, active),
+                  builder: (context, snapshot) {
+                    var fractionalOffset = snapshot.data;
+                    final stepSize = 1.0 / 74.0;
+                    if (fractionalOffset > 0.5 - stepSize &&
+                        fractionalOffset < 0.5 + stepSize) {
+                      fractionalOffset = 0.5;
+                    }
+                    return _FaderKnop(fractionalOffset * width, active);
+                  },
                 )),
             ),
           );
@@ -391,30 +386,16 @@ class _LevelSlider extends StatelessWidget {
               children: [0, 1, 2, 3]
                   .map<Widget>((i) => _Label(
                       levelTexts[i],
-                      levelStops[i] * width,
-                      levelFractionalOffset[i],
-                      levelAbsoluteOffset[i]))
+                      levelStops[i] * width + levelAbsoluteOffset[i],
+                      height / 2,
+                      Offset(levelFractionalOffset[i], -0.5)))
                   .toList()
                     ..insertAll(0, _getLevelIndicator(width, height))
-                    ..add(
-                      muted
-                          ? Positioned(
-                              left: width / 2,
-                              top: height / 2,
-                              child: FractionalTranslation(
-                                translation: Offset(-0.5, -0.5),
-                                child: Text(
-                                  "Mute",
-                                  overflow: TextOverflow.visible,
-                                  textScaleFactor: 2,
-                                  style: TextStyle(
-                                    color: Color(0x90FF0000),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Container(),
-                    )
+                    ..add(_buildZeroMarker(levelStops[3] * width, -12))
+                    ..add(_buildZeroMarker(levelStops[3] * width, height + 4))
+                    ..add(muted
+                        ? _buildMuteLabel(width / 2, height / 2)
+                        : Container())
                     ..add(
                       // TODO: if linked, base on left channel!
                       StreamBuilder(
@@ -461,6 +442,23 @@ class _LevelSlider extends StatelessWidget {
       ];
     }
   }
+}
+
+Widget _buildMuteLabel(double left, double top) {
+  return _Label("Mute", left, top, Offset(-0.5, -0.5),
+      textColor: Color(0x90FF0000), textScaleFactor: 2.0);
+}
+
+Widget _buildZeroMarker(double left, double top) {
+  return Positioned(
+    left: left - 0.5,
+    top: top,
+    child: Container(
+      color: Colors.grey[800],
+      width: 1,
+      height: 8,
+    ),
+  );
 }
 
 class _FaderKnop extends StatelessWidget {
@@ -555,30 +553,36 @@ class _LevelIndicator extends StatelessWidget {
 }
 
 class _Label extends StatelessWidget {
-  static const textColor = Color.fromARGB(196, 0, 0, 0);
   final String text;
-  final double position;
-  final double fractionalOffset;
-  final double absoluteOffset;
+  final double left;
+  final double top;
+  final Offset fractionalOffset;
+  final textColor;
+  final textScaleFactor;
 
   const _Label(
-      this.text, this.position, this.fractionalOffset, this.absoluteOffset);
+    this.text,
+    this.left,
+    this.top,
+    this.fractionalOffset, {
+    this.textColor = const Color(0xC9000000),
+    this.textScaleFactor = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Positioned(
-      left: position,
-      bottom: 0,
-      top: 0,
+      left: left,
+      top: top,
       child: Center(
         child: FractionalTranslation(
-          translation: Offset(fractionalOffset, 0.0),
-          child: Transform.translate(
-            offset: Offset(absoluteOffset, 0.0),
-            child: Text(
-              text,
-              style: const TextStyle(inherit: false, color: textColor),
-            ),
+          translation: fractionalOffset,
+          child: Text(
+            text,
+            overflow: TextOverflow.visible,
+            style: theme.textTheme.caption.copyWith(color: textColor),
+            textScaleFactor: textScaleFactor,
           ),
         ),
       ),

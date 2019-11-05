@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
     scaffoldBackgroundColor: Color(0xFF010101),
     // e.g. android progress bar
     accentColor: Colors.blue,
+    cardColor: Color(0xFF161616),
     dialogBackgroundColor:
         Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
   );
