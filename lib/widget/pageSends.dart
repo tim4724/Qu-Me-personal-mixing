@@ -30,6 +30,7 @@ class _PageGroupState extends State<PageGroup> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final group = groupModel.getGroup(widget.groupId);
 
     final textController = TextEditingController.fromValue(
@@ -39,11 +40,10 @@ class _PageGroupState extends State<PageGroup> {
       ),
     );
 
-    final theme = Theme.of(context);
     Widget titleWidget;
     if (group.nameUserDefined) {
       titleWidget = Container(
-        constraints: BoxConstraints(maxWidth: 120),
+        width: 120.0,
         child: PlatformTextField(
           maxLines: 1,
           maxLength: 12,
@@ -98,13 +98,15 @@ class _PageGroupState extends State<PageGroup> {
   Widget _buildBody(Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
     final stereoMix = mainSendModel.getCurrentMix().mixType == MixType.stereo;
+    const levelPanSwitchInputHeight = 32.0;
 
     EdgeInsets listWidgetPadding;
     if (stereoMix) {
+      // We need some padding for the button to switch between panning and level
       if (landscape) {
-        listWidgetPadding = EdgeInsets.only(left: 32);
+        listWidgetPadding = EdgeInsets.only(left: levelPanSwitchInputHeight);
       } else {
-        listWidgetPadding = EdgeInsets.only(top: 32);
+        listWidgetPadding = EdgeInsets.only(top: levelPanSwitchInputHeight);
       }
     }
     final scrollDirection = landscape ? Axis.horizontal : Axis.vertical;
@@ -125,6 +127,7 @@ class _PageGroupState extends State<PageGroup> {
         );
       };
     } else {
+      // Use the basic simple list. Changes are not animated
       listBuilder = (List<int> sendIds) {
         return ListView.builder(
           padding: listWidgetPadding,
@@ -137,6 +140,7 @@ class _PageGroupState extends State<PageGroup> {
       };
     }
 
+    final theme = Theme.of(context);
     return Selector<SendGroupModel, List<int>>(
       selector: (_, model) {
         // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
@@ -157,6 +161,7 @@ class _PageGroupState extends State<PageGroup> {
                 opacity: sendsEmpty ? 0 : 1,
                 child: Container(
                   width: double.maxFinite,
+                  height: levelPanSwitchInputHeight,
                   color: Color(0xFF111111),
                   // TODO: make custom segmented control
                   child: CupertinoSegmentedControl<bool>(
@@ -166,8 +171,8 @@ class _PageGroupState extends State<PageGroup> {
                     },
                     groupValue: panMode,
                     unselectedColor: Color(0xFF111111),
-                    borderColor: Theme.of(context).accentColor,
-                    selectedColor: Theme.of(context).accentColor.withAlpha(148),
+                    borderColor: theme.accentColor,
+                    selectedColor: theme.accentColor.withAlpha(148),
                     padding: EdgeInsets.all(2),
                     onValueChanged: (bool key) {
                       if (!sendsEmpty) setState(() => panMode = key);

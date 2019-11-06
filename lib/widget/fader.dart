@@ -9,6 +9,8 @@ import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/gestures/dragFader.dart';
+import 'package:qu_me/util.dart';
+import 'package:qu_me/widget/quTheme.dart';
 
 enum LevelType { mono, stereo_left, stereo_right }
 
@@ -48,12 +50,6 @@ class VerticalFader extends Fader {
 }
 
 abstract class _FaderState extends State<Fader> {
-  static const borderRadius = BorderRadius.all(const Radius.circular(4));
-  static const int inActiveAlpha = 127;
-  static const Color backgroundActiveColor =
-      const Color.fromARGB(255, 42, 42, 42);
-  static final Color backgroundColor =
-      backgroundActiveColor.withAlpha(inActiveAlpha);
   final _levelPanModel = FaderLevelPanModel();
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
@@ -109,7 +105,6 @@ abstract class _FaderState extends State<Fader> {
   }
 
   Widget faderLabel(FaderInfo info) {
-    final active = this.active;
     String primary;
     String secondary;
     if (widget.forceDisplayTechnicalName) {
@@ -119,11 +114,25 @@ abstract class _FaderState extends State<Fader> {
       primary = info.name;
       secondary = active ? info.technicalName : info.personName;
     }
-    return _FaderLabel(primary, secondary, info.color, active);
+    Color color = info.color;
+    if (!active) {
+      final quTheme = QuThemeData.get();
+      color = color.withAlpha(quTheme.labelBackgroundAlpha);
+    }
+
+    return _FaderLabel(primary, secondary, color);
   }
 
-  BoxDecoration decoration(FaderInfo faderInfo) {
+  BoxDecoration decoration(BuildContext context, FaderInfo faderInfo) {
+    final quTheme = QuThemeData.get();
+
     Color bgColor;
+    if (active) {
+      bgColor = quTheme.faderBackgroundColor;
+    } else {
+      bgColor = quTheme.faderInactiveBackgroundColor;
+    }
+
     Gradient bgGradient;
     if (faderInfo.muted) {
       bgGradient = LinearGradient(
@@ -132,21 +141,19 @@ abstract class _FaderState extends State<Fader> {
         tileMode: TileMode.repeated,
         stops: [0, 0.5, 0.5, 1],
         colors: [
-          active ? backgroundActiveColor : backgroundColor,
-          active ? backgroundActiveColor : backgroundColor,
-          active ? Color(0x30FF0000) : Color(0x40FF0000),
-          active ? Color(0x30FF0000) : Color(0x40FF0000),
+          bgColor,
+          bgColor,
+          quTheme.faderMutedBackgroundColor,
+          quTheme.faderMutedBackgroundColor
         ],
       );
-    } else {
-      bgColor = active ? backgroundActiveColor : backgroundColor;
     }
 
     return BoxDecoration(
-      color: bgColor,
+      color: bgGradient == null ? bgColor : null,
       gradient: bgGradient,
-      borderRadius: _FaderState.borderRadius,
-      border: Border.all(color: faderInfo.color, width: 1),
+      borderRadius: quTheme.borderRadius,
+      border: Border.all(color: faderInfo.color, width: quTheme.borderWidth),
     );
   }
 
@@ -173,7 +180,7 @@ abstract class _FaderState extends State<Fader> {
             child: widget.pan
                 ? _PanSlider(faderInfo.id, faderInfo.muted, active)
                 : _LevelSlider(
-                    faderInfo.id, active, faderInfo.stereo, faderInfo.muted)),
+                    faderInfo.id, faderInfo.muted, active, faderInfo.stereo)),
         duration: const Duration(milliseconds: 400));
   }
 }
@@ -194,7 +201,7 @@ class _HorizontalFaderState extends _FaderState {
   Widget buildFader(BuildContext context, FaderInfo faderInfo) {
     return Container(
       height: 56,
-      decoration: decoration(faderInfo),
+      decoration: decoration(context, faderInfo),
       child: Row(
         children: [
           faderLabel(faderInfo),
@@ -222,7 +229,7 @@ class _VerticalFaderState extends _FaderState {
   Widget buildFader(BuildContext context, FaderInfo faderInfo) {
     return Container(
       width: 72,
-      decoration: decoration(faderInfo),
+      decoration: decoration(context, faderInfo),
       child: Column(
         children: [
           faderLabel(faderInfo),
@@ -242,189 +249,211 @@ class _VerticalFaderState extends _FaderState {
 }
 
 class _FaderLabel extends StatelessWidget {
-  static const secondaryTextColor = const Color.fromARGB(196, 255, 255, 255);
   final String primary;
-  final TextAlign textAlignPrimary;
   final String secondary;
   final Color color;
-  final bool active;
 
-  const _FaderLabel(this.primary, this.secondary, this.color, this.active,
-      {Key key, this.textAlignPrimary = TextAlign.start})
+  const _FaderLabel(this.primary, this.secondary, this.color, {Key key})
       : super(key: key);
-
-  Widget buildNameLabel(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          primary,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.fade,
-          textAlign: textAlignPrimary,
-          style: TextStyle(color: Color(0xFFFFFFFF)),
-        ),
-        Text(
-          secondary,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.fade,
-          textScaleFactor: 0.9,
-          style: TextStyle(color: secondaryTextColor),
-        )
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       constraints: const BoxConstraints.tightFor(width: 72, height: 50),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      color: active ? color : color.withAlpha(_FaderState.inActiveAlpha),
-      child: buildNameLabel(context),
+      padding: const EdgeInsets.all(8),
+      color: color,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Text(
+            primary,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+          ),
+          Text(
+            secondary,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+            style: theme.textTheme.caption,
+          )
+        ],
+      ),
     );
   }
 }
 
-class _PanSlider extends StatelessWidget {
-  static const radius = 9.0;
-  final _levelPanModel = FaderLevelPanModel();
+abstract class _Slider extends StatelessWidget {
+  final levelPanModel = FaderLevelPanModel();
   final int id;
   final bool muted;
   final bool active;
 
-  _PanSlider(this.id, this.muted, this.active, {Key key}) : super(key: key);
+  _Slider(this.id, this.muted, this.active, {key: Key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
           final height = constraints.maxHeight;
-
           return Container(
             height: height,
-            decoration: BoxDecoration(
-              color: Colors.grey[600],
-              borderRadius:
-                  const BorderRadius.all(const Radius.circular(radius)),
-            ),
+            width: width,
+            decoration: decoration(),
             child: Stack(
               overflow: Overflow.visible,
-              children: List<Widget>()
-                ..add(_buildZeroMarker(width / 2, -12))
-                ..add(_buildZeroMarker(width / 2, height + 4))
-                ..add(
-                    _Label("Center", width / 2, height / 2, Offset(-0.5, -0.5)))
-                ..add(_Label("Left", 8, height / 2, Offset(0, -0.5)))
-                ..add(_Label("Right", width - 8, height / 2, Offset(-1, -0.5)))
-                ..add(muted
-                    ? _buildMuteLabel(width / 2, height / 2)
-                    : Container())
-                ..add(StreamBuilder(
-                  initialData: _levelPanModel.getPanSlider(id),
-                  stream: _levelPanModel.getPanStreamForId(id),
-                  builder: (context, snapshot) {
-                    var fractionalOffset = snapshot.data;
-                    final stepSize = 1.0 / 74.0;
-                    if (fractionalOffset > 0.5 - stepSize &&
-                        fractionalOffset < 0.5 + stepSize) {
-                      fractionalOffset = 0.5;
-                    }
-                    return _FaderKnop(fractionalOffset * width, active);
-                  },
-                )),
+              children: children(context, width, height),
             ),
           );
         },
+      ),
+    );
+  }
+
+  BoxDecoration decoration();
+
+  List<Widget> children(BuildContext context, double width, double height);
+
+  Color getKnobColor(BuildContext context) {
+    final quTheme = QuThemeData.get();
+    final theme = Theme.of(context);
+    Color knobColor = theme.iconTheme.color;
+    if (!active) {
+      knobColor = knobColor.withAlpha(quTheme.labelBackgroundAlpha);
+    }
+    return knobColor;
+  }
+
+  Widget buildMuteLabel(double left, double top) {
+    final color = QuThemeData.get().sliderMuteLabelColor;
+    return _Label("Mute", left, top, Offset(-0.5, -0.5),
+        textColor: color, textScaleFactor: 2.0);
+  }
+
+  Widget buildZeroMarker(double left, double top) {
+    final quTheme = QuThemeData.get();
+    return Positioned(
+      left: left - 0.5,
+      top: top,
+      child: Container(
+        color: quTheme.sliderZeroMarkerColor,
+        width: 1,
+        height: 8,
       ),
     );
   }
 }
 
-class _LevelSlider extends StatelessWidget {
+class _PanSlider extends _Slider {
+  _PanSlider(int id, bool muted, bool active, {Key key})
+      : super(id, muted, active, key: key);
+
+  @override
+  BoxDecoration decoration() {
+    final quTheme = QuThemeData.get();
+    return BoxDecoration(
+      color: quTheme.sliderPanBackgroundColor,
+      borderRadius: quTheme.sliderBorderRadius,
+    );
+  }
+
+  List<Widget> children(BuildContext context, double width, double height) {
+    final knobColor = getKnobColor(context);
+    final xCenter = width / 2;
+    return [
+      buildZeroMarker(xCenter, -12),
+      buildZeroMarker(xCenter, height + 4),
+      _Label("Left", 8, height / 2, Offset(0, -0.5)),
+      _Label("Center", xCenter, height / 2, Offset(-0.5, -0.5)),
+      _Label("Right", width - 8, height / 2, Offset(-1, -0.5)),
+      if (muted) buildMuteLabel(xCenter, height / 2),
+      StreamBuilder(
+        initialData: levelPanModel.getPanSlider(id),
+        stream: levelPanModel.getPanStreamForId(id),
+        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+          var fractionalOffset = snapshot.data;
+          const stepSize = 1.0 / 74.0;
+          if (fractionalOffset > 0.5 - stepSize &&
+              fractionalOffset < 0.5 + stepSize) {
+            fractionalOffset = 0.5;
+          }
+          return _FaderKnop(fractionalOffset * width, knobColor);
+        },
+      )
+    ];
+  }
+}
+
+class _LevelSlider extends _Slider {
   static const stop = convertFromDbValue;
   static const levelTexts = ["-inf", "-30", "-10", "0"];
   static const levelFractionalOffset = [0.0, -0.5, -0.5, -0.5];
   static const levelAbsoluteOffset = [8.0, 0.0, 0.0, 0.0];
-  static const colors = [Colors.green, Colors.green, Colors.yellow, Colors.red];
-  static const radius = 9.0;
   static final levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];
   static final gradientStops = [stop(-128), stop(-5), stop(0), stop(10)];
-  final _levelPanModel = FaderLevelPanModel();
-  final int id;
-  final bool active;
   final bool stereo;
-  final bool muted;
 
-  _LevelSlider(this.id, this.active, this.stereo, this.muted, {Key key})
-      : super(key: key);
+  _LevelSlider(int id, bool muted, bool active, this.stereo, {Key key})
+      : super(id, muted, active, key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 18, 20, 18),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          var width = constraints.maxWidth;
-          var height = constraints.maxHeight;
-          return Container(
-            height: height,
-            width: width,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors, stops: gradientStops),
-              borderRadius:
-                  const BorderRadius.all(const Radius.circular(radius)),
-            ),
-            child: Stack(
-              overflow: Overflow.visible,
-              children: [0, 1, 2, 3]
-                  .map<Widget>((i) => _Label(
-                      levelTexts[i],
-                      levelStops[i] * width + levelAbsoluteOffset[i],
-                      height / 2,
-                      Offset(levelFractionalOffset[i], -0.5)))
-                  .toList()
-                    ..insertAll(0, _getLevelIndicator(width, height))
-                    ..add(_buildZeroMarker(levelStops[3] * width, -12))
-                    ..add(_buildZeroMarker(levelStops[3] * width, height + 4))
-                    ..add(muted
-                        ? _buildMuteLabel(width / 2, height / 2)
-                        : Container())
-                    ..add(
-                      // TODO: if linked, base on left channel!
-                      StreamBuilder(
-                        initialData: _levelPanModel.getLevelSLider(id),
-                        stream: _levelPanModel.getLevelStreamForId(id),
-                        builder: (context, snapshot) =>
-                            _FaderKnop(snapshot.data * width, active),
-                      ),
-                    ),
-            ),
-          );
-        },
-      ),
+  BoxDecoration decoration() {
+    final quTheme = QuThemeData.get();
+    final colors = quTheme.sliderLevelColors;
+    return BoxDecoration(
+      gradient: LinearGradient(colors: colors, stops: gradientStops),
+      borderRadius: quTheme.sliderBorderRadius,
     );
   }
 
-  List<Widget> _getLevelIndicator(double width, double height) {
+  @override
+  List<Widget> children(BuildContext context, double width, double height) {
+    final knobColor = getKnobColor(context);
+    final yCenter = height / 2;
+    final xCenter = width / 2;
+    final levelLabels = mapIndexed(levelTexts, (i, text) {
+      final left = levelStops[i] * width + levelAbsoluteOffset[i];
+      final fractionalOffset = Offset(levelFractionalOffset[i], -0.5);
+      return _Label(text, left, yCenter, fractionalOffset);
+    });
+    final zeroStop = levelStops[3] * width;
+    return [
+      ...getLevelIndicator(width, height),
+      buildZeroMarker(zeroStop, -12),
+      buildZeroMarker(zeroStop, height + 4),
+      ...levelLabels,
+      if (muted) buildMuteLabel(xCenter, yCenter),
+      StreamBuilder(
+        initialData: levelPanModel.getLevelSLider(id),
+        stream: levelPanModel.getLevelStreamForId(id),
+        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+          // TODO: if linked, base on left channel!
+          return _FaderKnop(snapshot.data * width, knobColor);
+        },
+      ),
+    ];
+  }
+
+  List<Widget> getLevelIndicator(double width, double height) {
     if (stereo) {
       return [
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
-          builder: (context, snapshot) {
+          builder: (_, AsyncSnapshot<List<double>> snapshot) {
             final level = convertFromDbValue(snapshot.data[id]);
             return _LevelIndicator.left(level, width, height / 2.0);
           },
         ),
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
-          builder: (context, snapshot) {
+          builder: (_, AsyncSnapshot<List<double>> snapshot) {
             final level = convertFromDbValue(snapshot.data[id + 1]);
             return _LevelIndicator.right(level, width, height / 2.0);
           },
@@ -434,7 +463,7 @@ class _LevelSlider extends StatelessWidget {
       return [
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
-          builder: (context, snapshot) {
+          builder: (_, AsyncSnapshot<List<double>> snapshot) {
             final level = convertFromDbValue(snapshot.data[id]);
             return _LevelIndicator.mono(level, width);
           },
@@ -444,30 +473,11 @@ class _LevelSlider extends StatelessWidget {
   }
 }
 
-Widget _buildMuteLabel(double left, double top) {
-  return _Label("Mute", left, top, Offset(-0.5, -0.5),
-      textColor: Color(0x90FF0000), textScaleFactor: 2.0);
-}
-
-Widget _buildZeroMarker(double left, double top) {
-  return Positioned(
-    left: left - 0.5,
-    top: top,
-    child: Container(
-      color: Colors.grey[800],
-      width: 1,
-      height: 8,
-    ),
-  );
-}
-
 class _FaderKnop extends StatelessWidget {
-  static const color = Color.fromARGB(_FaderState.inActiveAlpha, 255, 255, 255);
-  static const colorActive = Color.fromARGB(255, 255, 255, 255);
   final double position;
-  final bool active;
+  final Color color;
 
-  const _FaderKnop(this.position, this.active);
+  const _FaderKnop(this.position, this.color);
 
   @override
   Widget build(BuildContext context) {
@@ -480,7 +490,7 @@ class _FaderKnop extends StatelessWidget {
         child: Center(
           child: Icon(
             Icons.adjust,
-            color: active ? colorActive : color,
+            color: color,
             size: 40,
           ),
         ),
@@ -490,7 +500,6 @@ class _FaderKnop extends StatelessWidget {
 }
 
 class _LevelIndicator extends StatelessWidget {
-  static const shadowColor = const Color.fromARGB(128, 0, 0, 0);
   final LevelType type;
   final double level;
   final double width;
@@ -511,28 +520,30 @@ class _LevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const radius = _LevelSlider.radius;
+    final quTheme = QuThemeData.get();
+    final radius = quTheme.sliderRadius;
     final levelPos = max((1 - level) * width, radius);
     var yOffset = 0.0;
+    // TODO: proberbly can be simplified because min level is -110 db
     BorderRadius borderRadius;
     switch (type) {
       case LevelType.stereo_left:
         borderRadius = BorderRadius.only(
           topLeft: Radius.circular(max(0, radius - width + levelPos)),
-          topRight: const Radius.circular(radius),
+          topRight: Radius.circular(radius),
         );
         break;
       case LevelType.stereo_right:
         borderRadius = BorderRadius.only(
           bottomLeft: Radius.circular(max(0, radius - width + levelPos)),
-          bottomRight: const Radius.circular(radius),
+          bottomRight: Radius.circular(radius),
         );
         yOffset = height;
         break;
       case LevelType.mono:
       default:
         borderRadius = BorderRadius.horizontal(
-          right: const Radius.circular(radius),
+          right: Radius.circular(radius),
           left: Radius.circular(max(0, radius - width + levelPos)),
         );
         break;
@@ -544,7 +555,7 @@ class _LevelIndicator extends StatelessWidget {
         width: levelPos,
         height: height,
         decoration: BoxDecoration(
-          color: shadowColor,
+          color: quTheme.sliderLevelShadowColor,
           borderRadius: borderRadius,
         ),
       ),
@@ -565,13 +576,14 @@ class _Label extends StatelessWidget {
     this.left,
     this.top,
     this.fractionalOffset, {
-    this.textColor = const Color(0xC9000000),
+    this.textColor,
     this.textScaleFactor = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final color = textColor ?? QuThemeData.get().sliderValueLabelColor;
     return Positioned(
       left: left,
       top: top,
@@ -581,7 +593,7 @@ class _Label extends StatelessWidget {
           child: Text(
             text,
             overflow: TextOverflow.visible,
-            style: theme.textTheme.caption.copyWith(color: textColor),
+            style: theme.textTheme.caption.copyWith(color: color),
             textScaleFactor: textScaleFactor,
           ),
         ),

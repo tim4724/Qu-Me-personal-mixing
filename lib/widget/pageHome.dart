@@ -14,6 +14,7 @@ import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 import 'package:qu_me/widget/pageSends.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
+import 'package:qu_me/widget/quTheme.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
@@ -218,6 +219,7 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildMuteButton(bool muteOn) {
+    final quTheme = QuThemeData.get();
     return QuCheckButton.simpleText(
       "Mute",
       selected: muteOn,
@@ -226,7 +228,7 @@ class _PageHomeState extends State<PageHome> {
         widget._mainSendMixModel.toogleMixMasterMute();
       },
       margin: EdgeInsets.only(bottom: 8),
-      checkColor: Colors.red,
+      checkColor: quTheme.mutedColor,
     );
   }
 

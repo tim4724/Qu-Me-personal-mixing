@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
+import 'package:qu_me/widget/quTheme.dart';
 
 class MyApp extends StatelessWidget {
   static final themeData = ThemeData(
@@ -18,9 +19,10 @@ class MyApp extends StatelessWidget {
     scaffoldBackgroundColor: Color(0xFF010101),
     // e.g. android progress bar
     accentColor: Colors.blue,
+    textSelectionHandleColor: Colors.blue,
     cardColor: Color(0xFF161616),
     dialogBackgroundColor:
-        Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
+    Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
   );
   static final cupertinoThemeData = MaterialBasedCupertinoThemeData(
     materialTheme: themeData.copyWith(
@@ -28,6 +30,41 @@ class MyApp extends StatelessWidget {
         barBackgroundColor: Color(0xFF111111),
       ),
     ),
+  );
+  static const quThemeData = QuThemeData(
+    itemRadius: 4.0,
+    buttonTextStyle: TextStyle(
+      color: Colors.black,
+      fontSize: 14.0,
+    ),
+    buttonColor: Colors.grey,
+    buttonCheckColor: Colors.green,
+    buttonPressedOpacity: 0.3,
+    borderWidth: 1.0,
+    groupAccentColor: Color(0xFF111111),
+    groupBorderColor: Color(0xFF424242),
+    groupBackgroundColor: Color(0xFF070707),
+    groupSelectedBackgroundColor: Color(0xFF010101),
+    groupLabelTextStyle: TextStyle(),
+    labelBackgroundAlpha: 148,
+    wheelColor: Color(0xFF9A9A9A),
+    wheelInactiveColor: Color(0xC9A9A9A9),
+    wheelCarveColor: Color(0xFF212121),
+    mutedColor: Colors.red,
+    faderBackgroundColor: Color(0xFF010101),
+    faderInactiveBackgroundColor: Color(0xFF070707),
+    // Colors.red with alpha
+    faderMutedBackgroundColor: Color(0x40F44336),
+    sliderRadius: 9.0,
+    // Colors.grey[600]
+    sliderPanBackgroundColor: Color(0xFF757575),
+    sliderValueLabelColor: Color(0xC9000000),
+    // Colors.red with alpha
+    sliderMuteLabelColor: Color(0xC9F44336),
+    sliderLevelShadowColor: Color(0x80000000),
+    // Colors.gray[800]
+    sliderZeroMarkerColor: Color(0xFF424242),
+    sliderLevelColors: [Colors.green, Colors.green, Colors.yellow, Colors.red],
   );
 
   @override
@@ -40,15 +77,16 @@ class MyApp extends StatelessWidget {
       child: Theme(
         data: themeData,
         child: PlatformProvider(
-          builder: (context) => PlatformApp(
-            title: 'QU ME',
-            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-              DefaultMaterialLocalizations.delegate,
-              DefaultWidgetsLocalizations.delegate,
-            ],
-            ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
-            home: PageLogin(),
-          ),
+          builder: (context) =>
+              PlatformApp(
+                title: 'QU ME',
+                localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+                  DefaultMaterialLocalizations.delegate,
+                  DefaultWidgetsLocalizations.delegate,
+                ],
+                ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
+                home: PageLogin(),
+              ),
         ),
       ),
     );

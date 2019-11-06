@@ -24,10 +24,10 @@ class QuDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(title),
       content: SingleChildScrollView(child: body),
-      contentPadding: EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0),
+      contentPadding: EdgeInsets.fromLTRB(24, 12, 24, 0),
       actions: <Widget>[action],
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(4.0)),
+        borderRadius: BorderRadius.all(Radius.circular(4)),
       ),
     );
   }

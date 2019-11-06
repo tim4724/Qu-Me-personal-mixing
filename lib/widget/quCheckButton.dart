@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:qu_me/widget/quTheme.dart';
 
 class QuCheckButton extends StatefulWidget {
   final bool selected;
@@ -20,8 +21,8 @@ class QuCheckButton extends StatefulWidget {
     this.padding = const EdgeInsets.all(8.0),
     this.width,
     this.height,
-    this.checkColor = Colors.green,
-    this.pressedOpacity = 0.3,
+    this.checkColor,
+    this.pressedOpacity,
   });
 
   QuCheckButton.simpleText(
@@ -32,8 +33,8 @@ class QuCheckButton extends StatefulWidget {
     padding = const EdgeInsets.all(8.0),
     width,
     height,
-    checkColor = Colors.green,
-    pressedOpacity = 0.3,
+    checkColor,
+    pressedOpacity,
   })  : child = Text(
           text,
           textAlign: TextAlign.center,
@@ -42,8 +43,8 @@ class QuCheckButton extends StatefulWidget {
         onSelect = onSelect,
         margin = margin,
         padding = padding,
-        width = width ?? null,
-        height = height ?? null,
+        width = width,
+        height = height,
         checkColor = checkColor,
         pressedOpacity = pressedOpacity;
 
@@ -56,6 +57,14 @@ class _QuCheckButtonState extends State<QuCheckButton> {
 
   @override
   Widget build(BuildContext context) {
+    final quTheme = QuThemeData.get();
+    Color buttonColor;
+    if (widget.selected) {
+      buttonColor = widget.checkColor ?? quTheme.buttonCheckColor;
+    } else {
+      buttonColor = quTheme.buttonColor;
+    }
+
     return GestureDetector(
       onTapDown: (_) => setState(() => down = true),
       onTapUp: (_) => setState(() => down = false),
@@ -64,21 +73,21 @@ class _QuCheckButtonState extends State<QuCheckButton> {
       child: Padding(
         padding: widget.margin,
         child: AnimatedOpacity(
-          opacity: down ? widget.pressedOpacity : 1.0,
+          opacity: down
+              ? widget.pressedOpacity ?? quTheme.buttonPressedOpacity
+              : 1.0,
           duration: down ? Duration.zero : const Duration(milliseconds: 100),
           child: Container(
             width: widget.width,
             height: widget.height,
             padding: widget.padding,
             child: DefaultTextStyle(
-                style: TextStyle(
-                  color: Color(0xFF000000),
-                  fontSize: 14.0
-                ),
-                child: widget.child),
+              style: quTheme.buttonTextStyle,
+              child: widget.child,
+            ),
             decoration: BoxDecoration(
-              color: widget.selected ? widget.checkColor : Colors.grey,
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
+              color: buttonColor,
+              borderRadius: quTheme.borderRadius,
             ),
           ),
         ),

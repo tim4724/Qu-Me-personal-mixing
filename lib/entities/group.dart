@@ -1,4 +1,4 @@
-import 'dart:ui';
+
 
 class SendGroup {
   final int id;
@@ -8,11 +8,9 @@ class SendGroup {
   // If the user is allowed to change the Assignment
   final bool assignmentUserDefined;
   String name; // user defined name
-  Color color;
 
   SendGroup(this.id, this.technicalName, this.displayId, this.nameUserDefined,
       this.assignmentUserDefined) {
     name = technicalName;
-    color = Color(0xFF424242);
   }
 }

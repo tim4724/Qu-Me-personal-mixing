@@ -9,6 +9,7 @@ import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
+import 'package:qu_me/widget/quTheme.dart';
 
 class PageLogin extends StatefulWidget {
   PageLogin({Key key}) : super(key: key);
@@ -41,6 +42,8 @@ class _PageLoginState extends State<PageLogin> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final quTheme = QuThemeData.get();
+
     return PlatformScaffold(
       body: Center(
         child: Column(
@@ -66,11 +69,11 @@ class _PageLoginState extends State<PageLogin> {
                   width: 200,
                   decoration: BoxDecoration(
                     color: theme.cardColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
                   ),
                   child: ListView.builder(
                     itemCount: mixers.length,
-                    padding: const EdgeInsets.all(0),
+                    padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     itemBuilder: (BuildContext context, int i) {
                       return _MixerItem(
