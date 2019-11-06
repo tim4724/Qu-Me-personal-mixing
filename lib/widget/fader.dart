@@ -171,17 +171,19 @@ abstract class _FaderState extends State<Fader> {
   Widget buildFader(BuildContext context, FaderInfo faderInfo);
 
   Widget buildSlider(BuildContext context, FaderInfo faderInfo) {
+    // Switch between pan and level mode
     return AnimatedSwitcher(
-        key: keyFaderSlider,
-        child: RawGestureDetector(
-            key: ValueKey(widget.pan),
-            behavior: HitTestBehavior.opaque,
-            gestures: gestures,
-            child: widget.pan
-                ? _PanSlider(faderInfo.id, faderInfo.muted, active)
-                : _LevelSlider(
-                    faderInfo.id, faderInfo.muted, active, faderInfo.stereo)),
-        duration: const Duration(milliseconds: 400));
+      key: keyFaderSlider,
+      child: RawGestureDetector(
+          key: ValueKey(widget.pan),
+          behavior: HitTestBehavior.opaque,
+          gestures: gestures,
+          child: widget.pan
+              ? _PanSlider(faderInfo.id, faderInfo.muted, active)
+              : _LevelSlider(
+                  faderInfo.id, faderInfo.muted, active, faderInfo.stereo)),
+      duration: const Duration(milliseconds: 400),
+    );
   }
 }
 
@@ -235,7 +237,8 @@ class _VerticalFaderState extends _FaderState {
           faderLabel(faderInfo),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 8, right: 8),
+              // padding because the width is larger than in horizontal fader
+              padding: EdgeInsets.symmetric(horizontal: 8),
               child: RotatedBox(
                 quarterTurns: 3,
                 child: buildSlider(context, faderInfo),
