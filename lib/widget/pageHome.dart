@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
@@ -33,6 +34,7 @@ class _PageHomeState extends State<PageHome> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context);
     // TODO: fade pagegroup widget
     print("build pageHome");
     // TODO : avoid rebuilding entire widget on wheel scroll
@@ -49,7 +51,7 @@ class _PageHomeState extends State<PageHome> {
                 ios: (context) => CupertinoNavigationBarData(
                   leading: CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: Text('Logout'),
+                    child: Text(localization.logout),
                     onPressed: () => logout(),
                   ),
                 ),
