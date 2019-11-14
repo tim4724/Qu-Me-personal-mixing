@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:quiver/collection.dart';
 
@@ -10,11 +11,11 @@ class SendGroupModel extends ChangeNotifier {
   factory SendGroupModel() => _instance;
 
   final _groups = [
-    SendGroup(0, "Group 1", "1", true, true),
-    SendGroup(1, "Group 2", "2", true, true),
-    SendGroup(2, "Group 3", "3", true, true),
-    SendGroup(3, "Me", "me", false, true),
-    SendGroup(4, "All", "", false, false)
+    SendGroup(0, SendGroupType.Custom),
+    SendGroup(1, SendGroupType.Custom),
+    SendGroup(2, SendGroupType.Custom),
+    SendGroup(3, SendGroupType.Me),
+    SendGroup(4, SendGroupType.All)
   ];
   final _assignement = _GroupAssignement();
   final availableSendIds = List<int>();
@@ -27,6 +28,7 @@ class SendGroupModel extends ChangeNotifier {
 
     // remove send from group if the send is not available anymore
     for (final sendId in _assignement.getAllSendIds()) {
+      // TODO: nte the best performance probably
       if (!availableSendIds.contains(sendId)) {
         _assignement.unset(sendId);
       }
@@ -48,7 +50,7 @@ class SendGroupModel extends ChangeNotifier {
   }
 
   List<int> getSendIdsForGroup(int groupId) {
-    if (groupId == 4) {
+    if (_groups[groupId].sendGroupType == SendGroupType.All) {
       // This group contains all available sends
       return UnmodifiableListView(availableSendIds);
     }
@@ -57,10 +59,7 @@ class SendGroupModel extends ChangeNotifier {
 
   SendGroup getGroupForSendId(int sendId) {
     final groupId = _assignement.getGroupId(sendId);
-    if (groupId != null) {
-      return getGroup(groupId);
-    }
-    return null;
+    return groupId != null ? getGroup(groupId) : null;
   }
 
   void toggleSendAssignement(int groupId, int sendId, bool linked) {
@@ -109,11 +108,40 @@ class SendGroupModel extends ChangeNotifier {
     return _groups[id];
   }
 
-  void setGroupName(int id, String name) {
-    if (name == null || name.isEmpty) {
-      name = _groups[id].technicalName;
+  String getGroupShortNameForId(int groupId) {
+    return getGroupShortName(_groups[groupId]);
+  }
+
+  static String getGroupTechnicalName(SendGroup group) {
+    if (group != null) {
+      switch (group.sendGroupType) {
+        case SendGroupType.Custom:
+          return QuLocalizations.get(Strings.Group, ["${group.id + 1}"]);
+        case SendGroupType.Me:
+          return QuLocalizations.get(Strings.Me);
+        case SendGroupType.All:
+          return QuLocalizations.get(Strings.All);
+      }
     }
-    _groups[id].name = name;
+    return "";
+  }
+
+  static String getGroupShortName(SendGroup group) {
+    if (group != null) {
+      switch (group.sendGroupType) {
+        case SendGroupType.Custom:
+          return "${group.id + 1}";
+        case SendGroupType.Me:
+          return QuLocalizations.get(Strings.Me);
+        case SendGroupType.All:
+          return QuLocalizations.get(Strings.All);
+      }
+    }
+    return "";
+  }
+
+  void setGroupName(int id, String name) {
+    _groups[id].name = name.trim();
     notifyListeners();
   }
 }

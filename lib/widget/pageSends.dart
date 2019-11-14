@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
@@ -33,15 +34,19 @@ class _PageGroupState extends State<PageGroup> {
     final theme = Theme.of(context);
     final group = groupModel.getGroup(widget.groupId);
 
+    String groupName = group.name;
+    if (groupName == null || groupName.isEmpty) {
+      groupName = SendGroupModel.getGroupTechnicalName(group);
+    }
     final textController = TextEditingController.fromValue(
       TextEditingValue(
-        text: group.name,
-        selection: TextSelection.collapsed(offset: group.name.length),
+        text: groupName,
+        selection: TextSelection.collapsed(offset: groupName.length),
       ),
     );
 
     Widget titleWidget;
-    if (group.nameUserDefined) {
+    if (group.sendGroupType == SendGroupType.Custom) {
       titleWidget = Container(
         width: 120.0,
         child: PlatformTextField(
@@ -49,7 +54,7 @@ class _PageGroupState extends State<PageGroup> {
           maxLength: 12,
           android: (context) => MaterialTextFieldData(
             decoration: InputDecoration(
-              hintText: "Name",
+              hintText: QuLocalizations.get(Strings.SendGroupName),
               counterText: "",
             ),
           ),
@@ -60,15 +65,15 @@ class _PageGroupState extends State<PageGroup> {
         ),
       );
     } else {
-      titleWidget = Text(group.name, textAlign: TextAlign.center);
+      titleWidget = Text(groupName, textAlign: TextAlign.center);
     }
 
     List<Widget> trailingActions;
-    if (group.assignmentUserDefined) {
+    if (group.sendGroupType != SendGroupType.All) {
       trailingActions = [
         PlatformButton(
           padding: EdgeInsets.zero,
-          child: Text('Assign'),
+          child: Text(QuLocalizations.get(Strings.Assign)),
           androidFlat: (context) => MaterialFlatButtonData(),
           onPressed: () {
             showPlatformDialog(
@@ -112,7 +117,7 @@ class _PageGroupState extends State<PageGroup> {
     final scrollDirection = landscape ? Axis.horizontal : Axis.vertical;
 
     Widget Function(List<int>) listBuilder;
-    if (group.assignmentUserDefined) {
+    if (group.sendGroupType != SendGroupType.All) {
       // Group assignment can change, therefore use this animated list
       final buildListItem = (context, int sendId, i, Animation<double> anim) {
         return _buildAnimatedFader(anim, sendId, landscape);
@@ -166,8 +171,8 @@ class _PageGroupState extends State<PageGroup> {
                   // TODO: make custom segmented control
                   child: CupertinoSegmentedControl<bool>(
                     children: {
-                      false: Text("Level"),
-                      true: Text("Panorama"),
+                      false: Text(QuLocalizations.get(Strings.Level)),
+                      true: Text(QuLocalizations.get(Strings.Panorama)),
                     },
                     groupValue: panMode,
                     unselectedColor: Color(0xFF111111),

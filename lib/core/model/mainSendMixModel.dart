@@ -100,10 +100,8 @@ class MainSendMixModel {
         }
       }
     } else {
-      // TODO improve
-      for (Send send in sends) {
-        availableSends.add(send.id);
-      }
+      // TODO add selection for QU-24, Qu-32 ...
+      availableSends.addAll(sends.map((send) => send.id));
     }
     SendGroupModel().setAvailableSends(availableSends);
   }

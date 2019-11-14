@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/levelConverter.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
@@ -336,7 +337,8 @@ abstract class _Slider extends StatelessWidget {
 
   Widget buildMuteLabel(double left, double top) {
     final color = QuThemeData.get().sliderMuteLabelColor;
-    return _Label("Mute", left, top, Offset(-0.5, -0.5),
+    final text = QuLocalizations.get(Strings.Mute);
+    return _Label(text, left, top, Offset(-0.5, -0.5),
         textColor: color, textScaleFactor: 2.0);
   }
 
@@ -370,12 +372,15 @@ class _PanSlider extends _Slider {
   List<Widget> children(BuildContext context, double width, double height) {
     final knobColor = getKnobColor(context);
     final xCenter = width / 2;
+    final yCenter = height / 2;
+    final labels =
+        QuLocalizations.getList([Strings.Left, Strings.Center, Strings.Right]);
     return [
       buildZeroMarker(xCenter, -12),
       buildZeroMarker(xCenter, height + 4),
-      _Label("Left", 8, height / 2, Offset(0, -0.5)),
-      _Label("Center", xCenter, height / 2, Offset(-0.5, -0.5)),
-      _Label("Right", width - 8, height / 2, Offset(-1, -0.5)),
+      _Label(labels[0], 8, yCenter, Offset(0, -0.5)),
+      _Label(labels[1], xCenter, yCenter, Offset(-0.5, -0.5)),
+      _Label(labels[2], width - 8, yCenter, Offset(-1, -0.5)),
       if (muted) buildMuteLabel(xCenter, height / 2),
       StreamBuilder(
         initialData: levelPanModel.getPanSlider(id),
@@ -396,7 +401,7 @@ class _PanSlider extends _Slider {
 
 class _LevelSlider extends _Slider {
   static const stop = convertFromDbValue;
-  static const levelTexts = ["-inf", "-30", "-10", "0"];
+  static const levelTexts = ["-\u221e", "-30", "-10", "0"]; // TODO: inf symbol?
   static const levelFractionalOffset = [0.0, -0.5, -0.5, -0.5];
   static const levelAbsoluteOffset = [8.0, 0.0, 0.0, 0.0];
   static final levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];

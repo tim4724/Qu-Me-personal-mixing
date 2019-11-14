@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
@@ -49,7 +50,7 @@ class _PageHomeState extends State<PageHome> {
                 ios: (context) => CupertinoNavigationBarData(
                   leading: CupertinoButton(
                     padding: EdgeInsets.zero,
-                    child: Text('Logout'),
+                    child: Text(QuLocalizations.get(Strings.Logout)),
                     onPressed: () => logout(),
                   ),
                 ),
@@ -63,7 +64,7 @@ class _PageHomeState extends State<PageHome> {
                   PlatformButton(
                     androidFlat: (context) => MaterialFlatButtonData(),
                     padding: EdgeInsets.zero,
-                    child: Text('Mix Select'),
+                    child: Text(QuLocalizations.get(Strings.MixSelect)),
                     onPressed: () {
                       showSelectMixDialog();
                     },
@@ -221,7 +222,7 @@ class _PageHomeState extends State<PageHome> {
   Widget buildMuteButton(bool muteOn) {
     final quTheme = QuThemeData.get();
     return QuCheckButton.simpleText(
-      "Mute",
+      QuLocalizations.get(Strings.Mute),
       selected: muteOn,
       width: 72.0,
       onSelect: () {

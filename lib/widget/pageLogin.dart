@@ -4,16 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
 import 'package:qu_me/widget/pageHome.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
-import 'package:qu_me/widget/quTheme.dart';
 
 class PageLogin extends StatefulWidget {
   PageLogin({Key key}) : super(key: key);
-  final String title = "QU ME";
 
   @override
   _PageLoginState createState() => _PageLoginState();
@@ -22,7 +21,9 @@ class PageLogin extends StatefulWidget {
 class _PageLoginState extends State<PageLogin> {
   final connectionModel = ConnectionModel();
   final mixingModel = MainSendMixModel();
-  final mixers = {"Demo": InternetAddress.loopbackIPv4};
+  final mixers = {
+    QuLocalizations.get(Strings.Demo): InternetAddress.loopbackIPv4
+  };
   var loading = false;
 
   @protected
@@ -42,7 +43,6 @@ class _PageLoginState extends State<PageLogin> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final quTheme = QuThemeData.get();
 
     return PlatformScaffold(
       body: Center(
@@ -57,7 +57,7 @@ class _PageLoginState extends State<PageLogin> {
             Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                widget.title,
+                QuLocalizations.get(Strings.AppName),
               ),
             ),
             Stack(

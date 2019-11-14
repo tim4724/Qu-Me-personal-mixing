@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
@@ -38,12 +39,14 @@ class DialogAssignSends extends StatelessWidget {
       },
     );
     final doneAction = PlatformButton(
-      child: Text("Done"),
+      child: Text(QuLocalizations.get(Strings.Done)),
       androidFlat: (context) => MaterialFlatButtonData(),
       onPressed: () => Navigator.of(context).pop(),
     );
+
+    String name = groupModel.getGroupShortNameForId(currentGroupId);
     return QuDialog(
-      title: 'Assign to ${groupModel.getGroup(currentGroupId).technicalName}',
+      title: QuLocalizations.get(Strings.AssignSendToGroup, [name]),
       body: content,
       action: doneAction,
     );
@@ -56,7 +59,7 @@ class DialogAssignSends extends StatelessWidget {
         final isInCurrentGroup = group != null && group.id == currentGroupId;
         return ValueListenableBuilder<Send>(
           valueListenable: sendModel.getSendNotifierForId(sendId),
-          builder: (context, send, child) => Stack(
+          builder: (BuildContext context, Send send, _) => Stack(
             children: [
               buildButton(isInCurrentGroup, send),
               buildAvatar(group, isInCurrentGroup),
@@ -78,7 +81,7 @@ class DialogAssignSends extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(3),
                 child: AutoSizeText(
-                  group != null ? group.displayId : "",
+                  SendGroupModel.getGroupShortName(group),
                   minFontSize: 8,
                   maxFontSize: 20,
                 ),

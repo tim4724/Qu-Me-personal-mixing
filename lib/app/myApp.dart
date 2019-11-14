@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
@@ -77,16 +79,18 @@ class MyApp extends StatelessWidget {
       child: Theme(
         data: themeData,
         child: PlatformProvider(
-          builder: (context) =>
-              PlatformApp(
-                title: 'QU ME',
-                localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-                  DefaultMaterialLocalizations.delegate,
-                  DefaultWidgetsLocalizations.delegate,
-                ],
-                ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
-                home: PageLogin(),
-              ),
+          builder: (context) => PlatformApp(
+            title: 'QU ME',
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              AppLocalizationsDelegate(),
+            ],
+            supportedLocales: [const Locale('en'), const Locale('de')],
+            ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
+            home: PageLogin(),
+          ),
         ),
       ),
     );

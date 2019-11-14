@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
@@ -113,11 +114,17 @@ class _GroupWheelState extends State<GroupWheel> {
     return Selector<SendGroupModel, MapEntry<SendGroup, int>>(
       selector: (BuildContext context, SendGroupModel model) {
         final sendsCount = model.getSendIdsForGroup(id).length;
-        return MapEntry(model.getGroup(id), sendsCount);
+        final group = model.getGroup(id);
+        return MapEntry<SendGroup, int>(group, sendsCount);
       },
       builder: (BuildContext context, MapEntry<SendGroup, int> pair, _) {
         final group = pair.key;
         final sendsCount = pair.value;
+
+        String groupName = group.name;
+        if (groupName == null || groupName.isEmpty) {
+          groupName = SendGroupModel.getGroupTechnicalName(group);
+        }
 
         Color bgColor;
         if (active && sendsCount <= 0) {
@@ -152,7 +159,7 @@ class _GroupWheelState extends State<GroupWheel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _GroupLabel(group.name),
+                _GroupLabel(groupName),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.all(16),
@@ -184,7 +191,7 @@ class _GroupWheelState extends State<GroupWheel> {
     }
     return Center(
       child: Text(
-        "Nothing Assigned\nDouble Tap",
+        QuLocalizations.get(Strings.SendGroupNothingAssigned),
         textAlign: TextAlign.center,
         style: theme.textTheme.caption,
       ),
