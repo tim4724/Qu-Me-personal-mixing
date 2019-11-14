@@ -53,7 +53,7 @@ class Send extends FaderInfo {
         technicalName = "$displayId";
         break;
     }
-    final color = findColor(name);
+    final color = findColorForSend(name, type);
     final personName = "Tim";
     return Send._internal(id, type, displayId, technicalName, name, color,
         personName, explicitMuteOn, controlGroups, faderLinked, panLinked);

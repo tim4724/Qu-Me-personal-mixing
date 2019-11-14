@@ -1,5 +1,9 @@
 import 'dart:ui';
 
+import 'package:qu_me/entities/send.dart';
+
+const fxReturnColor = Color(0xFF0000A0);
+
 const _colors = [
   Color(0xFF323232),
   Color.fromARGB(255, 222, 67, 31),
@@ -22,8 +26,14 @@ https://github.com/flutter/flutter/blob/master/examples/flutter_gallery/lib/demo
 Maybe this is helpful
  */
 
-Color findColor(String name) {
+Color findColorForSend(String name, SendType sendType) {
+  if (sendType == SendType.fxReturn) {
+    return fxReturnColor;
+  }
+  return findColor(name);
+}
 
+Color findColor(String name) {
   for (int i = 0; i < _names.length; i++) {
     final nameList = _names[i];
     for (final n in nameList) {
