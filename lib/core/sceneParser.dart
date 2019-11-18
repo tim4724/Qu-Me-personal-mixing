@@ -26,6 +26,8 @@ Scene parse(Uint8List data) {
   final allDcaGroups = List<ControlGroup>(4);
   final allMuteGroups = List<ControlGroup>(4);
   final sends = List<Send>(39);
+  final sendsLevelLinked = List<bool>(39);
+  final sendsPanLinked = List<bool>(39);
 
   // DCA1 Mute: data[24314] == 1
   // DCA2 Mute: data[24328] == 1
@@ -96,8 +98,9 @@ Scene parse(Uint8List data) {
     final controlGroups = getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
 
-    sends[i] = Send(
-        i, type, displayId, name, muteOn, controlGroups, linked, panLinked);
+    sendsLevelLinked[i] = linked;
+    sendsPanLinked[i] = panLinked;
+    sends[i] = Send(i, type, displayId, name, muteOn, controlGroups);
   }
 
   final mixes = List<Mix>(7);
@@ -166,7 +169,8 @@ Scene parse(Uint8List data) {
   }
   */
   final controlGroups = [...allDcaGroups, ...allMuteGroups];
-  return Scene(sends, mixes, mixMasterLevels, controlGroups);
+  return Scene(sends, mixes, sendsLevelLinked, sendsPanLinked, mixMasterLevels,
+      controlGroups);
 }
 
 Set<T> getControlGroupAssignement<T>(int val, val2, List<T> all, List<T> all2) {

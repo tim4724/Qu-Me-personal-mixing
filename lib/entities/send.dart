@@ -7,8 +7,6 @@ import 'package:qu_me/entities/faderInfo.dart';
 
 class Send extends FaderInfo {
   final SendType sendType;
-  final bool faderLinked;
-  final bool panLinked;
 
   Send._internal(
     int id,
@@ -20,8 +18,6 @@ class Send extends FaderInfo {
     String personName,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-    this.faderLinked,
-    this.panLinked,
   ) : super(id, displayId, technicalName, name, color, personName,
             explicitMuteOn, controlGroups);
 
@@ -32,8 +28,6 @@ class Send extends FaderInfo {
     String name,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-    bool faderLinked,
-    bool panLinked,
   ) {
     String technicalName;
     switch (type) {
@@ -54,9 +48,9 @@ class Send extends FaderInfo {
         break;
     }
     final color = findColorForSend(name, type);
-    final personName = "Tim";
+    final personName = null;
     return Send._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, controlGroups, faderLinked, panLinked);
+        personName, explicitMuteOn, controlGroups);
   }
 
   @override
@@ -68,19 +62,14 @@ class Send extends FaderInfo {
     String personName,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-    bool faderLinked,
-    bool panLinked,
   }) {
     return Send(
-      this.id,
-      this.sendType,
-      this.displayId,
-      name ?? this.name,
-      explicitMuteOn ?? this.explicitMuteOn,
-      controlGroups ?? this.controlGroups,
-      faderLinked ?? this.faderLinked,
-      panLinked ?? this.panLinked,
-    );
+        this.id,
+        this.sendType,
+        this.displayId,
+        name ?? this.name,
+        explicitMuteOn ?? this.explicitMuteOn,
+        controlGroups ?? this.controlGroups);
   }
 }
 

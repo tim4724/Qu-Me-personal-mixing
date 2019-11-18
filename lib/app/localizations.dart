@@ -57,7 +57,7 @@ class QuLocalizations {
     Strings.Level: "Level",
     Strings.Panorama: "Panorama",
     Strings.SendGroupNothingAssigned: "Nichts Zugewiesen\nDoppelt Tippen",
-    Strings.Left: "Linke",
+    Strings.Left: "Links",
     Strings.Center: "Mitte",
     Strings.Right: "Rechts",
     Strings.Cancel: "Abbrechen",

@@ -138,22 +138,27 @@ void _connect(InternetAddress address) async {
             final name = ascii.decode(data.sublist(2, data.indexOf(0x00, 2)));
             mainSendMixModel.updateFaderInfo(faderId, name: name);
             break;
-          default:
-            print("unknown packet group id: $groupId; dataLen: $dataLen");
-            print("data: $data");
-            // TODO: remember to change level and pan....
+          case 0x09:
             // Channel 3 mix 7/8:
             // Link off completely
             // unknown packet group id: 9; dataLen: 10
             // data: [0, 3, 0, 0, 0, 0, 255, 255, 255, 255]
-
             // Link on completely:
             // I/flutter (12681): unknown packet group id: 9; dataLen: 10
-            //I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 255, 255, 255]
-
+            // I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 255, 255, 255]
             // link off pan:
-           // I/flutter (12681): unknown packet group id: 9; dataLen: 10
-          // I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 247, 255, 255]
+            // 247 = 128 + 64 + 32 + 16 + 0 + 4 + 2 + 1
+            // I/flutter (12681): unknown packet group id: 9; dataLen: 10
+            // I/flutter (12681): data: [0, 3, 1, 0, 0, 0, 255, 247, 255, 255]
+            final faderId = data[1];
+            final linkOn = data[2] == 1;
+            final linkPan = linkOn && (data[7] >> 3) & 0x01 == 1;
+            _levelPanModel.onLink(faderId, linkOn, linkPan);
+            // TODO: Test this case
+            break;
+          default:
+            print("unknown packet group id: $groupId; dataLen: $dataLen");
+            print("data: $data");
             break;
         }
         break;
@@ -171,7 +176,7 @@ void _connect(InternetAddress address) async {
             // ???
             case 0x07:
               final valueInDb = (dspPacket.value / 256.0 - 128.0);
-              _levelPanModel.onNewFaderLevel(faderId, valueInDb);
+              _levelPanModel.onLevel(faderId, valueInDb);
               //TODO on "link" level needs to change maybe
               print("Fader value: ${dspPacket.value}");
               break;
@@ -192,7 +197,7 @@ void _connect(InternetAddress address) async {
               // Value == 38 => center
               print("Pan Fader ${dspPacket.param1 + 1} ${dspPacket.value}");
               //TODO on "link pan" pan needs to change maybe
-              _levelPanModel.onNewFaderPan(faderId, dspPacket.value);
+              _levelPanModel.onPan(faderId, dspPacket.value);
               break;
             case 0x0F:
               // Mute Group 1 muteOn->true

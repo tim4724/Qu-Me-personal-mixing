@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:qu_me/core/levelConverter.dart';
-import 'package:qu_me/core/model/mainSendMixModel.dart';
+import 'package:qu_me/core/levelAndPanConverter.dart';
 import 'package:qu_me/io/network.dart' as network;
 
 class FaderLevelPanModel {
@@ -23,7 +22,10 @@ class FaderLevelPanModel {
 
   // These are in range from 0.0 to 1.0
   // 0: panned to the left, 0.5: center, 1: panned to the right
-  final _panSlider = List.filled(60, 0.5);
+  final _panSlider = List.filled(60, 0.5); // TODO: or 39?
+
+  final _levelLinked = List.filled(60, false); // TODO: or 39? or 32?
+  final _panLinked = List.filled(60, false); // TODO: or 39? or 32?
 
   final _levelController = StreamController<int>(sync: true);
   final _panController = StreamController<int>(sync: true);
@@ -38,12 +40,35 @@ class FaderLevelPanModel {
     _panStream = _panController.stream.asBroadcastStream();
   }
 
-  void onNewLevelSlider(int id, double sliderValue) {
+  void initLinks(List<bool> levelLinks, List<bool> panLinks) {
+    for (int i = 0; i < levelLinks.length; i++) {
+      _levelLinked[i] = levelLinks[i];
+      _panLinked[i] = panLinks[i];
+    }
+  }
+
+  void initLevelsAndPans(List<double> levelInDb, List<int> pans) {
+    for (int i = 0; i < levelInDb.length; i++) {
+      onLevel(i, levelInDb[i]);
+    }
+    for (int i = 0; i < pans.length; i++) {
+      onPan(i, pans[i]);
+    }
+  }
+
+  void onSliderLevel(int id, double sliderValue) {
     sliderValue = sliderValue.clamp(0.0, 1.0);
     _levelSlider[id] = sliderValue;
-    _levelsInDb[id] = convertToDbValue(sliderValue);
+    _levelsInDb[id] = dbLevelFromSliderValue(sliderValue);
     _levelController.add(id);
     _dirtyNetworkLevelIds.add(id);
+    _notifyNetwork();
+  }
+
+  void onSliderPan(int id, double sliderValue) {
+    _panSlider[id] = sliderValue.clamp(0.0, 1.0);
+    _panController.add(id);
+    _dirtyNetworkPanIds.add(id);
     _notifyNetwork();
   }
 
@@ -51,7 +76,6 @@ class FaderLevelPanModel {
     if (sendIds == null || sendIds.length == 0 || delta == 0) {
       return;
     }
-
     final maxSendId = maxBy(sendIds, (id) => _levelSlider[id]);
     double maxSendLevel = _levelSlider[maxSendId];
 
@@ -63,51 +87,49 @@ class FaderLevelPanModel {
     final newMaxSendLevel = (maxSendLevel + delta).clamp(0.0, 1.0);
     // Delta in db for all sends will be calculated based on the
     // delta for the highest send level
-    final deltaInDb =
-        convertToDbValue(newMaxSendLevel) - convertToDbValue(maxSendLevel);
+    final deltaInDb = dbLevelFromSliderValue(newMaxSendLevel) -
+        dbLevelFromSliderValue(maxSendLevel);
 
-    final _mainSendMixModel = MainSendMixModel();
-    for (final sendId in sendIds) {
-      // If 2 Faders are linked. Only change 1 fader
-      if (_mainSendMixModel.getSend(sendId).faderLinked && sendId % 2 == 1) {
+    for (int i = 0; i < sendIds.length; i++) {
+      int sendId = sendIds[i];
+      if (_levelLinked[sendId] &&
+          sendId % 2 == 1 &&
+          i > 0 &&
+          sendIds[i - 1] == sendId - 1) {
+        // If two channels are linked and both are to be trimmed,
+        // only change the lower ("left") one
+        // The mixer will automatically change the other one
+        // This assumes the send id list is sorted the both linked channels
+        // are next to each other in the sendIds-list
         continue;
       }
-      _levelsInDb[sendId] = (_levelsInDb[sendId] + deltaInDb);
-      _levelSlider[sendId] = convertFromDbValue(_levelsInDb[sendId]);
+      final newLevelInDb = (_levelsInDb[sendId] + deltaInDb);
+      _levelsInDb[sendId] = newLevelInDb;
+      _levelSlider[sendId] = dBLevelToSliderValue(newLevelInDb);
       _levelController.add(sendId);
       _dirtyNetworkLevelIds.add(sendId);
     }
     _notifyNetwork();
   }
 
-  void onNewPanSlider(int id, double sliderValue) {
-    sliderValue = sliderValue.clamp(0.0, 1.0);
-    _panSlider[id] = sliderValue;
-    _panController.add(id);
-    _dirtyNetworkPanIds.add(id);
-    _notifyNetwork();
+  void onLink(int id, bool link, bool panLink) {
+    assert(panLink == false || link == panLink);
+    // Always 2 channels that are next to each other are linked
+    id -= id % 2;
+    _levelLinked.fillRange(id, id + 1, link);
+    _panLinked.fillRange(id, id + 1, panLink);
+    // TODO: Ensure that Level and pan is set correct for both of the linked channels...
   }
 
-  void onNewFaderLevel(int id, double levelInDb) {
+  void onLevel(int id, double levelInDb) {
     _levelsInDb[id] = levelInDb.clamp(-128.0, 10.0);
-    _levelSlider[id] = convertFromDbValue(levelInDb);
+    _levelSlider[id] = dBLevelToSliderValue(levelInDb);
     _levelController.add(id);
   }
 
-  void onNewFaderPan(int id, int pan) {
-    _panSlider[id] = pan.clamp(0, 74).toDouble() / 74.0;
+  void onPan(int id, int pan) {
+    _panSlider[id] = panToSliderValue(pan);
     _panController.add(id);
-  }
-
-  void reset() {
-    for (int i = 0; i < _levelsInDb.length; i++) {
-      _levelsInDb[i] = -128.0;
-      _levelSlider[i] = 0.0;
-      _panSlider[i] = 0.5;
-      _levelController.add(i);
-    }
-    _dirtyNetworkPanIds.clear();
-    _dirtyNetworkLevelIds.clear();
   }
 
   Stream<double> getLevelStreamForId(int id) {
@@ -126,6 +148,22 @@ class FaderLevelPanModel {
     return _panSlider[id];
   }
 
+  void reset() {
+    _levelsInDb.fillRange(0, _levelsInDb.length, -128.0);
+    _levelSlider.fillRange(0, _levelSlider.length, 0.0);
+    for (int i = 0; i < _levelsInDb.length; i++) {
+      _levelController.add(i);
+    }
+    _panSlider.fillRange(0, _panSlider.length, 0.5);
+    for (int i = 0; i < _panSlider.length; i++) {
+      _panController.add(i);
+    }
+    _levelLinked.fillRange(0, _levelLinked.length, false);
+    _panLinked.fillRange(0, _panLinked.length, false);
+    _dirtyNetworkPanIds.clear();
+    _dirtyNetworkLevelIds.clear();
+  }
+
   Stream<double> _getStreamForId(int id, Stream source, List<double> values) {
     return source.transform(StreamTransformer<int, double>.fromHandlers(
       handleData: (int value, EventSink<double> sink) {
@@ -141,15 +179,15 @@ class FaderLevelPanModel {
     if (_networkNotifyTimer == null || !_networkNotifyTimer.isActive) {
       final minInterval = (_dirtyNetworkLevelIds.length ~/ 8 + 1) * 5;
       _networkNotifyTimer = Timer(Duration(milliseconds: minInterval), () {
-        for (var id in _dirtyNetworkLevelIds) {
+        for (int id in _dirtyNetworkLevelIds) {
           // the level in db can go lower than -128.0 => clamp the value
           network.faderLevelChanged(id, _levelsInDb[id].clamp(-128.0, 10.0));
         }
-        for (var id in _dirtyNetworkPanIds) {
-          network.faderPanChanged(id, (_panSlider[id] * 74.0).toInt());
+        _dirtyNetworkLevelIds.clear();
+        for (int id in _dirtyNetworkPanIds) {
+          network.faderPanChanged(id, panFromSliderValue(_panSlider[id]));
         }
         _dirtyNetworkPanIds.clear();
-        _dirtyNetworkLevelIds.clear();
       });
     }
   }

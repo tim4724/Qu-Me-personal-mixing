@@ -108,7 +108,11 @@ class DialogAssignSends extends StatelessWidget {
     String secondary;
     if (send.sendType != SendType.fxReturn) {
       primary = send.name;
-      secondary = send.personName;
+      if (send.personName != null && send.personName.isNotEmpty) {
+        secondary = send.personName;
+      } else {
+        secondary = send.technicalName;
+      }
     } else {
       primary = send.technicalName;
       secondary = send.name;
@@ -137,8 +141,7 @@ class DialogAssignSends extends StatelessWidget {
       ),
       onSelect: () => groupModel.toggleSendAssignement(
         currentGroupId,
-        send.id,
-        send.faderLinked,
+        send.id
       ),
       margin: EdgeInsets.only(bottom: 6),
       padding: EdgeInsets.all(4),

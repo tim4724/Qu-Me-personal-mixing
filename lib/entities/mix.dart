@@ -30,7 +30,7 @@ class Mix extends FaderInfo {
       technicalName = "Mix $displayId/${displayId + 1}";
     }
     final color = findColor(name);
-    final personName = "Tim";
+    final personName = null;
     return Mix._internal(id, type, displayId, technicalName, name, color,
         personName, explicitMuteOn, controlGroups, sendLevelsInDb, sendPans, sendAssigns);
   }

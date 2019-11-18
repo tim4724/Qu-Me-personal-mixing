@@ -22,14 +22,13 @@ class SendGroupModel extends ChangeNotifier {
 
   SendGroupModel._internal();
 
-  void setAvailableSends(List<int> availableSendIds) {
-    this.availableSendIds.clear();
-    this.availableSendIds.addAll(availableSendIds);
-
+  void initAvailableSends(List<int> sendIds) {
+    availableSendIds.clear();
+    availableSendIds.addAll(sendIds);
     // remove send from group if the send is not available anymore
     for (final sendId in _assignement.getAllSendIds()) {
-      // TODO: nte the best performance probably
-      if (!availableSendIds.contains(sendId)) {
+      // TODO: not the best performance probably
+      if (!sendIds.contains(sendId)) {
         _assignement.unset(sendId);
       }
     }
@@ -37,16 +36,14 @@ class SendGroupModel extends ChangeNotifier {
   }
 
   void updateAvailabilitySend(int sendId, bool available) {
-    if (available && !availableSendIds.contains(sendId)) {
+    if (!available) {
+      availableSendIds.remove(sendId);
+      _assignement.unset(sendId);
+    } else if (available && !availableSendIds.contains(sendId)) {
       availableSendIds.add(sendId);
       availableSendIds.sort();
-      notifyListeners();
-    } else if (!available && availableSendIds.contains(sendId)) {
-      availableSendIds.remove(sendId);
-      // TODO: maybe keep it, but filter everytime requested?
-      unassignSend(sendId, false);
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   List<int> getSendIdsForGroup(int groupId) {
@@ -62,45 +59,16 @@ class SendGroupModel extends ChangeNotifier {
     return groupId != null ? getGroup(groupId) : null;
   }
 
-  void toggleSendAssignement(int groupId, int sendId, bool linked) {
-    if (_assignement.getGroupId(sendId) == groupId) {
-      unassignSend(sendId, linked);
+  void toggleSendAssignement(int groupId, int sendId) {
+    if (_assignement.getGroupId(sendId) != groupId) {
+      _assignement.set(groupId, sendId);
     } else {
-      assignSend(groupId, sendId, linked);
-    }
-  }
-
-  void assignSend(int groupId, int sendId, bool linked) {
-    _assignement.set(groupId, sendId);
-    if (linked) {
-      _assignement.set(groupId, getLinkedId(sendId));
+      _assignement.unset(sendId);
     }
     notifyListeners();
   }
 
-  void unassignSend(int victimId, bool linked) {
-    final groupId = _assignement.getGroupId(victimId);
-    _assignement.unset(victimId);
-    if (linked && groupId != null) {
-      final linkedId = getLinkedId(victimId);
-      final lastId = _assignement.getSendIds(groupId).last;
-      if (lastId == victimId || lastId == linkedId) {
-        // Delay unset, because of animated list bug
-        // Bug occures, when two items are removed at the same time,
-        // and one of them is the last item in list
-        // TODO: This workaround is not prefect yet
-        Future.delayed(Duration(milliseconds: 32), () {
-          _assignement.unset(linkedId);
-          notifyListeners();
-        });
-      } else {
-        _assignement.unset(linkedId);
-      }
-    }
-    notifyListeners();
-  }
-
-  int getLinkedId(int sendId) {
+  static int getLinkedId(int sendId) {
     return sendId % 2 == 0 ? sendId + 1 : sendId - 1;
   }
 

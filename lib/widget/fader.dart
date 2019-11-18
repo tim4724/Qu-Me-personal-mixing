@@ -5,7 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/app/localizations.dart';
-import 'package:qu_me/core/levelConverter.dart';
+import 'package:qu_me/core/levelAndPanConverter.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -94,10 +94,10 @@ abstract class _FaderState extends State<Fader> {
     final deltaNormalized = (delta / (sliderWidth));
     if (widget.pan) {
       final currentSliderValue = _levelPanModel.getPanSlider(id);
-      _levelPanModel.onNewPanSlider(id, currentSliderValue + deltaNormalized);
+      _levelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
     } else {
       final currentSliderValue = _levelPanModel.getLevelSLider(id);
-      _levelPanModel.onNewLevelSlider(id, currentSliderValue + deltaNormalized);
+      _levelPanModel.onSliderLevel(id, currentSliderValue + deltaNormalized);
     }
   }
 
@@ -110,10 +110,18 @@ abstract class _FaderState extends State<Fader> {
     String secondary;
     if (widget.forceDisplayTechnicalName) {
       primary = info.technicalName;
-      secondary = active ? info.personName : info.name;
+      if (active && info.personName != null && info.personName.isNotEmpty) {
+        secondary = info.personName;
+      } else {
+        secondary = info.name;
+      }
     } else {
       primary = info.name;
-      secondary = active ? info.technicalName : info.personName;
+      if (active || info.personName == null || info.personName.isEmpty) {
+        secondary = info.technicalName;
+      } else {
+        secondary = info.personName;
+      }
     }
     Color color = info.color;
     if (!active) {
@@ -400,7 +408,7 @@ class _PanSlider extends _Slider {
 }
 
 class _LevelSlider extends _Slider {
-  static const stop = convertFromDbValue;
+  static const stop = dBLevelToSliderValue;
   static const levelTexts = ["-\u221e", "-30", "-10", "0"]; // TODO: inf symbol?
   static const levelFractionalOffset = [0.0, -0.5, -0.5, -0.5];
   static const levelAbsoluteOffset = [8.0, 0.0, 0.0, 0.0];
@@ -455,14 +463,14 @@ class _LevelSlider extends _Slider {
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
           builder: (_, AsyncSnapshot<List<double>> snapshot) {
-            final level = convertFromDbValue(snapshot.data[id]);
+            final level = dBLevelToSliderValue(snapshot.data[id]);
             return _LevelIndicator.left(level, width, height / 2.0);
           },
         ),
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
           builder: (_, AsyncSnapshot<List<double>> snapshot) {
-            final level = convertFromDbValue(snapshot.data[id + 1]);
+            final level = dBLevelToSliderValue(snapshot.data[id + 1]);
             return _LevelIndicator.right(level, width, height / 2.0);
           },
         ),
@@ -472,7 +480,7 @@ class _LevelSlider extends _Slider {
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
           builder: (_, AsyncSnapshot<List<double>> snapshot) {
-            final level = convertFromDbValue(snapshot.data[id]);
+            final level = dBLevelToSliderValue(snapshot.data[id]);
             return _LevelIndicator.mono(level, width);
           },
         ),

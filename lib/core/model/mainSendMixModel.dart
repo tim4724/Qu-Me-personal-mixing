@@ -53,6 +53,7 @@ class MainSendMixModel {
     _initAvailableSends(scene.sends, currentMix, mixerType);
 
     // TODO: in which class to update fader leves
+    _levelPanModel.initLinks(scene.faderLevelLinks, scene.faderPanLinks);
     _initFaderLevelsAndPans(currentMix, scene.mixesLevelInDb);
 
     initializedNotifier.value = true;
@@ -103,15 +104,18 @@ class MainSendMixModel {
       // TODO add selection for QU-24, Qu-32 ...
       availableSends.addAll(sends.map((send) => send.id));
     }
-    SendGroupModel().setAvailableSends(availableSends);
+    SendGroupModel().initAvailableSends(availableSends);
   }
 
   void _initFaderLevelsAndPans(Mix currentMix, List<double> mixesLevelInDb) {
-    // Init fader levels based on current mix
-    if (currentMixIdNotifier != null) {
+    if (currentMix != null) {
+      _levelPanModel.initLevelsAndPans(
+        currentMix.sendLevelsInDb,
+        currentMix.sendPans,
+      );
       for (int i = 0; i < currentMix.sendLevelsInDb.length; i++) {
-        _levelPanModel.onNewFaderLevel(i, currentMix.sendLevelsInDb[i]);
-        _levelPanModel.onNewFaderPan(i, currentMix.sendPans[i] ?? 37);
+        _levelPanModel.onLevel(i, currentMix.sendLevelsInDb[i]);
+        _levelPanModel.onPan(i, currentMix.sendPans[i] ?? 37);
       }
     } else {
       _levelPanModel.reset();
@@ -119,7 +123,7 @@ class MainSendMixModel {
 
     // Init master fader levels
     for (int i = 0; i < mixesLevelInDb.length; i++) {
-      _levelPanModel.onNewFaderLevel(i + 39, mixesLevelInDb[i]);
+      _levelPanModel.onLevel(i + 39, mixesLevelInDb[i]);
     }
   }
 
@@ -193,18 +197,13 @@ class MainSendMixModel {
       {String name,
       String personName,
       bool explicitMuteOn,
-      Set<ControlGroup> controlGroups,
-      bool faderLinked,
-      bool panLinked}) {
+      Set<ControlGroup> controlGroups}) {
     final sendNotifier = getSendNotifierForId(id);
     sendNotifier.value = sendNotifier.value.copyWith(
-      name: name,
-      personName: personName,
-      explicitMuteOn: explicitMuteOn,
-      controlGroups: controlGroups,
-      faderLinked: faderLinked,
-      panLinked: panLinked,
-    );
+        name: name,
+        personName: personName,
+        explicitMuteOn: explicitMuteOn,
+        controlGroups: controlGroups);
   }
 
   void updateMix(int id,
