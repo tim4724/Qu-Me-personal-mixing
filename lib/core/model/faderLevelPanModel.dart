@@ -57,6 +57,8 @@ class FaderLevelPanModel {
   }
 
   void onSliderLevel(int id, double sliderValue) {
+    // If two channels are linked, always go for the even channels' data
+    id = (id % 2 == 1 && _levelLinked[id]) ? id - 1 : id;
     sliderValue = sliderValue.clamp(0.0, 1.0);
     _levelSlider[id] = sliderValue;
     _levelsInDb[id] = dbLevelFromSliderValue(sliderValue);
@@ -66,6 +68,8 @@ class FaderLevelPanModel {
   }
 
   void onSliderPan(int id, double sliderValue) {
+    // If two channels are linked, always go for the even channels' data
+    id = (id % 2 == 1 && _panLinked[id]) ? id - 1 : id;
     _panSlider[id] = sliderValue.clamp(0.0, 1.0);
     _panController.add(id);
     _dirtyNetworkPanIds.add(id);
@@ -73,14 +77,18 @@ class FaderLevelPanModel {
   }
 
   void onTrim(List<int> sendIds, double delta) {
-    if (sendIds == null || sendIds.length == 0 || delta == 0) {
+    if (sendIds == null || sendIds.isEmpty || delta == 0.0) {
       return;
     }
+
     final maxSendId = maxBy(sendIds, (id) => _levelSlider[id]);
     double maxSendLevel = _levelSlider[maxSendId];
-
     // One fader reached the top. Do not increase trim anymore
     if (delta > 0 && maxSendLevel >= 1.0) {
+      return;
+    }
+    // All faders reached the bottom. Do not decrease trim anymore
+    if (delta < 0 && maxSendLevel <= 0.0) {
       return;
     }
 
@@ -91,23 +99,23 @@ class FaderLevelPanModel {
         dbLevelFromSliderValue(maxSendLevel);
 
     for (int i = 0; i < sendIds.length; i++) {
-      int sendId = sendIds[i];
-      if (_levelLinked[sendId] &&
-          sendId % 2 == 1 &&
-          i > 0 &&
-          sendIds[i - 1] == sendId - 1) {
-        // If two channels are linked and both are to be trimmed,
-        // only change the lower ("left") one
-        // The mixer will automatically change the other one
-        // This assumes the send id list is sorted the both linked channels
-        // are next to each other in the sendIds-list
-        continue;
+      int id = sendIds[i];
+      // TODO: check what happens on the mixer if both faders are trimmed...
+      if (_isUnEven(id) && _levelLinked[id]) {
+        // If two channels are linked, always set the even channel
+        id--;
+        if (sendIds[i - 1] == id) {
+          // Already set the even channel
+          // This assumes the send id list is sorted the both linked channels
+          // are next to each other in the sendIds-list
+          continue;
+        }
       }
-      final newLevelInDb = (_levelsInDb[sendId] + deltaInDb);
-      _levelsInDb[sendId] = newLevelInDb;
-      _levelSlider[sendId] = dBLevelToSliderValue(newLevelInDb);
-      _levelController.add(sendId);
-      _dirtyNetworkLevelIds.add(sendId);
+      final newLevelInDb = (_levelsInDb[id] + deltaInDb);
+      _levelsInDb[id] = newLevelInDb;
+      _levelSlider[id] = dBLevelToSliderValue(newLevelInDb);
+      _levelController.add(id);
+      _dirtyNetworkLevelIds.add(id);
     }
     _notifyNetwork();
   }
@@ -132,19 +140,47 @@ class FaderLevelPanModel {
     _panController.add(id);
   }
 
-  Stream<double> getLevelStreamForId(int id) {
-    return _getStreamForId(id, _levelStream, _levelSlider);
+  Stream<double> getLevelStreamForId(final int id) {
+    final bool unEvenId = _isUnEven(id);
+    return _levelStream.transform(StreamTransformer<int, double>.fromHandlers(
+      handleData: (int value, EventSink<double> sink) {
+        // If two channels are linked, always go for the even channels' data
+        if (unEvenId && _levelLinked[id] ? value == id - 1 : value == id) {
+          sink.add(_levelSlider[value]);
+        }
+      },
+    ));
   }
 
-  Stream<double> getPanStreamForId(int id) {
-    return _getStreamForId(id, _panStream, _panSlider);
+  Stream<double> getPanStreamForId(final int id) {
+    final bool unEvenId = _isUnEven(id);
+    return _panStream.transform(StreamTransformer<int, double>.fromHandlers(
+      handleData: (int value, EventSink<double> sink) {
+        if (unEvenId && _levelLinked[id]) {
+          // If two channels are linked, always go for the even channels' data
+          if (value == id - 1) {
+            sink.add(1.0 - _panSlider[value]);
+          }
+        } else if (value == id) {
+          sink.add(_panSlider[value]);
+        }
+      },
+    ));
   }
 
   double getLevelSLider(int id) {
+    if (_isUnEven(id) && _levelLinked[id]) {
+      // If two channels are linked, always go for the even channel' data
+      return _levelSlider[id - 1];
+    }
     return _levelSlider[id];
   }
 
   double getPanSlider(int id) {
+    if (_isUnEven(id) && _levelLinked[id]) {
+      // If two channels are linked, always go for the even channels' data
+      return 1.0 - _panSlider[id - 1];
+    }
     return _panSlider[id];
   }
 
@@ -164,16 +200,6 @@ class FaderLevelPanModel {
     _dirtyNetworkLevelIds.clear();
   }
 
-  Stream<double> _getStreamForId(int id, Stream source, List<double> values) {
-    return source.transform(StreamTransformer<int, double>.fromHandlers(
-      handleData: (int value, EventSink<double> sink) {
-        if (value == id) {
-          sink.add(values[id]);
-        }
-      },
-    ));
-  }
-
   void _notifyNetwork() {
     // do not spam the qu mixer with messages
     if (_networkNotifyTimer == null || !_networkNotifyTimer.isActive) {
@@ -190,6 +216,10 @@ class FaderLevelPanModel {
         _dirtyNetworkPanIds.clear();
       });
     }
+  }
+
+  static bool _isUnEven(int i) {
+    return i % 2 == 1;
   }
 }
 
