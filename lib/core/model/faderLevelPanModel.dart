@@ -14,18 +14,20 @@ class FaderLevelPanModel {
   // However the level in this model can go lower than -128.0
   // The reason is to keep the proportion between sends the same
   // if trim reduces the level of a group of sends
-  final _levelsInDb = List.filled(60, -128.0);
+  final _levelsInDb = List.filled(46, -128.0);
 
   // These are in range from 0.0 to 1.0 and
   // are related to fader position in the ui
-  final _levelSlider = List.filled(60, 0.0);
+  final _levelSlider = List.filled(46, 0.0);
 
+  // Only the 39 sends can be panned
   // These are in range from 0.0 to 1.0
   // 0: panned to the left, 0.5: center, 1: panned to the right
-  final _panSlider = List.filled(60, 0.5); // TODO: or 39?
+  final _panSlider = List.filled(39, 0.5);
 
-  final _levelLinked = List.filled(60, false); // TODO: or 39? or 32?
-  final _panLinked = List.filled(60, false); // TODO: or 39? or 32?
+  // Only the 32 mono channels can be linked
+  final _levelLinked = List.filled(32, false);
+  final _panLinked = List.filled(32, false);
 
   final _levelController = StreamController<int>(sync: true);
   final _panController = StreamController<int>(sync: true);
@@ -47,10 +49,13 @@ class FaderLevelPanModel {
     }
   }
 
-  void initLevelsAndPans(List<double> levelInDb, List<int> pans) {
+  void initLevels(List<double> levelInDb, [int offset = 0]) {
     for (int i = 0; i < levelInDb.length; i++) {
-      onLevel(i, levelInDb[i]);
+      onLevel(i + offset, levelInDb[i]);
     }
+  }
+
+  void initPans(List<int> pans) {
     for (int i = 0; i < pans.length; i++) {
       onPan(i, pans[i]);
     }
@@ -58,7 +63,9 @@ class FaderLevelPanModel {
 
   void onSliderLevel(int id, double sliderValue) {
     // If two channels are linked, always go for the even channels' data
-    id = (id % 2 == 1 && _levelLinked[id]) ? id - 1 : id;
+    if (_isUnEven(id) && _isLevelLinked(id)) {
+      id--;
+    }
     sliderValue = sliderValue.clamp(0.0, 1.0);
     _levelSlider[id] = sliderValue;
     _levelsInDb[id] = dbLevelFromSliderValue(sliderValue);
@@ -69,7 +76,10 @@ class FaderLevelPanModel {
 
   void onSliderPan(int id, double sliderValue) {
     // If two channels are linked, always go for the even channels' data
-    id = (id % 2 == 1 && _panLinked[id]) ? id - 1 : id;
+    if (_isUnEven(id) && _isPanLinked(id)) {
+      id--;
+      sliderValue = 1.0 - sliderValue;
+    }
     _panSlider[id] = sliderValue.clamp(0.0, 1.0);
     _panController.add(id);
     _dirtyNetworkPanIds.add(id);
@@ -83,28 +93,25 @@ class FaderLevelPanModel {
 
     final maxSendId = maxBy(sendIds, (id) => _levelSlider[id]);
     double maxSendLevel = _levelSlider[maxSendId];
-    // One fader reached the top. Do not increase trim anymore
-    if (delta > 0 && maxSendLevel >= 1.0) {
-      return;
-    }
-    // All faders reached the bottom. Do not decrease trim anymore
-    if (delta < 0 && maxSendLevel <= 0.0) {
+    // One fader reached the top or all faders reached the bottom.
+    // Do not decrease trim anymore
+    if (delta > 0 && maxSendLevel >= 1.0 || delta < 0 && maxSendLevel <= 0.0) {
       return;
     }
 
-    final newMaxSendLevel = (maxSendLevel + delta).clamp(0.0, 1.0);
+    final newMaxSendLevelSlider = (maxSendLevel + delta).clamp(0.0, 1.0);
+    final newMaxSendLevelDb = dbLevelFromSliderValue(newMaxSendLevelSlider);
     // Delta in db for all sends will be calculated based on the
     // delta for the highest send level
-    final deltaInDb = dbLevelFromSliderValue(newMaxSendLevel) -
-        dbLevelFromSliderValue(maxSendLevel);
+    final deltaInDb = newMaxSendLevelDb - _levelsInDb[maxSendId];
 
     for (int i = 0; i < sendIds.length; i++) {
       int id = sendIds[i];
       // TODO: check what happens on the mixer if both faders are trimmed...
-      if (_isUnEven(id) && _levelLinked[id]) {
+      if (_isUnEven(id) && _isLevelLinked(id)) {
         // If two channels are linked, always set the even channel
         id--;
-        if (sendIds[i - 1] == id) {
+        if (i > 0 && sendIds[i - 1] == id) {
           // Already set the even channel
           // This assumes the send id list is sorted the both linked channels
           // are next to each other in the sendIds-list
@@ -145,7 +152,7 @@ class FaderLevelPanModel {
     return _levelStream.transform(StreamTransformer<int, double>.fromHandlers(
       handleData: (int value, EventSink<double> sink) {
         // If two channels are linked, always go for the even channels' data
-        if (unEvenId && _levelLinked[id] ? value == id - 1 : value == id) {
+        if (unEvenId && _isLevelLinked(id) ? value == id - 1 : value == id) {
           sink.add(_levelSlider[value]);
         }
       },
@@ -156,7 +163,7 @@ class FaderLevelPanModel {
     final bool unEvenId = _isUnEven(id);
     return _panStream.transform(StreamTransformer<int, double>.fromHandlers(
       handleData: (int value, EventSink<double> sink) {
-        if (unEvenId && _levelLinked[id]) {
+        if (unEvenId && _isPanLinked(id)) {
           // If two channels are linked, always go for the even channels' data
           if (value == id - 1) {
             sink.add(1.0 - _panSlider[value]);
@@ -169,7 +176,7 @@ class FaderLevelPanModel {
   }
 
   double getLevelSLider(int id) {
-    if (_isUnEven(id) && _levelLinked[id]) {
+    if (_isUnEven(id) && _isLevelLinked(id)) {
       // If two channels are linked, always go for the even channel' data
       return _levelSlider[id - 1];
     }
@@ -177,7 +184,7 @@ class FaderLevelPanModel {
   }
 
   double getPanSlider(int id) {
-    if (_isUnEven(id) && _levelLinked[id]) {
+    if (_isUnEven(id) && _isPanLinked(id)) {
       // If two channels are linked, always go for the even channels' data
       return 1.0 - _panSlider[id - 1];
     }
@@ -207,15 +214,23 @@ class FaderLevelPanModel {
       _networkNotifyTimer = Timer(Duration(milliseconds: minInterval), () {
         for (int id in _dirtyNetworkLevelIds) {
           // the level in db can go lower than -128.0 => clamp the value
-          network.faderLevelChanged(id, _levelsInDb[id].clamp(-128.0, 10.0));
+          network.changeFaderLevel(id, _levelsInDb[id].clamp(-128.0, 10.0));
         }
         _dirtyNetworkLevelIds.clear();
         for (int id in _dirtyNetworkPanIds) {
-          network.faderPanChanged(id, panFromSliderValue(_panSlider[id]));
+          network.changeFaderPan(id, panFromSliderValue(_panSlider[id]));
         }
         _dirtyNetworkPanIds.clear();
       });
     }
+  }
+
+  bool _isLevelLinked(int id) {
+    return id < _levelLinked.length && _levelLinked[id];
+  }
+
+  bool _isPanLinked(int id) {
+    return id < _panLinked.length && _panLinked[id];
   }
 
   static bool _isUnEven(int i) {

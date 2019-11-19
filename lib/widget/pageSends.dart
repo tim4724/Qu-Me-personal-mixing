@@ -102,7 +102,7 @@ class _PageGroupState extends State<PageGroup> {
 
   Widget _buildBody(Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
-    final stereoMix = mainSendModel.getCurrentMix().mixType == MixType.stereo;
+    final stereoMix = mainSendModel.getCurrentMix()?.mixType == MixType.stereo;
     const levelPanSwitchInputHeight = 32.0;
 
     EdgeInsets listWidgetPadding;

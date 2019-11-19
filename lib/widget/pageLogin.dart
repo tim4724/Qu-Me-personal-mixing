@@ -30,7 +30,6 @@ class _PageLoginState extends State<PageLogin> {
   void initState() {
     super.initState();
     connectionModel.addListener(connectStateChanged);
-    mixingModel.initializedNotifier.addListener(connectStateChanged);
     quFind.findQuMixers((name, address, foundTime) {
       setState(() {
         mixers[name] = address;
@@ -95,14 +94,13 @@ class _PageLoginState extends State<PageLogin> {
   }
 
   void onMixerSelected(String name) {
-    ConnectionModel().onStartConnect(name, mixers[name]);
+    ConnectionModel().startConnect(name, mixers[name]);
     setState(() => loading = true);
   }
 
   void connectStateChanged() {
-    if (connectionModel.initialized && mixingModel.initializedNotifier.value) {
+    if (connectionModel.initialized) {
       connectionModel.removeListener(connectStateChanged);
-      mixingModel.initializedNotifier.removeListener(connectStateChanged);
       Navigator.of(context).pushReplacement(
         platformPageRoute(
           builder: (context) => PageHome(),

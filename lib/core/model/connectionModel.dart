@@ -10,11 +10,13 @@ class ConnectionModel extends ChangeNotifier {
   factory ConnectionModel() => _instance;
 
   Mixer _mixer;
+  bool _initialized = false;
 
   ConnectionModel._internal();
 
-  void onStartConnect(String name, InternetAddress address) {
+  void startConnect(String name, InternetAddress address) {
     _mixer = Mixer(name, address);
+    _initialized = false;
     network.connect(name, address);
     notifyListeners();
   }
@@ -25,18 +27,29 @@ class ConnectionModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void onLoadingScene() {
+    _initialized = false;
+    notifyListeners();
+  }
+
+  void onSceneLoaded() {
+    _initialized = true;
+    notifyListeners();
+  }
+
   InternetAddress get remoteAddress => _mixer?.address;
 
   String get name => _mixer?.name;
 
-  get type => _mixer?.mixerType;
+  int get type => _mixer?.mixerType;
 
   bool get initialized {
-    return _mixer?.mixerType != null;
+    return _initialized;
   }
 
   void reset() {
     _mixer = null;
+    _initialized = false;
     notifyListeners();
   }
 }

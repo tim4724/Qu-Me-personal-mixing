@@ -10,26 +10,36 @@ import 'package:qu_me/widget/quDialog.dart';
 class DialogSelectMix extends StatelessWidget {
   final mixModel = MainSendMixModel();
 
+  DialogSelectMix();
+
   @override
   Widget build(BuildContext context) {
-    final cancelAction = PlatformButton(
-      child: Text(QuLocalizations.get(Strings.Cancel)),
-      androidFlat: (context) => MaterialFlatButtonData(),
-      onPressed: () => Navigator.of(context).pop(),
-    );
+    Widget cancelAction;
+    if (mixModel.getCurrentMix() != null) {
+      cancelAction = PlatformButton(
+        child: Text(QuLocalizations.get(Strings.Cancel)),
+        androidFlat: (context) => MaterialFlatButtonData(),
+        onPressed: () => Navigator.of(context).pop(),
+      );
+    }
 
     return QuDialog(
       title: QuLocalizations.get(Strings.MixSelect),
-      body: ValueListenableBuilder<List<int>>(
-        valueListenable: mixModel.availableMixIdsNotifier,
-        builder: (context, availableMixIds, child) {
-          return SizedBox(
-            width: 300,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: buildChildren(availableMixIds),
-            ),
-          );
+      body: WillPopScope(
+        child: ValueListenableBuilder<List<int>>(
+          valueListenable: mixModel.availableMixIdsNotifier,
+          builder: (context, availableMixIds, child) {
+            return SizedBox(
+              width: 300,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: buildChildren(availableMixIds),
+              ),
+            );
+          },
+        ),
+        onWillPop: () {
+          return Future.sync(() => mixModel.getCurrentMix() != null);
         },
       ),
       action: cancelAction,

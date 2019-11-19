@@ -450,7 +450,6 @@ class _LevelSlider extends _Slider {
         initialData: levelPanModel.getLevelSLider(id),
         stream: levelPanModel.getLevelStreamForId(id),
         builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-          // TODO: if linked, base on left channel!
           return _FaderKnop(snapshot.data * width, knobColor);
         },
       ),

@@ -1,16 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/mix.dart';
-import 'package:qu_me/entities/mixer.dart';
-import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:quiver/collection.dart';
-
-import 'faderLevelPanModel.dart';
-import 'sendGroupModel.dart';
 
 class MainSendMixModel {
   static final MainSendMixModel _instance = MainSendMixModel._internal();
@@ -20,46 +14,24 @@ class MainSendMixModel {
   // Not so sure if the list of available mix-ids can change,
   // yet we wrap the list in a changeNotifier
   final availableMixIdsNotifier = ValueNotifier(List<int>());
-
   final _mixNotifiers = List<ValueNotifier<Mix>>();
-
-  // TODO: Move to groupModel?
-  final _sendNotifierForId = List<ValueNotifier<Send>>();
-
+  final _sendNotifiers = List<ValueNotifier<Send>>();
   final currentMixIdNotifier = ValueNotifier<int>(null);
 
-  final initializedNotifier = ValueNotifier<bool>(false);
-
+  // TODO: maybe improve control group managent?
   final _availableControlGroups =
       ListMultimap<ControlGroupType, ControlGroup>();
 
-  final _levelPanModel = FaderLevelPanModel();
-
   MainSendMixModel._internal();
 
-  void onScene(Scene scene) {
+  void initControlGroups(List<ControlGroup> controlGroups) {
     _availableControlGroups.clear();
-    for (final group in scene.controlGroups) {
+    controlGroups.forEach((group) {
       _availableControlGroups.add(group.type, group);
-    }
-
-    _initMixes(scene.mixes);
-    _initSends(scene.sends);
-
-    final currentMix = getCurrentMix();
-    // TODO: What if ConnectionModel is not initialized
-    final mixerType = ConnectionModel().type;
-    // TODO: in which class to parse available sends?
-    _initAvailableSends(scene.sends, currentMix, mixerType);
-
-    // TODO: in which class to update fader leves
-    _levelPanModel.initLinks(scene.faderLevelLinks, scene.faderPanLinks);
-    _initFaderLevelsAndPans(currentMix, scene.mixesLevelInDb);
-
-    initializedNotifier.value = true;
+    });
   }
 
-  void _initMixes(List<Mix> mixes) {
+  void initMixes(List<Mix> mixes) {
     // Init mix list
     _mixNotifiers.length = mixes.length;
     for (int i = 0; i < mixes.length; i++) {
@@ -74,70 +46,35 @@ class MainSendMixModel {
     availableMixIdsNotifier.value = availableMixIds;
 
     // Init current mix id
-    if (currentMixIdNotifier.value == null ||
+    if (currentMixIdNotifier.value != null &&
         !availableMixIds.contains(currentMixIdNotifier.value)) {
-      // TODO let user select
-      currentMixIdNotifier.value = availableMixIds.first;
+      currentMixIdNotifier.value = null;
     }
   }
 
-  void _initSends(List<Send> sends) {
-    _sendNotifierForId.length = sends.length;
+  void initSends(List<Send> sends) {
+    _sendNotifiers.length = sends.length;
     for (final send in sends) {
-      if (_sendNotifierForId[send.id] == null) {
-        _sendNotifierForId[send.id] = ValueNotifier<Send>(null);
+      if (_sendNotifiers[send.id] == null) {
+        _sendNotifiers[send.id] = ValueNotifier<Send>(null);
       }
-      _sendNotifierForId[send.id].value = send;
-    }
-  }
-
-  void _initAvailableSends(List<Send> sends, Mix currentMix, int mixerType) {
-    final availableSends = List<int>();
-    if (mixerType == MixerType.QU_16) {
-      for (Send send in sends) {
-        if (currentMix.sendAssigns[send.id] &&
-            (send.sendType != SendType.monoChannel || send.id < 16)) {
-          availableSends.add(send.id);
-        }
-      }
-    } else {
-      // TODO add selection for QU-24, Qu-32 ...
-      availableSends.addAll(sends.map((send) => send.id));
-    }
-    SendGroupModel().initAvailableSends(availableSends);
-  }
-
-  void _initFaderLevelsAndPans(Mix currentMix, List<double> mixesLevelInDb) {
-    if (currentMix != null) {
-      _levelPanModel.initLevelsAndPans(
-        currentMix.sendLevelsInDb,
-        currentMix.sendPans,
-      );
-      for (int i = 0; i < currentMix.sendLevelsInDb.length; i++) {
-        _levelPanModel.onLevel(i, currentMix.sendLevelsInDb[i]);
-        _levelPanModel.onPan(i, currentMix.sendPans[i] ?? 37);
-      }
-    } else {
-      _levelPanModel.reset();
-    }
-
-    // Init master fader levels
-    for (int i = 0; i < mixesLevelInDb.length; i++) {
-      _levelPanModel.onLevel(i + 39, mixesLevelInDb[i]);
+      _sendNotifiers[send.id].value = send;
     }
   }
 
   void selectMix(int id) {
     currentMixIdNotifier.value = id;
     final index = id - _mixNotifiers[0].value.id;
-    network.mixSelectChanged(id, index);
+    network.changeSelectedMix(id, index);
   }
 
   void toogleMixMasterMute() {
     final currentMix = getCurrentMix();
-    getMixNotifierForId(currentMix.id).value =
-        currentMix.copyWith(explicitMuteOn: !currentMix.explicitMuteOn);
-    network.muteOnChanged(currentMix.id, !currentMix.explicitMuteOn);
+    if (currentMix != null) {
+      getMixNotifierForId(currentMix.id).value =
+          currentMix.copyWith(explicitMuteOn: !currentMix.explicitMuteOn);
+      network.changeMute(currentMix.id, !currentMix.explicitMuteOn);
+    }
   }
 
   void updateControlGroup(int groupId, ControlGroupType type, bool muteOn) {
@@ -148,7 +85,7 @@ class MainSendMixModel {
 
     final newControlGroup = ControlGroup(groupId, type, muteOn);
     _availableControlGroups[type][groupId] = newControlGroup;
-    for (final sendNotifier in _sendNotifierForId) {
+    for (final sendNotifier in _sendNotifiers) {
       _updateControlGroup(sendNotifier.value, newControlGroup);
     }
     for (final mixNotifier in _mixNotifiers) {
@@ -225,7 +162,7 @@ class MainSendMixModel {
   }
 
   Send getSend(int id) {
-    return _sendNotifierForId[id].value;
+    return _sendNotifiers[id].value;
   }
 
   FaderInfo _getFaderInfo(int id) {
@@ -238,7 +175,7 @@ class MainSendMixModel {
   }
 
   ValueNotifier<Send> getSendNotifierForId(int sendId) {
-    return _sendNotifierForId[sendId];
+    return _sendNotifiers[sendId];
   }
 
   ValueNotifier<Mix> getMixNotifierForId(int mixId) {
@@ -246,11 +183,13 @@ class MainSendMixModel {
   }
 
   void reset() {
-    initializedNotifier.value = false;
-    // TODO: reset all?
+    // TODO: reset ?
   }
 
   Mix getCurrentMix() {
+    if (currentMixIdNotifier.value == null) {
+      return null;
+    }
     return getMixNotifierForId(currentMixIdNotifier.value).value;
   }
 }

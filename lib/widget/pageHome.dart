@@ -20,17 +20,20 @@ import 'package:qu_me/widget/quTheme.dart';
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
 
-  final _connectionModel = ConnectionModel();
-  final _mainSendMixModel = MainSendMixModel();
-  final _groupModel = SendGroupModel();
-  final _levelPanModel = FaderLevelPanModel();
-
   @override
   _PageHomeState createState() => _PageHomeState();
 }
 
 class _PageHomeState extends State<PageHome> {
+  final connectionModel = ConnectionModel();
+  final mainSendMixModel = MainSendMixModel();
+  final groupModel = SendGroupModel();
+  final levelPanModel = FaderLevelPanModel();
+
   var activeWheel = -1;
+
+  // TODO: show loading when scene is loading
+  // TODO: show something, when mix is not selected
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +49,7 @@ class _PageHomeState extends State<PageHome> {
             child: PlatformScaffold(
               appBar: PlatformAppBar(
                 // TODO: make reactive
-                title: Text(widget._connectionModel.name ?? ""),
+                title: Text(connectionModel.name ?? ""),
                 ios: (context) => CupertinoNavigationBarData(
                   leading: CupertinoButton(
                     padding: EdgeInsets.zero,
@@ -93,8 +96,8 @@ class _PageHomeState extends State<PageHome> {
       });
     }
     if (activeWheel == groupId) {
-      final sends = widget._groupModel.getSendIdsForGroup(groupId);
-      widget._levelPanModel.onTrim(sends, delta);
+      final sends = groupModel.getSendIdsForGroup(groupId);
+      levelPanModel.onTrim(sends, delta);
     }
   }
 
@@ -108,12 +111,12 @@ class _PageHomeState extends State<PageHome> {
 
   logout() {
     network.close();
-    ConnectionModel().reset();
+    connectionModel.reset();
     final route =
         platformPageRoute(builder: (context) => PageLogin(), context: context);
     Navigator.pushReplacement(context, route);
-    widget._mainSendMixModel.reset();
-    widget._levelPanModel.reset();
+    mainSendMixModel.reset();
+    levelPanModel.reset();
   }
 
   Widget buildBodyPortrait() {
@@ -166,37 +169,47 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildFaderWithMuteButton() {
-    final mainSendMixModel = widget._mainSendMixModel;
     return Padding(
       padding: EdgeInsets.all(4.0),
       // TODO merge listenables?
       child: ValueListenableBuilder(
         valueListenable: mainSendMixModel.currentMixIdNotifier,
         builder: (context, mixId, _) {
-          final mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
-          return Column(
-            children: [
-              QuCheckButton.simpleText(
-                "Switch Platform",
-                width: 72.0,
-                onSelect: () {
-                  ConnectionModel().reset();
-                  final platformProvider = PlatformProvider.of(context);
-                  if (platformProvider.platform != TargetPlatform.iOS) {
-                    platformProvider.changeToCupertinoPlatform();
-                  } else {
-                    platformProvider.changeToMaterialPlatform();
-                  }
-                },
-                margin: EdgeInsets.only(bottom: 8.0),
-              ),
-              ValueListenableBuilder<FaderInfo>(
-                valueListenable: mixNotifier,
-                builder: (context, info, _) =>
-                    buildMuteButton(info.explicitMuteOn),
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
+          Widget child;
+          if (mixId == null) {
+            Future.delayed(Duration(milliseconds: 300), () {
+              showSelectMixDialog();
+            });
+            child = Container(
+              width: 72.0,
+              key: ValueKey(null),
+              // TODO: display something?
+            );
+          } else {
+            final mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
+            child = Column(
+              key: ValueKey(mixId),
+              children: [
+                QuCheckButton.simpleText(
+                  "Switch Platform",
+                  width: 72.0,
+                  onSelect: () {
+                    ConnectionModel().reset();
+                    final platformProvider = PlatformProvider.of(context);
+                    if (platformProvider.platform != TargetPlatform.iOS) {
+                      platformProvider.changeToCupertinoPlatform();
+                    } else {
+                      platformProvider.changeToMaterialPlatform();
+                    }
+                  },
+                  margin: EdgeInsets.only(bottom: 8.0),
+                ),
+                ValueListenableBuilder<FaderInfo>(
+                  valueListenable: mixNotifier,
+                  builder: (context, info, _) =>
+                      buildMuteButton(info.explicitMuteOn),
+                ),
+                Expanded(
                   child: VerticalFader(
                     mixNotifier,
                     false,
@@ -207,12 +220,14 @@ class _PageHomeState extends State<PageHome> {
                         context: context,
                       ),
                     ),
-                    key: ValueKey(mixNotifier.value.id),
                   ),
-                  duration: Duration(milliseconds: 400),
                 ),
-              ),
-            ],
+              ],
+            );
+          }
+          return AnimatedSwitcher(
+            child: child,
+            duration: Duration(milliseconds: 400),
           );
         },
       ),
@@ -226,7 +241,7 @@ class _PageHomeState extends State<PageHome> {
       selected: muteOn,
       width: 72.0,
       onSelect: () {
-        widget._mainSendMixModel.toogleMixMasterMute();
+        mainSendMixModel.toogleMixMasterMute();
       },
       margin: EdgeInsets.only(bottom: 8),
       checkColor: quTheme.mutedColor,

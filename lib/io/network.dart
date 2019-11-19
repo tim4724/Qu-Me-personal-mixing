@@ -14,31 +14,142 @@ import 'package:qu_me/core/sceneParser.dart' as sceneParser;
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/entities/scene.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/networkMetersListener.dart' as metersListener;
 
 Socket _socket;
-int _currentMixIndex = -1;
+int _currentMixIndex = -1; // TODO is this variable necessary?
+final _connectionModel = ConnectionModel();
+final _mainSendMixModel = MainSendMixModel();
+final _sendGroupModel = SendGroupModel();
 final _levelPanModel = FaderLevelPanModel();
 
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
+    _socket?.destroy();
+    _socket = null;
     Future.delayed(Duration(milliseconds: 500), () {
-      final mixerModel = ConnectionModel();
-      mixerModel.onMixerVersion(MixerType.QU_16, "0");
-      final mixingModel = MainSendMixModel();
-      mixingModel.onScene(buildDemoScene());
+      _connectionModel.onMixerVersion(MixerType.QU_16, "0");
+      _onSceneReceived(buildDemoScene());
     });
   } else {
     _connect(address);
   }
 }
 
-void _connect(InternetAddress address) async {
-  final connectionModel = ConnectionModel();
-  final mainSendMixModel = MainSendMixModel();
-  final groupModel = SendGroupModel();
+void changeFaderLevel(int id, double levelInDb) {
+  if (_socket == null || _currentMixIndex == -1) {
+    return;
+  }
+  final value = ((levelInDb + 128.0) * 256.0).toInt();
+  final valueId = id < 39 ? 0x0a : 0x07;
+  final param2 = id < 39 ? _currentMixIndex : 0x07;
+  final packet = [
+    0x7F, // System Packet
+    0x03, // Group Id
+    0x08, // Len
+    0x00, // Len
+    0x04, //
+    0x04, //
+    valueId,
+    0x00,
+    id,
+    param2
+  ];
+  packet.addAll(_fromUint16(value));
+  print("Set level $id $value");
+  _socket.add(packet);
+}
 
+void changeFaderPan(int id, int value) {
+  if (_socket == null || _currentMixIndex == -1) {
+    return;
+  }
+  // TODO: Do something useful
+}
+
+void changeMute(int id, bool muteOn) {
+  if (_socket == null) {
+    return;
+  }
+  // Mix 1 mute on:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x01 0x00
+  // Mix 1 mute off:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x00 0x00
+  // Mix 9/10 mute on:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x01 0x00
+  // Mix 9/10 mute off:
+  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x00 0x00
+  final packet = [
+    0x7F, // System Packet
+    0x03, // Group Id
+    0x08, // Len
+    0x00, // Len
+    0x04, //
+    0x04, //
+    0x06,
+    0x00,
+    id,
+    0x07,
+    muteOn ? 0x01 : 0x00,
+    0x00
+  ];
+  _socket.add(packet);
+}
+
+void changeSelectedMix(int mixId, int mixIndex) {
+  _connectionModel.onLoadingScene();
+
+  if (_socket == null) {
+    // For demo scene
+    // TODO : implement demo mode better?
+    Future.delayed(Duration(milliseconds: 500), () {
+      _onSceneReceived(buildDemoScene());
+    });
+    return;
+  }
+  _currentMixIndex = -1;
+
+  // Listen for future Mix Master Fader changes?
+  final magicData = Uint8List(36);
+  magicData[0] = 0x13;
+  final magicValue = _fromUint16(0x80 * pow(2, mixIndex));
+  magicData[8] = magicValue[0];
+  magicData[9] = magicValue[1];
+  _socket.add(_buildSystemPacket(0x04, [0x03, mixId]));
+  _socket.add(_buildSystemPacket(0x04, magicData));
+
+  // _socket.add(_buildSystemPacket(
+  //      0x04,
+  //      HEX.decode(130000000000000000010000000000000000000000000000000000000000000000000000
+  //          "130000000000000080000000000000000000000000000000000000000000000000000000")));
+
+  // Listen for future send level changes for new mix?
+  final magicData1 = Uint8List(36);
+  magicData1[0] = 0x14;
+  magicData1[4] = 0x01 * pow(2, mixIndex);
+  _socket.add(_buildSystemPacket(0x04, [0x04, mixId]));
+  _socket.add(_buildSystemPacket(0x04, magicData1));
+  // _socket.add(_buildSystemPacket(
+  //    0x04,
+  //    HEX.decode(
+  //        "140000000100000000000000000000000000000000000000000000000000000000000000")));
+
+  // Request current scene state
+  // - to receive latest send levels for new mix
+  // - to receive latest new mix master fader level
+  _requestSceneState();
+
+  _currentMixIndex = mixIndex;
+}
+
+void close() {
+  _socket?.destroy();
+  _socket = null;
+}
+
+void _connect(InternetAddress address) async {
   _socket = await Socket.connect(address, 51326);
   _socket.setOption(SocketOption.tcpNoDelay, true);
 
@@ -56,8 +167,8 @@ void _connect(InternetAddress address) async {
       _socket?.destroy();
       heartbeat.stop();
       byteStreamController.close();
-      connectionModel.reset();
-      mainSendMixModel.reset();
+      _connectionModel.reset();
+      _mainSendMixModel.reset();
     },
     onError: _onError,
     cancelOnError: false,
@@ -80,9 +191,8 @@ void _connect(InternetAddress address) async {
   // Check password "inear"
   _socket.add(_buildSystemPacket(0x04, HEX.decode("0104000046c340f4")));
 
+  // TODO: Or rquest after mixer version received
   _requestSceneState();
-
-  mixSelectChanged(39, 0);
 
   StreamQueue<int> queue = StreamQueue(byteStreamController.stream);
   while (await queue.hasNext) {
@@ -99,7 +209,7 @@ void _connect(InternetAddress address) async {
             heartbeat.start(metersSocket, address, dstPort);
             break;
           case 0x01:
-            connectionModel.onMixerVersion(
+            _connectionModel.onMixerVersion(
                 data[0], "${data[1]}.${data[2]}-${_getUint16(data, 4)}");
             break;
           case 0x02:
@@ -110,8 +220,8 @@ void _connect(InternetAddress address) async {
             }
             break;
           case 0x06:
-            mainSendMixModel
-                .onScene(sceneParser.parse(Uint8List.fromList(data)));
+            final scene = sceneParser.parse(Uint8List.fromList(data));
+            _onSceneReceived(scene);
             break;
           case 0x07:
             // Don't know what this is...
@@ -136,7 +246,7 @@ void _connect(InternetAddress address) async {
             print("Rename data: $data");
             final faderId = data[1];
             final name = ascii.decode(data.sublist(2, data.indexOf(0x00, 2)));
-            mainSendMixModel.updateFaderInfo(faderId, name: name);
+            _mainSendMixModel.updateFaderInfo(faderId, name: name);
             break;
           case 0x09:
             // Channel 3 mix 7/8:
@@ -182,12 +292,13 @@ void _connect(InternetAddress address) async {
               break;
             case 0x06:
               final muteOn = dspPacket.value == 1;
-              mainSendMixModel.updateFaderInfo(faderId, explicitMuteOn: muteOn);
+              _mainSendMixModel.updateFaderInfo(faderId,
+                  explicitMuteOn: muteOn);
               print("Mute fader $faderId: $muteOn");
               break;
             case 0x09:
               final assignOn = dspPacket.value == 1;
-              groupModel.updateAvailabilitySend(faderId, assignOn);
+              _sendGroupModel.updateAvailabilitySend(faderId, assignOn);
               print("Assign send $faderId to current Mix: $assignOn");
               break;
             case 0x0C:
@@ -212,20 +323,20 @@ void _connect(InternetAddress address) async {
               for (int muteGroupId = 0; muteGroupId < 4; muteGroupId++) {
                 final muteOn = (dspPacket.value >> muteGroupId) & 0x01 == 0x01;
                 final type = ControlGroupType.muteGroup;
-                mainSendMixModel.updateControlGroup(muteGroupId, type, muteOn);
+                _mainSendMixModel.updateControlGroup(muteGroupId, type, muteOn);
               }
               break;
             case 0x0D:
               final muteGroupId = dspPacket.param2;
               final assignOn = dspPacket.value == 1;
-              mainSendMixModel.updateControlGroupAssignment(
+              _mainSendMixModel.updateControlGroupAssignment(
                   muteGroupId, ControlGroupType.muteGroup, faderId, assignOn);
               break;
             case 0x16:
               final dcaGroupId = faderId - 205;
               final type = ControlGroupType.dca;
               final muteOn = dspPacket.value != 0;
-              mainSendMixModel.updateControlGroup(dcaGroupId, type, muteOn);
+              _mainSendMixModel.updateControlGroup(dcaGroupId, type, muteOn);
               // DCA 1: muteOn -> true
               // DspPacket{controlId: 90, targetGroup: 4, valueId: 22, clientId: 0, param1: 205, param2: 0, value 1}
               // DCA 2: muteOn -> true
@@ -248,7 +359,7 @@ void _connect(InternetAddress address) async {
             case 0x17:
               final dcaGroupId = dspPacket.param2;
               final assignOn = dspPacket.value == 1;
-              mainSendMixModel.updateControlGroupAssignment(
+              _mainSendMixModel.updateControlGroupAssignment(
                   dcaGroupId, ControlGroupType.dca, faderId, assignOn);
               break;
             default:
@@ -262,144 +373,6 @@ void _connect(InternetAddress address) async {
         break;
     }
   }
-}
-
-Uint8List _buildSystemPacket(int groupId, List<int> value) {
-  return Uint8List.fromList(
-      [0x7f, groupId, value.length, value.length >> 8]..addAll(value));
-}
-
-int _getUint16(List<int> data, [int index = 0]) {
-  return data[index] | data[index + 1] << 8;
-}
-
-Uint8List _fromUint16(int value) {
-  return Uint8List.fromList([value, value >> 8]);
-}
-
-void faderLevelChanged(int id, double valueInDb) {
-  if (_socket == null || _currentMixIndex == -1) {
-    return;
-  }
-  final value = ((valueInDb + 128.0) * 256.0).toInt();
-  final valueId = id < 39 ? 0x0a : 0x07;
-  final param2 = id < 39 ? _currentMixIndex : 0x07;
-  final packet = [
-    0x7F, // System Packet
-    0x03, // Group Id
-    0x08, // Len
-    0x00, // Len
-    0x04, //
-    0x04, //
-    valueId,
-    0x00,
-    id,
-    param2
-  ];
-  packet.addAll(_fromUint16(value));
-  print("Set level $id $value");
-  _socket.add(packet);
-}
-
-void faderPanChanged(int id, int value) {
-  if (_socket == null || _currentMixIndex == -1) {
-    return;
-  }
-
-  // TODO: Do something useful
-  /*
-  final valueId = id < 39 ? 0x0a : 0x07;
-  final param2 = id < 39 ? _currentMixIndex : 0x07;
-  final packet = [
-    0x7F, // System Packet
-    0x03, // Group Id
-    0x08, // Len
-    0x00, // Len
-    0x04, //
-    0x04, //
-    valueId,
-    0x00,
-    id,
-    param2
-  ];
-  packet.addAll(_fromUint16(value));
-  print("Set level $id $value");
-  _socket.add(packet);
-  */
-}
-
-void muteOnChanged(int id, bool muteOn) {
-  if (_socket == null) {
-    return;
-  }
-  // Mix 1 mute on:
-  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x01 0x00
-  // Mix 1 mute off:
-  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x27 0x07 0x00 0x00
-  // Mix 9/10 mute on:
-  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x01 0x00
-  // Mix 9/10 mute off:
-  // 0x7F 0x03 0x08 0x00 0x04 0x04 0x06 0x00 0x2d 0x07 0x00 0x00
-  final packet = [
-    0x7F, // System Packet
-    0x03, // Group Id
-    0x08, // Len
-    0x00, // Len
-    0x04, //
-    0x04, //
-    0x06,
-    0x00,
-    id,
-    0x07,
-    muteOn ? 0x01 : 0x00,
-    0x00
-  ];
-  _socket.add(packet);
-}
-
-void _requestSceneState() {
-  if (_socket == null) {
-    return;
-  }
-  // request scene state
-  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
-}
-
-void mixSelectChanged(int mixId, int mixIndex) {
-  if (_socket == null) {
-    return;
-  }
-  _currentMixIndex = -1;
-  // Request current scene state
-  // - to receive latest send levels for new mix
-  // - to receive latest new mix master fader level
-  _requestSceneState();
-
-  // Listen for future Mix Master Fader changes?
-  final magicData = Uint8List(36);
-  magicData[0] = 0x13;
-  final magicValue = _fromUint16(0x80 * pow(2, mixIndex));
-  magicData[8] = magicValue[0];
-  magicData[9] = magicValue[1];
-  _socket.add(_buildSystemPacket(0x04, [0x03, mixId]));
-  _socket.add(_buildSystemPacket(0x04, magicData));
-
-  // _socket.add(_buildSystemPacket(
-  //      0x04,
-  //      HEX.decode(130000000000000000010000000000000000000000000000000000000000000000000000
-  //          "130000000000000080000000000000000000000000000000000000000000000000000000")));
-
-  // Listen for future send level changes for new mix?
-  final magicData1 = Uint8List(36);
-  magicData1[0] = 0x14;
-  magicData1[4] = 0x01 * pow(2, mixIndex);
-  _socket.add(_buildSystemPacket(0x04, [0x04, mixId]));
-  _socket.add(_buildSystemPacket(0x04, magicData1));
-  // _socket.add(_buildSystemPacket(
-  //    0x04,
-  //    HEX.decode(
-  //        "140000000100000000000000000000000000000000000000000000000000000000000000")));
-  _currentMixIndex = mixIndex;
 }
 
 class DspPacket {
@@ -432,10 +405,59 @@ class DspPacket {
   }
 }
 
-void close() {
-  _socket?.destroy();
+void _requestSceneState() {
+  // request scene state
+  _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
+}
+
+void _onSceneReceived(Scene scene) {
+  _mainSendMixModel.initControlGroups(scene.controlGroups);
+  _mainSendMixModel.initMixes(scene.mixes);
+  _mainSendMixModel.initSends(scene.sends);
+
+  final currentMix = _mainSendMixModel.getCurrentMix();
+  if (currentMix != null) {
+    int maxMonoChannels = 32;
+    // TODO: What if ConnectionModel is not initialized
+    if (_connectionModel.type == MixerType.QU_16) {
+      maxMonoChannels = 16;
+    }
+    // TODO add selection for QU-24, Qu-32 ...
+
+    List<int> availableSendIds = scene.sends
+        .where((send) {
+          return currentMix.sendAssigns[send.id] &&
+              (send.sendType != SendType.monoChannel ||
+                  send.id < maxMonoChannels);
+        })
+        .map((send) => send.id)
+        .toList();
+    _sendGroupModel.initAvailableSends(availableSendIds);
+
+    _levelPanModel.initLevels(currentMix.sendLevelsInDb);
+    _levelPanModel.initPans(currentMix.sendPans);
+  } else {
+    _levelPanModel.reset();
+  }
+  _levelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
+  _levelPanModel.initLinks(scene.faderLevelLinks, scene.faderPanLinks);
+
+  _connectionModel.onSceneLoaded();
 }
 
 void _onError(e) {
   print(e);
+}
+
+Uint8List _buildSystemPacket(int groupId, List<int> value) {
+  return Uint8List.fromList(
+      [0x7f, groupId, value.length, value.length >> 8]..addAll(value));
+}
+
+int _getUint16(List<int> data, [int index = 0]) {
+  return data[index] | data[index + 1] << 8;
+}
+
+Uint8List _fromUint16(int value) {
+  return Uint8List.fromList([value, value >> 8]);
 }

@@ -24,7 +24,7 @@ class QuDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(title),
       content: SingleChildScrollView(child: body),
-      contentPadding: EdgeInsets.fromLTRB(24, 12, 24, 0),
+      contentPadding: EdgeInsets.fromLTRB(24, 12, 24, action == null ? 12 : 0),
       actions: <Widget>[action],
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(4)),
@@ -44,6 +44,7 @@ class QuCupertinoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bodyPaddingBot = action != null ? 0.0 : 24.0;
     return Padding(
       padding: const EdgeInsets.fromLTRB(36, 36, 36, 24),
       child: Center(
@@ -58,13 +59,13 @@ class QuCupertinoDialog extends StatelessWidget {
                 children: <Widget>[
                   if (title != null)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                       child: Text(title, style: (theme.textTheme.title)),
                     ),
                   Flexible(
                     child: SingleChildScrollView(
                       child: body,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: EdgeInsets.fromLTRB(24, 8, 24, bodyPaddingBot),
                     ),
                   ),
                   if (action != null) action
