@@ -1,16 +1,16 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:qu_me/core/findColor.dart';
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
+import 'package:qu_me/util.dart';
 
 class Mix extends FaderInfo {
   final MixType mixType;
-
-  // TODO make private?
-  final List<double> sendLevelsInDb;
-  final List<int> sendPans;
-  final List<bool> sendAssigns;
+  final UnmodifiableListView<double> sendLevelsInDb;
+  final UnmodifiableListView<int> sendPans;
+  final UnmodifiableListView<bool> sendAssigns;
 
   factory Mix(
     int id,
@@ -31,8 +31,20 @@ class Mix extends FaderInfo {
     }
     final color = findColor(name);
     final personName = null;
-    return Mix._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, controlGroups, sendLevelsInDb, sendPans, sendAssigns);
+    return Mix._internal(
+      id,
+      type,
+      displayId,
+      technicalName,
+      name,
+      color,
+      personName,
+      explicitMuteOn,
+      controlGroups,
+      unmodifiableList(sendLevelsInDb),
+      unmodifiableList(sendPans),
+      unmodifiableList(sendAssigns),
+    );
   }
 
   Mix._internal(

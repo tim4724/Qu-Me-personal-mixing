@@ -10,7 +10,7 @@ class Scene {
   final List<double> mixesLevelInDb;
   final List<ControlGroup> controlGroups;
 
-  Scene(
+  const Scene(
     this.sends,
     this.mixes,
     this.faderLevelLinks,

@@ -109,7 +109,7 @@ class SendGroupModel extends ChangeNotifier {
   }
 
   void setGroupName(int id, String name) {
-    _groups[id].name = name.trim();
+    _groups[id] = _groups[id].copyWithNewName(name.trim());
     notifyListeners();
   }
 }

@@ -3,7 +3,7 @@ class ControlGroup {
   final ControlGroupType type;
   final bool muteOn;
 
-  ControlGroup(this.id, this.type, this.muteOn);
+  const ControlGroup(this.id, this.type, this.muteOn);
 }
 
 enum ControlGroupType {

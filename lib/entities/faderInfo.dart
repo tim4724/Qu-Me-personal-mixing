@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/controlGroup.dart';
+import 'package:qu_me/util.dart';
 
 abstract class FaderInfo {
   final int id; // global id
@@ -9,7 +11,7 @@ abstract class FaderInfo {
   final Color color;
   final String personName; // name of the musician
   final bool explicitMuteOn; // Explicitly muted
-  final Set<ControlGroup> controlGroups; // TODO unmodiviable
+  final UnmodifiableSetView<ControlGroup> controlGroups; // DCA or Mute Groups
 
   FaderInfo(
     this.id,
@@ -19,13 +21,13 @@ abstract class FaderInfo {
     this.color,
     this.personName,
     this.explicitMuteOn,
-    this.controlGroups,
-  );
+    Set<ControlGroup> controlGroups,
+  ) : this.controlGroups = unmodifiableSet<ControlGroup>(controlGroups);
 
   bool get stereo;
 
   // Either explicitly muted or muted through a group
-  bool get muted => explicitMuteOn || controlGroups.any((group) => group.muteOn);
+  bool get muted => explicitMuteOn || controlGroups.any((cg) => cg.muteOn);
 
   FaderInfo copyWith({
     String name,
