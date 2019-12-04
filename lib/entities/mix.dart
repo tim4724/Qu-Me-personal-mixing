@@ -1,28 +1,14 @@
 import 'dart:ui';
 
-import 'package:collection/collection.dart';
 import 'package:qu_me/core/findColor.dart';
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
-import 'package:qu_me/util.dart';
 
 class Mix extends FaderInfo {
   final MixType mixType;
-  final UnmodifiableListView<double> sendLevelsInDb;
-  final UnmodifiableListView<int> sendPans;
-  final UnmodifiableListView<bool> sendAssigns;
 
-  factory Mix(
-    int id,
-    MixType type,
-    int displayId,
-    String name,
-    bool explicitMuteOn,
-    Set<ControlGroup> controlGroups,
-    List<double> sendLevelsInDb,
-    List<int> sendPans,
-    List<bool> sendAssigns,
-  ) {
+  factory Mix(int id, MixType type, int displayId, String name,
+      bool explicitMuteOn, Set<ControlGroup> controlGroups) {
     String technicalName;
     if (type == MixType.mono) {
       technicalName = "Mix $displayId";
@@ -41,9 +27,6 @@ class Mix extends FaderInfo {
       personName,
       explicitMuteOn,
       controlGroups,
-      unmodifiableList(sendLevelsInDb),
-      unmodifiableList(sendPans),
-      unmodifiableList(sendAssigns),
     );
   }
 
@@ -57,9 +40,6 @@ class Mix extends FaderInfo {
     String personName,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-    this.sendLevelsInDb,
-    this.sendPans,
-    this.sendAssigns,
   ) : super(id, displayId, technicalName, name, color, personName,
             explicitMuteOn, controlGroups);
 
@@ -70,11 +50,9 @@ class Mix extends FaderInfo {
   FaderInfo copyWith({
     String name,
     String personName,
+    Color color,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-    List<double> sendLevelsInDb,
-    List<int> sendPans,
-    List<bool> sendAssigns,
   }) {
     return Mix(
       this.id,
@@ -83,9 +61,6 @@ class Mix extends FaderInfo {
       name ?? this.name,
       explicitMuteOn ?? this.explicitMuteOn,
       controlGroups ?? this.controlGroups,
-      sendLevelsInDb ?? this.sendLevelsInDb,
-      sendPans ?? this.sendPans,
-      sendAssigns ?? this.sendAssigns,
     );
   }
 }

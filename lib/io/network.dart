@@ -103,7 +103,7 @@ void changeSelectedMix(int mixId, int mixIndex) {
 
   if (_socket == null) {
     // For demo scene
-    // TODO : implement demo mode better?
+    // TODO: implement demo mode better?
     Future.delayed(Duration(milliseconds: 500), () {
       _onSceneReceived(buildDemoScene());
     });
@@ -137,8 +137,8 @@ void changeSelectedMix(int mixId, int mixIndex) {
   //        "140000000100000000000000000000000000000000000000000000000000000000000000")));
 
   // Request current scene state
-  // - to receive latest send levels for new mix
-  // - to receive latest new mix master fader level
+  // - to receive latest send levels, send pans, assignements for new mix
+  // - to receive latest mix master fader level
   _requestSceneState();
 
   _currentMixIndex = mixIndex;
@@ -220,7 +220,8 @@ void _connect(InternetAddress address) async {
             }
             break;
           case 0x06:
-            final scene = sceneParser.parse(Uint8List.fromList(data));
+            final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+            final scene = sceneParser.parse(Uint8List.fromList(data), mixId);
             _onSceneReceived(scene);
             break;
           case 0x07:
@@ -415,32 +416,24 @@ void _onSceneReceived(Scene scene) {
   _mainSendMixModel.initMixes(scene.mixes);
   _mainSendMixModel.initSends(scene.sends);
 
-  final currentMix = _mainSendMixModel.getCurrentMix();
-  if (currentMix != null) {
-    int maxMonoChannels = 32;
-    // TODO: What if ConnectionModel is not initialized
-    if (_connectionModel.type == MixerType.QU_16) {
-      maxMonoChannels = 16;
-    }
-    // TODO add selection for QU-24, Qu-32 ...
-
-    List<int> availableSendIds = scene.sends
-        .where((send) {
-          return currentMix.sendAssigns[send.id] &&
-              (send.sendType != SendType.monoChannel ||
-                  send.id < maxMonoChannels);
-        })
-        .map((send) => send.id)
-        .toList();
-    _sendGroupModel.initAvailableSends(availableSendIds);
-
-    _levelPanModel.initLevels(currentMix.sendLevelsInDb);
-    _levelPanModel.initPans(currentMix.sendPans);
-  } else {
-    _levelPanModel.reset();
+  int maxMonoChannels = 32;
+  // TODO: What if ConnectionModel is not initialized
+  if (_connectionModel.type == MixerType.QU_16) {
+    maxMonoChannels = 16;
   }
-  _levelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
-  _levelPanModel.initLinks(scene.faderLevelLinks, scene.faderPanLinks);
+  // TODO add selection for QU-24, Qu-32 ...
+
+  List<int> availableSendIds = scene.sends
+      .where((send) =>
+          scene.sendAssigns[send.id] &&
+          (send.sendType != SendType.monoChannel || send.id < maxMonoChannels))
+      .map((send) => send.id)
+      .toList();
+  _sendGroupModel.initAvailableSends(availableSendIds);
+
+  _levelPanModel.initLinks(scene.sendsLevelLinked, scene.sendsPanLinked);
+  _levelPanModel.initLevels(scene.sendLevelsInDb);
+  _levelPanModel.initPans(scene.sendPans);
 
   _connectionModel.onSceneLoaded();
 }

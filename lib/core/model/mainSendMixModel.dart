@@ -19,15 +19,14 @@ class MainSendMixModel {
   final currentMixIdNotifier = ValueNotifier<int>(null);
 
   // TODO: maybe improve control group managent?
-  final _availableControlGroups =
-      ListMultimap<ControlGroupType, ControlGroup>();
+  final _allControlGroups = ListMultimap<ControlGroupType, ControlGroup>();
 
   MainSendMixModel._internal();
 
   void initControlGroups(List<ControlGroup> controlGroups) {
-    _availableControlGroups.clear();
+    _allControlGroups.clear();
     controlGroups.forEach((group) {
-      _availableControlGroups.add(group.type, group);
+      _allControlGroups.add(group.type, group);
     });
   }
 
@@ -78,13 +77,13 @@ class MainSendMixModel {
   }
 
   void updateControlGroup(int groupId, ControlGroupType type, bool muteOn) {
-    final oldGroup = _availableControlGroups[type][groupId];
+    final oldGroup = _allControlGroups[type][groupId];
     if (oldGroup.muteOn == muteOn) {
       return;
     }
 
     final newControlGroup = ControlGroup(groupId, type, muteOn);
-    _availableControlGroups[type][groupId] = newControlGroup;
+    _allControlGroups[type][groupId] = newControlGroup;
     for (final sendNotifier in _sendNotifiers) {
       _updateControlGroup(sendNotifier.value, newControlGroup);
     }
@@ -111,7 +110,7 @@ class MainSendMixModel {
     final controlGroups = Set<ControlGroup>.from(faderInfo.controlGroups)
       ..removeWhere((group) => group.id == groupId && group.type == type);
     if (assignOn) {
-      controlGroups.add(_availableControlGroups[type][groupId]);
+      controlGroups.add(_allControlGroups[type][groupId]);
     }
     updateFaderInfo(faderId, controlGroups: controlGroups);
   }
@@ -126,37 +125,6 @@ class MainSendMixModel {
       name: name,
       personName: personName,
       explicitMuteOn: explicitMuteOn,
-      controlGroups: controlGroups,
-    );
-  }
-
-  void updateSend(int id,
-      {String name,
-      String personName,
-      bool explicitMuteOn,
-      Set<ControlGroup> controlGroups}) {
-    final sendNotifier = getSendNotifierForId(id);
-    sendNotifier.value = sendNotifier.value.copyWith(
-        name: name,
-        personName: personName,
-        explicitMuteOn: explicitMuteOn,
-        controlGroups: controlGroups);
-  }
-
-  void updateMix(int id,
-      {String name,
-      String personName,
-      bool explicitMuteOn,
-      Set<ControlGroup> controlGroups,
-      List<double> sendLevelsInDb,
-      List<bool> sendAssigns}) {
-    final mixNotifier = getMixNotifierForId(id);
-    mixNotifier.value = mixNotifier.value.copyWith(
-      name: name,
-      personName: personName,
-      explicitMuteOn: explicitMuteOn,
-      sendLevelsInDb: sendLevelsInDb,
-      sendAssigns: sendAssigns,
       controlGroups: controlGroups,
     );
   }

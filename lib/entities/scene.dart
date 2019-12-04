@@ -3,41 +3,40 @@ import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/send.dart';
 
 class Scene {
-  final List<Send> sends;
-  final List<Mix> mixes;
-  final List<bool> faderLevelLinks;
-  final List<bool> faderPanLinks;
-  final List<double> mixesLevelInDb;
-  final List<ControlGroup> controlGroups;
+  final List<ControlGroup> controlGroups = List<ControlGroup>(8);
+  final List<Send> sends = List<Send>(39);
+  final List<bool> sendsLevelLinked = List.filled(32, false);
+  final List<bool> sendsPanLinked = List.filled(32, false);
+  final List<Mix> mixes = List<Mix>(7);
+  final List<double> mixesLevelInDb = List.filled(7, -128.0);
+  final List<bool> sendAssigns = List.filled(39, false);
+  final List<double> sendLevelsInDb = List.filled(39, -128.0);
+  final List<int> sendPans = List.filled(32, 37);
 
-  const Scene(
-    this.sends,
-    this.mixes,
-    this.faderLevelLinks,
-    this.faderPanLinks,
-    this.mixesLevelInDb,
-    this.controlGroups,
-  );
-
-  @override
-  String toString() {
-    return 'Scene{sends: $sends, mixes: $mixes}';
-  }
+  Scene();
 }
 
 Scene buildDemoScene() {
+  final scene = Scene();
+
+  final controlGroups = List<ControlGroup>.generate(
+      8,
+      (i) => ControlGroup(i < 4 ? i : i - 4,
+          i < 4 ? ControlGroupType.dca : ControlGroupType.muteGroup, false));
+  scene.controlGroups.setRange(0, 8, controlGroups);
+
   final names = [
     "Kick",
     "Snare",
-    "Drums L",
-    "Drums R",
+    "Drum L",
+    "Drum R",
     "Bass",
     "",
     "E-Git",
     "Git",
-    "Keys L",
-    "Keys R",
-    "Pads",
+    "Key L",
+    "Key R",
+    "Pad",
     "Synth",
     "Voc 1",
     "Voc 2",
@@ -46,59 +45,38 @@ Scene buildDemoScene() {
     "Mic 1",
     "Mic 2"
   ];
-  final sends = List<Send>();
-  final links = List<bool>();
+
   for (int i = 0; i < 32; i++) {
     final name = i < names.length ? names[i] : "CH ${i + 1}";
-    final link = name.startsWith("Drums") || name.startsWith("Keys");
-    links.add(link);
-    sends.add(
-      Send(i, SendType.monoChannel, i + 1, name, false, Set<ControlGroup>()),
-    );
+    final link = name.startsWith("Drum") || name.startsWith("Key");
+    scene.sendsLevelLinked[i] = link;
+    scene.sendsPanLinked[i] = link;
+    scene.sends[i] =
+        Send(i, SendType.monoChannel, i + 1, name, false, Set<ControlGroup>());
   }
-  final stereoNames = ["PC", "Handy", "Atmo"];
+  final stereoNames = ["PC", "Smartphone", "Atmo"];
   for (int i = 0; i < 3; i++) {
     final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
-    sends.add(
-      Send(i + 32, SendType.stereoChannel, i + 1, name, i < 2,
-          Set<ControlGroup>()),
-    );
+    scene.sends[i + 32] = Send(i + 32, SendType.stereoChannel, i + 1, name,
+        i < 2, Set<ControlGroup>());
   }
   final fxNames = ["voc", "instr"];
   for (int i = 0; i < 4; i++) {
     final name = i < fxNames.length ? fxNames[i] : "";
-    sends.add(
-      Send(i + 35, SendType.fxReturn, i + 1, name, false, Set<ControlGroup>()),
-    );
+    scene.sends[i + 35] = Send(
+        i + 35, SendType.fxReturn, i + 1, name, false, Set<ControlGroup>());
   }
-  final mixes = [
-    Mix(0x27, MixType.mono, 1, "Voc 1", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x28, MixType.mono, 2, "Voc 2", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x29, MixType.mono, 3, "Voc 3", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x2A, MixType.mono, 4, "Voc 4", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x2B, MixType.stereo, 5, "Key", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x2C, MixType.stereo, 7, "Bass", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-    Mix(0x2D, MixType.stereo, 9, "Drum", false, Set<ControlGroup>(),
-        List.filled(39, -128.0), List.filled(39, 37), List.filled(39, true)),
-  ];
+  scene.sendAssigns.fillRange(0, scene.sendAssigns.length, true);
 
-  return Scene(
-    sends,
-    mixes,
-    links,
-    links,
-    List<double>.filled(7, -128.0),
-    List<ControlGroup>.generate(
-        4, (i) => ControlGroup(i, ControlGroupType.dca, false))
-      ..addAll(
-        List<ControlGroup>.generate(
-            4, (i) => ControlGroup(i, ControlGroupType.muteGroup, false)),
-      ),
-  );
+  scene.mixes.setRange(0, 7, [
+    Mix(0x27, MixType.mono, 1, "Voc 1", false, Set<ControlGroup>()),
+    Mix(0x28, MixType.mono, 2, "Voc 2", false, Set<ControlGroup>()),
+    Mix(0x29, MixType.mono, 3, "Voc 3", false, Set<ControlGroup>()),
+    Mix(0x2A, MixType.mono, 4, "Voc 4", false, Set<ControlGroup>()),
+    Mix(0x2B, MixType.stereo, 5, "Key", false, Set<ControlGroup>()),
+    Mix(0x2C, MixType.stereo, 7, "Bass", false, Set<ControlGroup>()),
+    Mix(0x2D, MixType.stereo, 9, "Drum", false, Set<ControlGroup>()),
+  ]);
+
+  return scene;
 }

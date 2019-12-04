@@ -18,6 +18,7 @@ enum LevelType { mono, stereo_left, stereo_right }
 abstract class Fader extends StatefulWidget {
   final bool pan;
   final bool forceDisplayTechnicalName;
+  // TODO: only store faderInfo and not valuenotifier
   final ValueNotifier<FaderInfo> _faderInfoNotifier;
   final Function doubleTap;
 

@@ -9,71 +9,36 @@ import 'package:qu_me/entities/send.dart';
 Uint8List _lastSceneData = Uint8List(0);
 const _blockLen = 192;
 
-Scene parse(Uint8List data) {
-  final dif = compare(_lastSceneData, data);
-  print("Scene dif");
-  for (var index in dif) {
-    print("index: $index \t oldValue: ${_lastSceneData[index]} "
-        "\t newValue: ${data[index]}");
-  }
-  print("");
+Scene parse(Uint8List data, int mixId) {
+  _debugCompare(data);
 
-  _lastSceneData = data;
   final sceneId = data[3];
   final sceneName = _readString(data, 12);
   print("Parsing scene \"$sceneName\" ($sceneId)");
 
+  final scene = Scene();
+
   final allDcaGroups = List<ControlGroup>(4);
   final allMuteGroups = List<ControlGroup>(4);
-  final sends = List<Send>(39);
-  final sendsLevelLinked = List<bool>(39);
-  final sendsPanLinked = List<bool>(39);
-
-  // DCA1 Mute: data[24314] == 1
-  // DCA2 Mute: data[24328] == 1
-  // DCA3 Mute: data[24342] == 1
-  // DCA4 Mute: data[24356] == 1
   for (int i = 0; i < allDcaGroups.length; i++) {
     final muteOn = (data[24314 + i * 14]) == 1;
     allDcaGroups[i] = ControlGroup(i, ControlGroupType.dca, muteOn);
   }
-  // Channel one not in any dca: data[214] == 0;
-  // Channel one in dca 1: data[214] == 1;
-  // Channel one in dca 2: data[214] == 2;
-  // Channel one in dca 1+2: data[214] == 3;
-
-  // Mute group 1 mute: data[21480] == 1
-  // Mute group 1 + 2 mute: data[21480] == 3
-  final muteGroupMuteData = data[21480];
   for (int i = 0; i < allMuteGroups.length; i++) {
-    final muteOn = muteGroupMuteData >> i & 0x01 == 1;
+    final muteOn = data[21480] >> i & 0x01 == 1;
     allMuteGroups[i] = ControlGroup(i, ControlGroupType.muteGroup, muteOn);
   }
-  // Channel 1 no mute groups: data[188] == 0
-  // Channel 1 mute-group 1: data[188] == 1
-  // Channel 1 mute-group 1 + 2: data[188] == 3
+  scene.controlGroups.setRange(0, 8, [...allDcaGroups, ...allMuteGroups]);
 
-  // Mono input channels 1 - 32
-  // Stereo input channels 1 - 3
-  // Fx Return 1 - 4
+  // Mono input channels 1 - 32, Stereo input channels 1 - 3, Fx Return 1 - 4
   // TODO: Group?
-  for (var i = 0, offset = 48; i < sends.length; i++, offset += _blockLen) {
-    // hpf, gate, eq, compressor: byte 0 - 120
-    // fader???: 121 - 123
-    // main send (or master if mix?): 126 - 128
-    // gain??: 129
-    // gain??: 152
-    // name: 156
-    // source: 132, 139
-    // linked: 144
-    // phantom: 154
-    // pad: 155
-    // id: 183
-    // mute: 184
+  for (int i = 0, offset = 48;
+      i < scene.sends.length;
+      i++, offset += _blockLen) {
     final muteOn = data[offset + 136] == 1;
-    final muteGroupData = data[offset + 140];
     final linked = data[offset + 144] == 1;
     final panLinked = linked && data[offset + 149] >> 3 & 1 == 1;
+    final muteGroupData = data[offset + 140];
     var name = _readString(data, offset + 156);
     final dcaData = data[offset + 166];
 
@@ -95,23 +60,17 @@ Scene parse(Uint8List data) {
       }
     }
 
-    final controlGroups = getControlGroupAssignement(
+    final controlGroups = _getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
-
-    sendsLevelLinked[i] = linked;
-    sendsPanLinked[i] = panLinked;
-    sends[i] = Send(i, type, displayId, name, muteOn, controlGroups);
+    scene.sends[i] = Send(i, type, displayId, name, muteOn, controlGroups);
+    scene.sendsLevelLinked[i] = linked;
+    scene.sendsPanLinked[i] = panLinked;
   }
 
-  final mixes = List<Mix>(7);
-  final mixMasterLevels = List<double>(7);
-
-  // Mono Mix 1 - 4
-  // Stereo Mix 5/6, 7/8, 9/10
+  // Mono Mix 1 - 4, Stereo Mix 5/6, 7/8, 9/10
   // TODO Mix-Group?
-  // offset 48 + 39 * 192 = 7536
-  for (var i = 0, offset = 48 + 39 * _blockLen;
-      i < mixes.length;
+  for (int i = 0, offset = 48 + 39 * _blockLen;
+      i < scene.mixes.length;
       i++, offset += _blockLen) {
     final muteOn = data[offset + 136] == 1;
     final muteGroupData = data[offset + 140];
@@ -121,45 +80,33 @@ Scene parse(Uint8List data) {
     final type = i < 4 ? MixType.mono : MixType.stereo;
     final displayId = i < 4 ? i + 1 : 2 * i - 3;
 
-    final controlGroups = getControlGroupAssignement(
+    final controlGroups = _getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
 
-    // channel 1 send mix 1 = _readUint16(data, 11872) / 256.0 - 128.0;
-    // channel 2 send mix 1 = _readUint16(data, 12032) / 256.0 - 128.0;
-    // channel 1 send mix 2 = _readUint16(data, 11880) / 256.0 - 128.0;
-    // Mix 1 Master Fader = _readUint16(data, 7662) / 256.0 - 128.0;
-    // Mix 2 Master Fader = _readUint16(data, 7854) / 256.0 - 128.0;
-    // channel 1 assign send mix 1 = data[11877] == 1;
-    // channel 1 assign send mix 2 = data[11885] == 1;
-    // channel 2 assign send mix 2 = data[12045] == 1;
-    final sendLevelsInDb = List<double>(39);
-    var sendLevelOffset = 11872 + i * 8;
-    for (var j = 0; j < sendLevelsInDb.length; j++, sendLevelOffset += 160) {
-      sendLevelsInDb[j] = _readUint16(data, sendLevelOffset) / 256.0 - 128.0;
-    }
-
-    // Mix 5/6 pan channel 1: 11906
-    // Mix 5/6 pan channel 2: 12066
-    // Mix 7/8 pan channel 1: 11914
-    final sendPans = List<int>(39);
-    if (type == MixType.stereo) {
-      var sendPanOffset = 11906 + (i - 4) * 8;
-      for (var j = 0; j < sendPans.length; j++, sendPanOffset += 160) {
-        sendPans[j] = _readUint16(data, sendPanOffset);
-      }
-    }
-
-    var sendAssignOffset = 11877 + i * 8;
-    final sendAssigns = List<bool>(39);
-    for (var j = 0; j < sendAssigns.length; j++, sendAssignOffset += 160) {
-      sendAssigns[j] = data[sendAssignOffset] == 1;
-    }
-
-    mixes[i] = Mix(39 + i, type, displayId, name, muteOn, controlGroups,
-        sendLevelsInDb, sendPans, sendAssigns);
+    scene.mixes[i] = Mix(39 + i, type, displayId, name, muteOn, controlGroups);
 
     final masterLevelOffset = 7662 + i * 192;
-    mixMasterLevels[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
+    scene.mixesLevelInDb[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
+  }
+
+  // Level and pan for sends of specific mix
+  if (mixId != null && mixId >= scene.mixes[0].id) {
+    final mixIndex = mixId - scene.mixes[0].id;
+    var levelOffset = 11872 + mixIndex * 8;
+    for (int j = 0; j < scene.sendLevelsInDb.length; j++, levelOffset += 160) {
+      scene.sendLevelsInDb[j] = _readUint16(data, levelOffset) / 256.0 - 128.0;
+    }
+    var assignOffset = 11877 + mixIndex * 8;
+    for (int j = 0; j < scene.sendAssigns.length; j++, assignOffset += 160) {
+      scene.sendAssigns[j] = data[assignOffset] == 1;
+    }
+
+    if (scene.mixes[mixIndex].mixType == MixType.stereo) {
+      var panOffset = 11906 + (mixIndex - 4) * 8;
+      for (var j = 0; j < scene.sendPans.length; j++, panOffset += 160) {
+        scene.sendPans[j] = _readUint16(data, panOffset);
+      }
+    }
   }
 
   // Fx Send
@@ -168,12 +115,11 @@ Scene parse(Uint8List data) {
     final name = _readString(data, offset + 156);
   }
   */
-  final controlGroups = [...allDcaGroups, ...allMuteGroups];
-  return Scene(sends, mixes, sendsLevelLinked, sendsPanLinked, mixMasterLevels,
-      controlGroups);
+  return scene;
 }
 
-Set<T> getControlGroupAssignement<T>(int val, val2, List<T> all, List<T> all2) {
+Set<T> _getControlGroupAssignement<T>(
+    int val, val2, List<T> all, List<T> all2) {
   final result = Set<T>();
   for (int i = 0; i < all.length; i++) {
     if ((val >> i) & 0x01 == 0x01) {
@@ -198,13 +144,35 @@ int _readUint16(Uint8List data, int startIndex) {
   return data[startIndex] | data[startIndex + 1] << 8;
 }
 
-compare(Uint8List oldData, Uint8List newData) {
-  var dif = [];
-  for (int i = 0; i < oldData.length; i++) {
-    if (oldData[i] != newData[i]) {
+_debugCompare(Uint8List newData) {
+  List<int> dif = [];
+  for (int i = 0; i < _lastSceneData.length; i++) {
+    if (_lastSceneData[i] != newData[i]) {
       dif.add(i);
     }
   }
-  print(dif);
-  return dif;
+  _lastSceneData = newData;
+
+  print("\nScene dif");
+  for (var index in dif) {
+    final oldValue = _lastSceneData[index];
+    final newValue = newData[index];
+    print("index: $index \t oldValue: $oldValue \t newValue: $newValue");
+  }
+  print("");
 }
+
+/*
+hpf, gate, eq, compressor: byte 0 - 120
+fader???: 121 - 123
+main send (or master if mix?): 126 - 128
+gain??: 129
+gain??: 152
+name: 156
+source: 132, 139
+linked: 144
+phantom: 154
+pad: 155
+id: 183
+mute: 184
+ */
