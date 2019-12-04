@@ -16,36 +16,29 @@ import 'package:qu_me/widget/quTheme.dart';
 enum LevelType { mono, stereo_left, stereo_right }
 
 abstract class Fader extends StatefulWidget {
-  final bool pan;
-  final bool forceDisplayTechnicalName;
-  // TODO: only store faderInfo and not valuenotifier
-  final ValueNotifier<FaderInfo> _faderInfoNotifier;
-  final Function doubleTap;
+  final bool _pan;
+  final bool _forceDisplayTechnicalName;
+  final FaderInfo _faderInfo;
+  final Function _doubleTap;
 
-  Fader(this._faderInfoNotifier, this.pan,
-      {this.forceDisplayTechnicalName = false, this.doubleTap, Key key})
+  Fader(this._faderInfo, this._pan, this._forceDisplayTechnicalName,
+      this._doubleTap, Key key)
       : super(key: key);
 }
 
 class HorizontalFader extends Fader {
-  HorizontalFader(ValueNotifier<FaderInfo> faderInfo, bool pan,
+  HorizontalFader(FaderInfo faderInfo, bool pan,
       {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
-      : super(faderInfo, pan,
-            forceDisplayTechnicalName: forceDisplayTechnicalName,
-            doubleTap: doubleTap,
-            key: key);
+      : super(faderInfo, pan, forceDisplayTechnicalName, doubleTap, key);
 
   @override
   State<StatefulWidget> createState() => _HorizontalFaderState();
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(ValueNotifier<FaderInfo> faderInfo, pan,
+  VerticalFader(FaderInfo faderInfo, pan,
       {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
-      : super(faderInfo, pan,
-            forceDisplayTechnicalName: forceDisplayTechnicalName,
-            doubleTap: doubleTap,
-            key: key);
+      : super(faderInfo, pan, forceDisplayTechnicalName, doubleTap, key);
 
   @override
   State<StatefulWidget> createState() => _VerticalFaderState();
@@ -76,11 +69,11 @@ abstract class _FaderState extends State<Fader> {
   @override
   void initState() {
     super.initState();
-    if (widget.doubleTap != null) {
+    if (widget._doubleTap != null) {
       gestures[DoubleTapGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<DoubleTapGestureRecognizer>(
         () => DoubleTapGestureRecognizer(),
-        (recognizer) => recognizer.onDoubleTap = widget.doubleTap,
+        (recognizer) => recognizer.onDoubleTap = widget._doubleTap,
       );
     }
   }
@@ -90,10 +83,10 @@ abstract class _FaderState extends State<Fader> {
   }
 
   void onDragUpdate(double delta) {
-    final id = widget._faderInfoNotifier.value.id;
+    final id = widget._faderInfo.id;
     final sliderWidth = keyFaderSlider.currentContext.size.width - 40;
     final deltaNormalized = (delta / (sliderWidth));
-    if (widget.pan) {
+    if (widget._pan) {
       final currentSliderValue = _levelPanModel.getPanSlider(id);
       _levelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
     } else {
@@ -109,7 +102,7 @@ abstract class _FaderState extends State<Fader> {
   Widget faderLabel(FaderInfo info) {
     String primary;
     String secondary;
-    if (widget.forceDisplayTechnicalName) {
+    if (widget._forceDisplayTechnicalName) {
       primary = info.technicalName;
       if (active && info.personName != null && info.personName.isNotEmpty) {
         secondary = info.personName;
@@ -169,13 +162,7 @@ abstract class _FaderState extends State<Fader> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<FaderInfo>(
-      valueListenable: widget._faderInfoNotifier,
-      builder: (context, faderInfo, child) {
-        print("build fader: $faderInfo");
-        return buildFader(context, faderInfo);
-      },
-    );
+    return buildFader(context, widget._faderInfo);
   }
 
   Widget buildFader(BuildContext context, FaderInfo faderInfo);
@@ -185,10 +172,10 @@ abstract class _FaderState extends State<Fader> {
     return AnimatedSwitcher(
       key: keyFaderSlider,
       child: RawGestureDetector(
-          key: ValueKey(widget.pan),
+          key: ValueKey(widget._pan),
           behavior: HitTestBehavior.opaque,
           gestures: gestures,
-          child: widget.pan
+          child: widget._pan
               ? _PanSlider(faderInfo.id, faderInfo.muted, active)
               : _LevelSlider(
                   faderInfo.id, faderInfo.muted, active, faderInfo.stereo)),

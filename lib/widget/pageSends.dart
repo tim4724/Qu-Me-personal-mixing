@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
+import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/send.dart';
@@ -15,16 +16,16 @@ import 'package:qu_me/widget/fader.dart';
 
 import 'dialogAssignSends.dart';
 
-class PageGroup extends StatefulWidget {
+class PageSends extends StatefulWidget {
   final int groupId;
 
-  PageGroup(this.groupId, {Key key}) : super(key: key);
+  PageSends(this.groupId, {Key key}) : super(key: key);
 
   @override
-  _PageGroupState createState() => _PageGroupState();
+  _PageSendsState createState() => _PageSendsState();
 }
 
-class _PageGroupState extends State<PageGroup> {
+class _PageSendsState extends State<PageSends> {
   final groupModel = SendGroupModel();
   final mainSendModel = MainSendMixModel();
   bool panMode = false;
@@ -211,11 +212,18 @@ class _PageGroupState extends State<PageGroup> {
     final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
     return Padding(
       padding: EdgeInsets.all(2.0),
-      child: landscape
-          ? VerticalFader(sendNotifier, panMode,
-              forceDisplayTechnicalName: showTechnicalName)
-          : HorizontalFader(sendNotifier, panMode,
-              forceDisplayTechnicalName: showTechnicalName),
+      child: ValueListenableBuilder<FaderInfo>(
+        valueListenable: sendNotifier,
+        builder: (BuildContext context, FaderInfo faderInfo, _) {
+          if (landscape) {
+            return VerticalFader(faderInfo, panMode,
+                forceDisplayTechnicalName: showTechnicalName);
+          } else {
+            return HorizontalFader(faderInfo, panMode,
+                forceDisplayTechnicalName: showTechnicalName);
+          }
+        },
+      ),
     );
   }
 }

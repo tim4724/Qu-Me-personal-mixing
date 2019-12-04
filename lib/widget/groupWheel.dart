@@ -89,7 +89,7 @@ class _GroupWheelState extends State<GroupWheel> {
     if (currentTime - lastTapTimestamp < 300) {
       Navigator.of(context).push(
         platformPageRoute<void>(
-          builder: (context) => PageGroup(id),
+          builder: (context) => PageSends(id),
           context: context,
         ),
       );

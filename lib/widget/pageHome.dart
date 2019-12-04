@@ -44,7 +44,7 @@ class _PageHomeState extends State<PageHome> {
       onWillPop: () => logout(),
       child: Stack(
         children: [
-          if (activeWheel != -1) PageGroup(activeWheel),
+          if (activeWheel != -1) PageSends(activeWheel),
           AnimatedOpacity(
             child: PlatformScaffold(
               appBar: PlatformAppBar(
@@ -112,8 +112,10 @@ class _PageHomeState extends State<PageHome> {
   logout() {
     network.close();
     connectionModel.reset();
-    final route =
-        platformPageRoute(builder: (context) => PageLogin(), context: context);
+    final route = platformPageRoute(
+      builder: (context) => PageLogin(),
+      context: context,
+    );
     Navigator.pushReplacement(context, route);
     mainSendMixModel.reset();
     levelPanModel.reset();
@@ -177,6 +179,7 @@ class _PageHomeState extends State<PageHome> {
         builder: (context, mixId, _) {
           Widget child;
           if (mixId == null) {
+            // TODO show hint with arrow to select mix button
             Future.delayed(Duration(milliseconds: 300), () {
               showSelectMixDialog();
             });
@@ -206,20 +209,26 @@ class _PageHomeState extends State<PageHome> {
                 ),
                 ValueListenableBuilder<FaderInfo>(
                   valueListenable: mixNotifier,
-                  builder: (context, info, _) =>
-                      buildMuteButton(info.explicitMuteOn),
+                  builder: (BuildContext context, FaderInfo info, _) {
+                    return buildMuteButton(info.explicitMuteOn);
+                  },
                 ),
                 Expanded(
-                  child: VerticalFader(
-                    mixNotifier,
-                    false,
-                    forceDisplayTechnicalName: true,
-                    doubleTap: () => Navigator.of(context).push(
-                      platformPageRoute<void>(
-                        builder: (context) => PageGroup(4),
-                        context: context,
-                      ),
-                    ),
+                  child: ValueListenableBuilder<FaderInfo>(
+                    valueListenable: mixNotifier,
+                    builder: (BuildContext context, FaderInfo faderInfo, _) {
+                      return VerticalFader(
+                        faderInfo,
+                        false,
+                        forceDisplayTechnicalName: true,
+                        doubleTap: () => Navigator.of(context).push(
+                          platformPageRoute<void>(
+                            builder: (context) => PageSends(4),
+                            context: context,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
