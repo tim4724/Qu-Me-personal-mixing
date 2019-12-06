@@ -16,7 +16,7 @@ class Scene {
   Scene();
 }
 
-Scene buildDemoScene() {
+Scene buildDemoScene(int mixId) {
   final scene = Scene();
 
   final controlGroups = List<ControlGroup>.generate(
@@ -66,7 +66,9 @@ Scene buildDemoScene() {
     scene.sends[i + 35] = Send(
         i + 35, SendType.fxReturn, i + 1, name, false, Set<ControlGroup>());
   }
-  scene.sendAssigns.fillRange(0, scene.sendAssigns.length, true);
+  if (mixId != null && mixId != -1) {
+    scene.sendAssigns.fillRange(0, scene.sendAssigns.length, true);
+  }
 
   scene.mixes.setRange(0, 7, [
     Mix(0x27, MixType.mono, 1, "Voc 1", false, Set<ControlGroup>()),

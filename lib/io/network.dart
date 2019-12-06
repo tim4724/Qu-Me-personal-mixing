@@ -31,7 +31,8 @@ void connect(String name, InternetAddress address) async {
     _socket = null;
     Future.delayed(Duration(milliseconds: 500), () {
       _connectionModel.onMixerVersion(MixerType.QU_16, "0");
-      _onSceneReceived(buildDemoScene());
+      final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+      _onSceneReceived(buildDemoScene(mixId));
     });
   } else {
     _connect(address);
@@ -105,7 +106,8 @@ void changeSelectedMix(int mixId, int mixIndex) {
     // For demo scene
     // TODO: implement demo mode better?
     Future.delayed(Duration(milliseconds: 500), () {
-      _onSceneReceived(buildDemoScene());
+      final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+      _onSceneReceived(buildDemoScene(mixId));
     });
     return;
   }

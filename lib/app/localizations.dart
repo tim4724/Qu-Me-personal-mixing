@@ -22,6 +22,7 @@ enum Strings {
   Group,
   Me,
   All,
+  EmptySends,
 }
 
 class QuLocalizations {
@@ -45,6 +46,7 @@ class QuLocalizations {
     Strings.Group: r"Group $0",
     Strings.Me: "Me",
     Strings.All: "All",
+    Strings.EmptySends: "Nothing available",
   };
   static const Map<Strings, String> _de = {
     Strings.AppName: "Qu Me",
@@ -66,6 +68,7 @@ class QuLocalizations {
     Strings.Group: r"Gruppe $0",
     Strings.Me: "Ich",
     Strings.All: "Alle",
+    Strings.EmptySends: "Nichts verfügbar",
   };
 
   QuLocalizations._internal();

@@ -25,21 +25,16 @@ class DialogSelectMix extends StatelessWidget {
 
     return QuDialog(
       title: QuLocalizations.get(Strings.MixSelect),
-      body: WillPopScope(
-        child: ValueListenableBuilder<List<int>>(
-          valueListenable: mixModel.availableMixIdsNotifier,
-          builder: (context, availableMixIds, child) {
-            return SizedBox(
-              width: 300,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: buildChildren(availableMixIds),
-              ),
-            );
-          },
-        ),
-        onWillPop: () {
-          return Future.sync(() => mixModel.getCurrentMix() != null);
+      body: ValueListenableBuilder<List<int>>(
+        valueListenable: mixModel.availableMixIdsNotifier,
+        builder: (context, availableMixIds, child) {
+          return SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: buildChildren(availableMixIds),
+            ),
+          );
         },
       ),
       action: cancelAction,

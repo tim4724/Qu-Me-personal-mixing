@@ -8,6 +8,7 @@ import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
+import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
@@ -173,69 +174,31 @@ class _PageHomeState extends State<PageHome> {
   Widget buildFaderWithMuteButton() {
     return Padding(
       padding: EdgeInsets.all(4.0),
-      // TODO merge listenables?
-      child: ValueListenableBuilder(
+      child: ValueListenableBuilder<int>(
         valueListenable: mainSendMixModel.currentMixIdNotifier,
-        builder: (context, mixId, _) {
-          Widget child;
+        builder: (BuildContext context, int mixId, _) {
+          ValueNotifier<Mix> mixNotifier;
           if (mixId == null) {
-            // TODO show hint with arrow to select mix button
-            Future.delayed(Duration(milliseconds: 300), () {
-              showSelectMixDialog();
-            });
-            child = Container(
-              width: 72.0,
-              key: ValueKey(null),
-              // TODO: display something?
-            );
+            mixNotifier = ValueNotifier(Mix.empty());
           } else {
-            final mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
-            child = Column(
-              key: ValueKey(mixId),
-              children: [
-                QuCheckButton.simpleText(
-                  "Switch Platform",
-                  width: 72.0,
-                  onSelect: () {
-                    ConnectionModel().reset();
-                    final platformProvider = PlatformProvider.of(context);
-                    if (platformProvider.platform != TargetPlatform.iOS) {
-                      platformProvider.changeToCupertinoPlatform();
-                    } else {
-                      platformProvider.changeToMaterialPlatform();
-                    }
-                  },
-                  margin: EdgeInsets.only(bottom: 8.0),
-                ),
-                ValueListenableBuilder<FaderInfo>(
-                  valueListenable: mixNotifier,
-                  builder: (BuildContext context, FaderInfo info, _) {
-                    return buildMuteButton(info.explicitMuteOn);
-                  },
-                ),
-                Expanded(
-                  child: ValueListenableBuilder<FaderInfo>(
-                    valueListenable: mixNotifier,
-                    builder: (BuildContext context, FaderInfo faderInfo, _) {
-                      return VerticalFader(
-                        faderInfo,
-                        false,
-                        forceDisplayTechnicalName: true,
-                        doubleTap: () => Navigator.of(context).push(
-                          platformPageRoute<void>(
-                            builder: (context) => PageSends(4),
-                            context: context,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
+            mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
           }
           return AnimatedSwitcher(
-            child: child,
+            child: Container(
+              child: ValueListenableBuilder<FaderInfo>(
+                valueListenable: mixNotifier,
+                builder: (BuildContext context, FaderInfo info, _) {
+                  return Column(
+                    children: [
+                      buildDebugSwitchPlatformButton(),
+                      buildMuteButton(info),
+                      Expanded(child: buildMixFader(info)),
+                    ],
+                  );
+                },
+              ),
+              key: ValueKey(mixId),
+            ),
             duration: Duration(milliseconds: 400),
           );
         },
@@ -243,17 +206,35 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  Widget buildMuteButton(bool muteOn) {
+  Widget buildMuteButton(FaderInfo info) {
     final quTheme = QuThemeData.get();
     return QuCheckButton.simpleText(
       QuLocalizations.get(Strings.Mute),
-      selected: muteOn,
+      selected: info.explicitMuteOn,
       width: 72.0,
       onSelect: () {
-        mainSendMixModel.toogleMixMasterMute();
+        if (info.id != -1) {
+          mainSendMixModel.changeMute(info.id, !info.explicitMuteOn);
+        }
       },
       margin: EdgeInsets.only(bottom: 8),
       checkColor: quTheme.mutedColor,
+      // TODO: add disabled state to QuCheckButton
+      pressedOpacity: info.id == -1 ? 1.0 : null,
+    );
+  }
+
+  Widget buildMixFader(FaderInfo info) {
+    return VerticalFader(
+      info,
+      false,
+      forceDisplayTechnicalName: true,
+      doubleTap: () => Navigator.of(context).push(
+        platformPageRoute<void>(
+          builder: (context) => PageSends(4),
+          context: context,
+        ),
+      ),
     );
   }
 
@@ -262,6 +243,23 @@ class _PageHomeState extends State<PageHome> {
       context: context,
       androidBarrierDismissible: true,
       builder: (BuildContext context) => DialogSelectMix(),
+    );
+  }
+
+  Widget buildDebugSwitchPlatformButton() {
+    return QuCheckButton.simpleText(
+      "Switch Platform",
+      width: 72.0,
+      onSelect: () {
+        ConnectionModel().reset();
+        final platformProvider = PlatformProvider.of(context);
+        if (platformProvider.platform != TargetPlatform.iOS) {
+          platformProvider.changeToCupertinoPlatform();
+        } else {
+          platformProvider.changeToMaterialPlatform();
+        }
+      },
+      margin: EdgeInsets.only(bottom: 8.0),
     );
   }
 }

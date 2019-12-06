@@ -11,9 +11,9 @@ class MainSendMixModel {
 
   factory MainSendMixModel() => _instance;
 
-  // Not so sure if the list of available mix-ids can change,
-  // yet we wrap the list in a changeNotifier
+  // Not so sure if the list of available mix-ids can change??
   final availableMixIdsNotifier = ValueNotifier(List<int>());
+
   final _mixNotifiers = List<ValueNotifier<Mix>>();
   final _sendNotifiers = List<ValueNotifier<Send>>();
   final currentMixIdNotifier = ValueNotifier<int>(null);
@@ -67,12 +67,11 @@ class MainSendMixModel {
     network.changeSelectedMix(id, index);
   }
 
-  void toogleMixMasterMute() {
-    final currentMix = getCurrentMix();
-    if (currentMix != null) {
-      getMixNotifierForId(currentMix.id).value =
-          currentMix.copyWith(explicitMuteOn: !currentMix.explicitMuteOn);
-      network.changeMute(currentMix.id, !currentMix.explicitMuteOn);
+  void changeMute(int id, bool muteOn) {
+    final faderInfo = _getFaderInfoNotifierForId(id);
+    if(faderInfo != null && faderInfo.value.explicitMuteOn != muteOn) {
+      faderInfo.value = faderInfo.value.copyWith(explicitMuteOn: muteOn);
+      network.changeMute(id, muteOn);
     }
   }
 

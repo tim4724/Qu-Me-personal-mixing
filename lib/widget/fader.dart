@@ -48,12 +48,22 @@ abstract class _FaderState extends State<Fader> {
   final _levelPanModel = FaderLevelPanModel();
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
-  final bool horizontalFader;
   var activePointers = 0;
 
   bool get active => activePointers > 0;
 
-  _FaderState(this.horizontalFader) {
+  _FaderState();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget._faderInfo.id != -1) {
+      initGestures();
+    }
+  }
+
+  @mustCallSuper
+  void initGestures() {
     gestures[MultiTapGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
       () => MultiTapGestureRecognizer(),
@@ -64,11 +74,6 @@ abstract class _FaderState extends State<Fader> {
           ..onTapUp = ((pointer, details) => onPointerStop());
       },
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
     if (widget._doubleTap != null) {
       gestures[DoubleTapGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<DoubleTapGestureRecognizer>(
@@ -126,7 +131,8 @@ abstract class _FaderState extends State<Fader> {
     return _FaderLabel(primary, secondary, color);
   }
 
-  BoxDecoration decoration(BuildContext context, FaderInfo faderInfo) {
+  BoxDecoration decoration(
+      BuildContext context, FaderInfo faderInfo, bool horizontal) {
     final quTheme = QuThemeData.get();
 
     Color bgColor;
@@ -139,8 +145,8 @@ abstract class _FaderState extends State<Fader> {
     Gradient bgGradient;
     if (faderInfo.muted) {
       bgGradient = LinearGradient(
-        begin: horizontalFader ? Alignment(0.015, 0) : Alignment(0, 0.015),
-        end: horizontalFader ? Alignment(0, 0.05) : Alignment(0.05, 0),
+        begin: horizontal ? Alignment(0.015, 0) : Alignment(0, 0.015),
+        end: horizontal ? Alignment(0, 0.05) : Alignment(0.05, 0),
         tileMode: TileMode.repeated,
         stops: [0, 0.5, 0.5, 1],
         colors: [
@@ -185,22 +191,26 @@ abstract class _FaderState extends State<Fader> {
 }
 
 class _HorizontalFaderState extends _FaderState {
-  _HorizontalFaderState() : super(true) {
+  @override
+  void initGestures() {
+    super.initGestures();
     gestures[HorizontalFaderDragRecognizer] =
         GestureRecognizerFactoryWithHandlers<HorizontalFaderDragRecognizer>(
-            () => HorizontalFaderDragRecognizer(), (recognizer) {
-      recognizer
-        ..onDragStart = ((offset) => onPointerStart())
-        ..onDragUpdate = ((details) => onDragUpdate(details.delta.dx))
-        ..onDragStop = () => onPointerStop();
-    });
+      () => HorizontalFaderDragRecognizer(),
+      (recognizer) {
+        recognizer
+          ..onDragStart = ((offset) => onPointerStart())
+          ..onDragUpdate = ((details) => onDragUpdate(details.delta.dx))
+          ..onDragStop = () => onPointerStop();
+      },
+    );
   }
 
   @override
   Widget buildFader(BuildContext context, FaderInfo faderInfo) {
     return Container(
       height: 56,
-      decoration: decoration(context, faderInfo),
+      decoration: decoration(context, faderInfo, true),
       child: Row(
         children: [
           faderLabel(faderInfo),
@@ -213,22 +223,26 @@ class _HorizontalFaderState extends _FaderState {
 }
 
 class _VerticalFaderState extends _FaderState {
-  _VerticalFaderState() : super(false) {
+  @override
+  void initGestures() {
+    super.initGestures();
     gestures[VerticalFaderDragRecognizer] =
         GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
-            () => VerticalFaderDragRecognizer(), (recognizer) {
-      recognizer
-        ..onDragStart = ((offset) => onPointerStart())
-        ..onDragUpdate = ((details) => onDragUpdate(-details.delta.dy))
-        ..onDragStop = () => onPointerStop();
-    });
+      () => VerticalFaderDragRecognizer(),
+      (recognizer) {
+        recognizer
+          ..onDragStart = ((offset) => onPointerStart())
+          ..onDragUpdate = ((details) => onDragUpdate(-details.delta.dy))
+          ..onDragStop = () => onPointerStop();
+      },
+    );
   }
 
   @override
   Widget buildFader(BuildContext context, FaderInfo faderInfo) {
     return Container(
       width: 72,
-      decoration: decoration(context, faderInfo),
+      decoration: decoration(context, faderInfo, false),
       child: Column(
         children: [
           faderLabel(faderInfo),
@@ -378,26 +392,27 @@ class _PanSlider extends _Slider {
       _Label(labels[1], xCenter, yCenter, Offset(-0.5, -0.5)),
       _Label(labels[2], width - 8, yCenter, Offset(-1, -0.5)),
       if (muted) buildMuteLabel(xCenter, height / 2),
-      StreamBuilder(
-        initialData: levelPanModel.getPanSlider(id),
-        stream: levelPanModel.getPanStreamForId(id),
-        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-          var fractionalOffset = snapshot.data;
-          const stepSize = 1.0 / 74.0;
-          if (fractionalOffset > 0.5 - stepSize &&
-              fractionalOffset < 0.5 + stepSize) {
-            fractionalOffset = 0.5;
-          }
-          return _FaderKnop(fractionalOffset * width, knobColor);
-        },
-      )
+      if (id >= 0)
+        StreamBuilder(
+          initialData: levelPanModel.getPanSlider(id),
+          stream: levelPanModel.getPanStreamForId(id),
+          builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+            var fractionalOffset = snapshot.data;
+            const stepSize = 1.0 / 74.0;
+            if (fractionalOffset > 0.5 - stepSize &&
+                fractionalOffset < 0.5 + stepSize) {
+              fractionalOffset = 0.5;
+            }
+            return _FaderKnop(fractionalOffset * width, knobColor);
+          },
+        )
     ];
   }
 }
 
 class _LevelSlider extends _Slider {
   static const stop = dBLevelToSliderValue;
-  static const levelTexts = ["-\u221e", "-30", "-10", "0"]; // TODO: inf symbol?
+  static const levelTexts = ["-\u221e", "-30", "-10", "0"];
   static const levelFractionalOffset = [0.0, -0.5, -0.5, -0.5];
   static const levelAbsoluteOffset = [8.0, 0.0, 0.0, 0.0];
   static final levelStops = [stop(-128), stop(-30), stop(-10), stop(0)];
@@ -434,17 +449,21 @@ class _LevelSlider extends _Slider {
       buildZeroMarker(zeroStop, height + 4),
       ...levelLabels,
       if (muted) buildMuteLabel(xCenter, yCenter),
-      StreamBuilder(
-        initialData: levelPanModel.getLevelSLider(id),
-        stream: levelPanModel.getLevelStreamForId(id),
-        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-          return _FaderKnop(snapshot.data * width, knobColor);
-        },
-      ),
+      if (id >= 0)
+        StreamBuilder(
+          initialData: levelPanModel.getLevelSLider(id),
+          stream: levelPanModel.getLevelStreamForId(id),
+          builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+            return _FaderKnop(snapshot.data * width, knobColor);
+          },
+        ),
     ];
   }
 
   List<Widget> getLevelIndicator(double width, double height) {
+    if (id == -1) {
+      return [_LevelIndicator.mono(0, width)];
+    }
     if (stereo) {
       return [
         StreamBuilder<List<double>>(

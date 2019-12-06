@@ -30,6 +30,18 @@ class DialogAssignSends extends StatelessWidget {
         return List.from(model.availableSendIds);
       },
       builder: (BuildContext context, List<int> sendIds, _) {
+        if (sendIds.isEmpty) {
+          final theme = Theme.of(context);
+          return Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              QuLocalizations.get(Strings.EmptySends),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.caption,
+              textScaleFactor: 1.2,
+            ),
+          );
+        }
         return Wrap(
           runSpacing: 2.0,
           spacing: 4.0,
@@ -139,10 +151,7 @@ class DialogAssignSends extends StatelessWidget {
           ),
         ],
       ),
-      onSelect: () => groupModel.toggleSendAssignement(
-        currentGroupId,
-        send.id
-      ),
+      onSelect: () => groupModel.toggleSendAssignement(currentGroupId, send.id),
       margin: EdgeInsets.only(bottom: 6),
       padding: EdgeInsets.all(4),
       width: 64,

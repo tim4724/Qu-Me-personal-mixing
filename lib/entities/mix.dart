@@ -7,6 +7,11 @@ import 'package:qu_me/entities/faderInfo.dart';
 class Mix extends FaderInfo {
   final MixType mixType;
 
+  factory Mix.empty() {
+    return Mix._internal(
+        -1, null, 0, "", "", Color(0xFF888888), "", false, {});
+  }
+
   factory Mix(int id, MixType type, int displayId, String name,
       bool explicitMuteOn, Set<ControlGroup> controlGroups) {
     String technicalName;
