@@ -7,7 +7,9 @@ import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
+import 'package:qu_me/entities/QuItemColors.dart';
 import 'package:qu_me/entities/faderInfo.dart';
+import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
@@ -163,10 +165,18 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildGroup(int groupId) {
+    final quTheme = QuThemeData.get();
+    final group = groupModel.getGroup(groupId);
+    QuItemColors colors;
+    if(group.sendGroupType == SendGroupType.Me) {
+      colors = quTheme.meColors;
+    } else {
+      colors = quTheme.defaultGroupColors;
+    }
     return Expanded(
       child: Padding(
-        padding: EdgeInsets.all(4),
-        child: GroupWheel(groupId, onWheelChanged, onWheelReleased),
+        padding: const EdgeInsets.all(4),
+        child: GroupWheel(groupId, colors, onWheelChanged, onWheelReleased),
       ),
     );
   }

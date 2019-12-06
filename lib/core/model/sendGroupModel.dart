@@ -56,7 +56,7 @@ class SendGroupModel extends ChangeNotifier {
 
   SendGroup getGroupForSendId(int sendId) {
     final groupId = _assignement.getGroupId(sendId);
-    return groupId != null ? getGroup(groupId) : null;
+    return groupId != null ? _groups[groupId] : null;
   }
 
   void toggleSendAssignement(int groupId, int sendId) {
@@ -80,6 +80,7 @@ class SendGroupModel extends ChangeNotifier {
     return getGroupShortName(_groups[groupId]);
   }
 
+  // TODO cache values
   static String getGroupTechnicalName(SendGroup group) {
     if (group != null) {
       switch (group.sendGroupType) {

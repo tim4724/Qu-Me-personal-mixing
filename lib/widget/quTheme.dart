@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/app/myApp.dart';
+import 'package:qu_me/entities/QuItemColors.dart';
 
 class QuThemeData {
   final double itemRadius;
@@ -12,11 +13,10 @@ class QuThemeData {
   final Color buttonCheckColor;
   final double buttonPressedOpacity;
 
-  final Color groupBackgroundColor;
-  final Color groupSelectedBackgroundColor;
-  final Color groupBorderColor;
-  final Color groupAccentColor;
+  final QuItemColors defaultGroupColors;
   final TextStyle groupLabelTextStyle;
+
+  final QuItemColors meColors;
 
   final Color wheelColor;
   final Color wheelCarveColor;
@@ -36,6 +36,7 @@ class QuThemeData {
   final Color sliderZeroMarkerColor;
   final List<Color> sliderLevelColors;
 
+  // TODO: do better?
   static QuThemeData get() {
     return MyApp.quThemeData;
   }
@@ -55,11 +56,9 @@ class QuThemeData {
     this.buttonColor,
     this.buttonCheckColor,
     this.buttonPressedOpacity,
-    this.groupBackgroundColor,
-    this.groupSelectedBackgroundColor,
-    this.groupAccentColor,
-    this.groupBorderColor,
+    this.defaultGroupColors,
     this.groupLabelTextStyle,
+    this.meColors,
     this.labelBackgroundAlpha,
     this.wheelColor,
     this.wheelInactiveColor,
