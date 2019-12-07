@@ -42,14 +42,13 @@ class Send extends FaderInfo {
   @override
   FaderInfo copyWith({
     String name,
-    SendType sendType,
     String personName,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
   }) {
     return Send(
         this.id,
-        sendType ?? this.sendType,
+        this.sendType,
         this.displayId,
         name ?? this.name,
         personName ?? this.personName,
