@@ -4,12 +4,12 @@ import 'package:qu_me/util.dart';
 
 abstract class FaderInfo {
   final int id; // global id
-  final int displayId;
-  final String technicalName; // not user defined name for send
-  final String name; // user defined name
-  final FaderInfoCategory category;
-  final String personName; // name of the musician
-  final bool explicitMuteOn; // Explicitly muted
+  final int displayId; // id that would be displayed on screen
+  final String technicalName; // not user defined name for this entity
+  final String name; // user defined name (in mixer console) for this entity
+  final FaderInfoCategory category; // category (like drum, git, key, voc, ...)
+  final String personName; // name of the musician or null
+  final bool explicitMuteOn; // Explicitly muted on the console
   final UnmodifiableSetView<ControlGroup> controlGroups; // DCA or Mute Groups
 
   FaderInfo(
