@@ -80,7 +80,6 @@ class SendGroupModel extends ChangeNotifier {
     return getGroupShortName(_groups[groupId]);
   }
 
-  // TODO cache values
   static String getGroupTechnicalName(SendGroup group) {
     if (group != null) {
       switch (group.sendGroupType) {

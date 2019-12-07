@@ -9,6 +9,7 @@ import 'package:qu_me/core/levelAndPanConverter.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
+import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/util.dart';
 import 'package:qu_me/widget/quTheme.dart';
@@ -20,10 +21,24 @@ abstract class Fader extends StatefulWidget {
   final bool _forceDisplayTechnicalName;
   final FaderInfo _faderInfo;
   final Function _doubleTap;
+  final ColorSwatch<bool> _colors;
 
   Fader(this._faderInfo, this._pan, this._forceDisplayTechnicalName,
       this._doubleTap, Key key)
-      : super(key: key);
+      : _colors = _getColorS(_faderInfo),
+        super(key: key);
+
+  static ColorSwatch<bool> _getColorS(FaderInfo faderInfo) {
+    final quTheme = QuThemeData.get();
+    if (faderInfo is Send) {
+      if (faderInfo.sendType != SendType.fxReturn) {
+        return quTheme.faderColors[faderInfo.category];
+      } else {
+        return quTheme.faderFxReturnColors;
+      }
+    }
+    return quTheme.faderMixColors;
+  }
 }
 
 class HorizontalFader extends Fader {
@@ -45,12 +60,14 @@ class VerticalFader extends Fader {
 }
 
 abstract class _FaderState extends State<Fader> {
-  final _levelPanModel = FaderLevelPanModel();
+  static final levelPanModel = FaderLevelPanModel();
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
   var activePointers = 0;
 
   bool get active => activePointers > 0;
+
+  Color get labelColor => widget._colors[active];
 
   _FaderState();
 
@@ -92,11 +109,11 @@ abstract class _FaderState extends State<Fader> {
     final sliderWidth = keyFaderSlider.currentContext.size.width - 40;
     final deltaNormalized = (delta / (sliderWidth));
     if (widget._pan) {
-      final currentSliderValue = _levelPanModel.getPanSlider(id);
-      _levelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
+      final currentSliderValue = levelPanModel.getPanSlider(id);
+      levelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
     } else {
-      final currentSliderValue = _levelPanModel.getLevelSLider(id);
-      _levelPanModel.onSliderLevel(id, currentSliderValue + deltaNormalized);
+      final currentSliderValue = levelPanModel.getLevelSLider(id);
+      levelPanModel.onSliderLevel(id, currentSliderValue + deltaNormalized);
     }
   }
 
@@ -122,25 +139,13 @@ abstract class _FaderState extends State<Fader> {
         secondary = info.personName;
       }
     }
-    Color color = info.color;
-    if (!active) {
-      final quTheme = QuThemeData.get();
-      color = color.withAlpha(quTheme.labelBackgroundAlpha);
-    }
-
-    return _FaderLabel(primary, secondary, color);
+    return _FaderLabel(primary, secondary, labelColor);
   }
 
   BoxDecoration decoration(
       BuildContext context, FaderInfo faderInfo, bool horizontal) {
     final quTheme = QuThemeData.get();
-
-    Color bgColor;
-    if (active) {
-      bgColor = quTheme.faderBackgroundColor;
-    } else {
-      bgColor = quTheme.faderInactiveBackgroundColor;
-    }
+    final bgColor = quTheme.itemBackgroundColor[active];
 
     Gradient bgGradient;
     if (faderInfo.muted) {
@@ -162,7 +167,7 @@ abstract class _FaderState extends State<Fader> {
       color: bgGradient == null ? bgColor : null,
       gradient: bgGradient,
       borderRadius: quTheme.borderRadius,
-      border: Border.all(color: faderInfo.color, width: quTheme.borderWidth),
+      border: Border.all(color: widget._colors, width: quTheme.itemBorderWidth),
     );
   }
 
@@ -302,12 +307,17 @@ class _FaderLabel extends StatelessWidget {
 }
 
 abstract class _Slider extends StatelessWidget {
-  final levelPanModel = FaderLevelPanModel();
+  static final _levelPanModel = FaderLevelPanModel();
+  static final _quTheme = QuThemeData.get();
   final int id;
   final bool muted;
   final bool active;
 
   _Slider(this.id, this.muted, this.active, {key: Key}) : super(key: key);
+
+  FaderLevelPanModel get levelPanModel => _levelPanModel;
+
+  QuThemeData get quTheme => _quTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -335,25 +345,18 @@ abstract class _Slider extends StatelessWidget {
 
   List<Widget> children(BuildContext context, double width, double height);
 
-  Color getKnobColor(BuildContext context) {
-    final quTheme = QuThemeData.get();
-    final theme = Theme.of(context);
-    Color knobColor = theme.iconTheme.color;
-    if (!active) {
-      knobColor = knobColor.withAlpha(quTheme.labelBackgroundAlpha);
-    }
-    return knobColor;
+  Color getKnobColor() {
+    return quTheme.sliderIconColor[active];
   }
 
   Widget buildMuteLabel(double left, double top) {
-    final color = QuThemeData.get().sliderMuteLabelColor;
+    final color = quTheme.sliderMuteTextColor;
     final text = QuLocalizations.get(Strings.Mute);
     return _Label(text, left, top, Offset(-0.5, -0.5),
         textColor: color, textScaleFactor: 2.0);
   }
 
   Widget buildZeroMarker(double left, double top) {
-    final quTheme = QuThemeData.get();
     return Positioned(
       left: left - 0.5,
       top: top,
@@ -380,7 +383,7 @@ class _PanSlider extends _Slider {
   }
 
   List<Widget> children(BuildContext context, double width, double height) {
-    final knobColor = getKnobColor(context);
+    final knobColor = quTheme.sliderIconColor[active];
     final xCenter = width / 2;
     final yCenter = height / 2;
     final labels =
@@ -424,7 +427,6 @@ class _LevelSlider extends _Slider {
 
   @override
   BoxDecoration decoration() {
-    final quTheme = QuThemeData.get();
     final colors = quTheme.sliderLevelColors;
     return BoxDecoration(
       gradient: LinearGradient(colors: colors, stops: gradientStops),
@@ -434,7 +436,7 @@ class _LevelSlider extends _Slider {
 
   @override
   List<Widget> children(BuildContext context, double width, double height) {
-    final knobColor = getKnobColor(context);
+    final knobColor = quTheme.sliderIconColor[active];
     final yCenter = height / 2;
     final xCenter = width / 2;
     final levelLabels = mapIndexed(levelTexts, (i, text) {

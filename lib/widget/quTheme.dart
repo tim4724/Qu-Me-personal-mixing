@@ -1,39 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/app/myApp.dart';
-import 'package:qu_me/entities/QuItemColors.dart';
+import 'package:qu_me/entities/faderInfo.dart';
 
 class QuThemeData {
-  final double itemRadius;
-  final double borderWidth;
-  final int labelBackgroundAlpha;
-
+  // Button
   final TextStyle buttonTextStyle;
   final Color buttonColor;
   final Color buttonCheckColor;
   final double buttonPressedOpacity;
+  final Color mutedButtonColor;
 
-  final QuItemColors defaultGroupColors;
-  final TextStyle groupLabelTextStyle;
+  // Faderitem/Groupitem
+  final double itemRadius;
+  final double itemBorderWidth;
+  final QuColorSwatch itemBackgroundColor;
 
-  final QuItemColors meColors;
-
-  final Color wheelColor;
-  final Color wheelCarveColor;
-  final Color wheelInactiveColor;
-
-  final Color mutedColor;
-
-  final Color faderBackgroundColor;
-  final Color faderInactiveBackgroundColor;
+  // Fader
+  final Map<FaderInfoCategory, QuColorSwatch> faderColors;
+  final QuColorSwatch faderMixColors;
+  final QuColorSwatch faderFxReturnColors;
   final Color faderMutedBackgroundColor;
 
+  // Group
+  final QuColorSwatch defaultGroupColors;
+  final QuColorSwatch meGroupColors;
+
+  // GroupWheel
+  final Color wheelCarveColor;
+  final QuColorSwatch wheelColor;
+
+  // Slider
   final double sliderRadius;
   final Color sliderPanBackgroundColor;
   final Color sliderValueLabelColor;
-  final Color sliderMuteLabelColor;
+  final Color sliderMuteTextColor;
   final Color sliderLevelShadowColor;
   final Color sliderZeroMarkerColor;
+  final QuColorSwatch sliderIconColor;
   final List<Color> sliderLevelColors;
 
   // TODO: do better?
@@ -49,30 +53,41 @@ class QuThemeData {
     return BorderRadius.circular(sliderRadius);
   }
 
-  const QuThemeData({
-    this.itemRadius,
-    this.borderWidth,
+  QuThemeData({
     this.buttonTextStyle,
     this.buttonColor,
     this.buttonCheckColor,
     this.buttonPressedOpacity,
-    this.defaultGroupColors,
-    this.groupLabelTextStyle,
-    this.meColors,
-    this.labelBackgroundAlpha,
-    this.wheelColor,
-    this.wheelInactiveColor,
-    this.wheelCarveColor,
-    this.mutedColor,
-    this.faderBackgroundColor,
+    this.mutedButtonColor,
+    this.itemRadius,
+    this.itemBorderWidth,
+    this.itemBackgroundColor,
+    this.faderColors,
+    this.faderMixColors,
+    this.faderFxReturnColors,
     this.faderMutedBackgroundColor,
-    this.faderInactiveBackgroundColor,
+    this.defaultGroupColors,
+    this.meGroupColors,
+    this.wheelCarveColor,
+    this.wheelColor,
     this.sliderRadius,
     this.sliderPanBackgroundColor,
     this.sliderValueLabelColor,
-    this.sliderMuteLabelColor,
+    this.sliderMuteTextColor,
     this.sliderLevelShadowColor,
     this.sliderZeroMarkerColor,
+    this.sliderIconColor,
     this.sliderLevelColors,
   });
+}
+
+class QuColorSwatch extends ColorSwatch<bool> {
+  QuColorSwatch.fromColors(Color activeColor, Color basicColor)
+      : super(activeColor.value, {true: activeColor, false: basicColor});
+
+  QuColorSwatch(int activeColorValue, int inActiveColorValue)
+      : this.fromColors(Color(activeColorValue), Color(inActiveColorValue));
+
+  QuColorSwatch.fromSingleColor(Color activeColor, int basicAlpha)
+      : this.fromColors(activeColor, activeColor.withAlpha(basicAlpha));
 }

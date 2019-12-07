@@ -16,8 +16,4 @@ class SendGroup {
   }
 }
 
-enum SendGroupType {
-  Custom,
-  Me,
-  All,
-}
+enum SendGroupType { Custom, Me, All }

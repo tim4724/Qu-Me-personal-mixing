@@ -12,8 +12,6 @@ class Scene {
   final List<bool> sendAssigns = List.filled(39, false);
   final List<double> sendLevelsInDb = List.filled(39, -128.0);
   final List<int> sendPans = List.filled(32, 37);
-
-  Scene();
 }
 
 Scene buildDemoScene(int mixId) {
@@ -51,34 +49,33 @@ Scene buildDemoScene(int mixId) {
     final link = name.startsWith("Drum") || name.startsWith("Key");
     scene.sendsLevelLinked[i] = link;
     scene.sendsPanLinked[i] = link;
-    scene.sends[i] =
-        Send(i, SendType.monoChannel, i + 1, name, false, Set<ControlGroup>());
+    scene.sends[i] = Send(
+        i, SendType.monoChannel, i + 1, name, null, false, Set<ControlGroup>());
   }
   final stereoNames = ["PC", "Smartphone", "Atmo"];
   for (int i = 0; i < 3; i++) {
     final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
     scene.sends[i + 32] = Send(i + 32, SendType.stereoChannel, i + 1, name,
-        i < 2, Set<ControlGroup>());
+        null, i < 2, Set<ControlGroup>());
   }
   final fxNames = ["voc", "instr"];
   for (int i = 0; i < 4; i++) {
     final name = i < fxNames.length ? fxNames[i] : "";
-    scene.sends[i + 35] = Send(
-        i + 35, SendType.fxReturn, i + 1, name, false, Set<ControlGroup>());
+    scene.sends[i + 35] = Send(i + 35, SendType.fxReturn, i + 1, name, null,
+        false, Set<ControlGroup>());
   }
   if (mixId != null && mixId != -1) {
     scene.sendAssigns.fillRange(0, scene.sendAssigns.length, true);
   }
 
   scene.mixes.setRange(0, 7, [
-    Mix(0x27, MixType.mono, 1, "Voc 1", false, Set<ControlGroup>()),
-    Mix(0x28, MixType.mono, 2, "Voc 2", false, Set<ControlGroup>()),
-    Mix(0x29, MixType.mono, 3, "Voc 3", false, Set<ControlGroup>()),
-    Mix(0x2A, MixType.mono, 4, "Voc 4", false, Set<ControlGroup>()),
-    Mix(0x2B, MixType.stereo, 5, "Key", false, Set<ControlGroup>()),
-    Mix(0x2C, MixType.stereo, 7, "Bass", false, Set<ControlGroup>()),
-    Mix(0x2D, MixType.stereo, 9, "Drum", false, Set<ControlGroup>()),
+    Mix(0x27, MixType.mono, 1, "Voc 1", null, false, Set<ControlGroup>()),
+    Mix(0x28, MixType.mono, 2, "Voc 2", null, false, Set<ControlGroup>()),
+    Mix(0x29, MixType.mono, 3, "Voc 3", null, false, Set<ControlGroup>()),
+    Mix(0x2A, MixType.mono, 4, "Voc 4", null, false, Set<ControlGroup>()),
+    Mix(0x2B, MixType.stereo, 5, "Key", null, false, Set<ControlGroup>()),
+    Mix(0x2C, MixType.stereo, 7, "Bass", null, false, Set<ControlGroup>()),
+    Mix(0x2D, MixType.stereo, 9, "Drum", null, false, Set<ControlGroup>()),
   ]);
-
   return scene;
 }

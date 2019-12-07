@@ -1,56 +1,39 @@
-import 'dart:ui';
-
-import 'package:flutter/material.dart';
-import 'package:qu_me/core/findColor.dart';
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 
 class Send extends FaderInfo {
   final SendType sendType;
 
-  Send._internal(
+  Send(
     int id,
     this.sendType,
     int displayId,
-    String technicalName,
     String name,
-    Color color,
     String personName,
     bool explicitMuteOn,
     Set<ControlGroup> controlGroups,
-  ) : super(id, displayId, technicalName, name, color, personName,
-            explicitMuteOn, controlGroups);
+  ) : super(
+          id,
+          displayId,
+          _technicalName(sendType, displayId),
+          name,
+          personName,
+          explicitMuteOn,
+          controlGroups,
+        );
 
-  factory Send(
-    int id,
-    SendType type,
-    int displayId,
-    String name,
-    bool explicitMuteOn,
-    Set<ControlGroup> controlGroups,
-  ) {
-    String technicalName;
+  static String _technicalName(SendType type, int displayId) {
     switch (type) {
       case SendType.monoChannel:
-        technicalName = "Ch $displayId";
-        break;
+        return "Ch $displayId";
       case SendType.stereoChannel:
-        technicalName = "St $displayId";
-        break;
+        return "St $displayId";
       case SendType.fxReturn:
-        technicalName = "FxRet $displayId";
-        break;
+        return "FxRet $displayId";
       case SendType.group:
-        technicalName = "Grp $displayId";
-        break;
-      default:
-        technicalName = "$displayId";
-        break;
+        return "Grp $displayId";
     }
-    final color = findColorForSend(name, type);
-    final personName = null;
-    return Send._internal(id, type, displayId, technicalName, name, color,
-        personName, explicitMuteOn, controlGroups);
+    return "$displayId";
   }
 
   @override
@@ -69,6 +52,7 @@ class Send extends FaderInfo {
         sendType ?? this.sendType,
         this.displayId,
         name ?? this.name,
+        personName ?? this.personName,
         explicitMuteOn ?? this.explicitMuteOn,
         controlGroups ?? this.controlGroups);
   }

@@ -9,7 +9,6 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
-import 'package:qu_me/entities/QuItemColors.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
@@ -21,18 +20,26 @@ typedef WheelDragUpdate = void Function(int id, double delta);
 typedef WheelDragRelease = void Function(int id);
 
 class GroupWheel extends StatefulWidget {
-  final int _id;
-  final QuItemColors _colors;
+  final SendGroup _group;
+  final ColorSwatch<bool> _colors;
   final WheelDragUpdate _dragUpdateCallback;
   final WheelDragRelease _dragReleaseCallback;
 
-  const GroupWheel(
-    this._id,
-    this._colors,
+  GroupWheel(
+    this._group,
     this._dragUpdateCallback,
     this._dragReleaseCallback, {
     Key key,
-  }) : super(key: key);
+  })  : _colors = _colorsForType(_group.sendGroupType),
+        super(key: key);
+
+  static ColorSwatch<bool> _colorsForType(SendGroupType type) {
+    final quTheme = QuThemeData.get();
+    if (type == SendGroupType.Me) {
+      return quTheme.meGroupColors;
+    }
+    return quTheme.defaultGroupColors;
+  }
 
   @override
   State<StatefulWidget> createState() {
@@ -48,11 +55,11 @@ class _GroupWheelState extends State<GroupWheel> {
   var wheelDragDelta = 0.0;
   var lastTapTimestamp = 0;
 
-  int get id => widget._id;
+  int get id => widget._group.id;
 
   bool get active => activePointers > 0;
 
-  QuItemColors get colors => widget._colors;
+  QuColorSwatch get colors => widget._colors;
 
   _GroupWheelState() {
     asset.loadImage("assets/shadow.png").then((image) {
@@ -91,7 +98,7 @@ class _GroupWheelState extends State<GroupWheel> {
 
   void onDragUpdate(double delta) {
     final wheelHeight = keyWheel.currentContext.size.height;
-    widget._dragUpdateCallback(widget._id, -delta / wheelHeight / 2);
+    widget._dragUpdateCallback(id, -delta / wheelHeight / 2);
     final newWheelDragDelta = (wheelDragDelta - delta);
     setState(() => wheelDragDelta = newWheelDragDelta);
   }
@@ -114,17 +121,16 @@ class _GroupWheelState extends State<GroupWheel> {
     setState(() {
       activePointers--;
       if (activePointers == 0) {
-        widget._dragReleaseCallback(widget._id);
+        widget._dragReleaseCallback(id);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = colors.border();
-    final bgColor = colors.background(active);
-    final labelColor = colors.label(active);
     final quTheme = QuThemeData.get();
+    final bgColor = quTheme.itemBackgroundColor[active];
+    final labelColor = colors[active];
 
     return Selector<SendGroupModel, MapEntry<SendGroup, int>>(
       selector: (BuildContext context, SendGroupModel model) {
@@ -157,8 +163,8 @@ class _GroupWheelState extends State<GroupWheel> {
             color: bgColor,
             borderRadius: quTheme.borderRadius,
             border: Border.all(
-              color: borderColor,
-              width: quTheme.borderWidth,
+              color: colors,
+              width: quTheme.itemBorderWidth,
             ),
           ),
           child: RawGestureDetector(
@@ -191,7 +197,7 @@ class _GroupWheelState extends State<GroupWheel> {
         painter: _Wheel(
           wheelDragDelta,
           shadowOverlay,
-          active ? quTheme.wheelColor : quTheme.wheelInactiveColor,
+          quTheme.wheelColor[active],
           quTheme.wheelCarveColor,
         ),
         key: keyWheel,
@@ -230,7 +236,6 @@ class _GroupLabel extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.fade,
-          style: quTheme.groupLabelTextStyle,
         ),
       ),
     );

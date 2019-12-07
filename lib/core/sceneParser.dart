@@ -62,7 +62,8 @@ Scene parse(Uint8List data, int mixId) {
 
     final controlGroups = _getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
-    scene.sends[i] = Send(i, type, displayId, name, muteOn, controlGroups);
+    scene.sends[i] =
+        Send(i, type, displayId, name, null, muteOn, controlGroups);
     scene.sendsLevelLinked[i] = linked;
     scene.sendsPanLinked[i] = panLinked;
   }
@@ -83,7 +84,8 @@ Scene parse(Uint8List data, int mixId) {
     final controlGroups = _getControlGroupAssignement(
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
 
-    scene.mixes[i] = Mix(39 + i, type, displayId, name, muteOn, controlGroups);
+    scene.mixes[i] =
+        Mix(39 + i, type, displayId, name, null, muteOn, controlGroups);
 
     final masterLevelOffset = 7662 + i * 192;
     scene.mixesLevelInDb[i] = _readUint16(data, masterLevelOffset) / 256 - 128;
