@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         QuColorSwatch.fromSingleColor(Color(0xE0D2DE1F), 0x94)
   };
 
-  static final themeData = ThemeData(
+  static final theme = ThemeData(
     brightness: Brightness.dark,
     // e.g. ios appbar buttons
     primarySwatch: Colors.blue,
@@ -47,19 +47,16 @@ class MyApp extends StatelessWidget {
     dialogBackgroundColor:
         Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
   );
-  static final cupertinoThemeData = MaterialBasedCupertinoThemeData(
-    materialTheme: themeData.copyWith(
+  static final cupertinoTheme = MaterialBasedCupertinoThemeData(
+    materialTheme: theme.copyWith(
       cupertinoOverrideTheme: const CupertinoThemeData(
         barBackgroundColor: Color(0xFF111111),
       ),
     ),
   );
-  static final quThemeData = QuThemeData(
+  static final quTheme = QuThemeData(
     // Button
-    buttonTextStyle: TextStyle(
-      color: Colors.black,
-      fontSize: 14.0,
-    ),
+    buttonTextStyle: TextStyle(color: Colors.black, fontSize: 14.0),
     buttonColor: Colors.grey,
     buttonCheckColor: Colors.green,
     buttonPressedOpacity: 0.3,
@@ -98,7 +95,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: SendGroupModel()),
       ],
       child: Theme(
-        data: themeData,
+        data: theme,
         child: PlatformProvider(
           builder: (context) => PlatformApp(
             title: 'QU ME',
@@ -109,7 +106,7 @@ class MyApp extends StatelessWidget {
               AppLocalizationsDelegate(),
             ],
             supportedLocales: [const Locale('en'), const Locale('de')],
-            ios: (context) => CupertinoAppData(theme: cupertinoThemeData),
+            ios: (context) => CupertinoAppData(theme: cupertinoTheme),
             home: PageLogin(),
           ),
         ),

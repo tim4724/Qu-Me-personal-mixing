@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:qu_me/widget/quTheme.dart';
+import 'package:qu_me/app/myApp.dart';
 
 class QuCheckButton extends StatefulWidget {
   final bool selected;
@@ -57,7 +57,7 @@ class _QuCheckButtonState extends State<QuCheckButton> {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     Color buttonColor;
     if (widget.selected) {
       buttonColor = widget.checkColor ?? quTheme.buttonCheckColor;

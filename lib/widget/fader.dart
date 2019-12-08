@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/levelAndPanConverter.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/metersModel.dart';
@@ -29,7 +30,7 @@ abstract class Fader extends StatefulWidget {
         super(key: key);
 
   static ColorSwatch<bool> _getColorS(FaderInfo faderInfo) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     if (faderInfo is Send) {
       if (faderInfo.sendType != SendType.fxReturn) {
         return quTheme.faderColors[faderInfo.category];
@@ -144,7 +145,7 @@ abstract class _FaderState extends State<Fader> {
 
   BoxDecoration decoration(
       BuildContext context, FaderInfo faderInfo, bool horizontal) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     final bgColor = quTheme.itemBackgroundColor[active];
 
     Gradient bgGradient;
@@ -308,7 +309,6 @@ class _FaderLabel extends StatelessWidget {
 
 abstract class _Slider extends StatelessWidget {
   static final _levelPanModel = FaderLevelPanModel();
-  static final _quTheme = QuThemeData.get();
   final int id;
   final bool muted;
   final bool active;
@@ -317,7 +317,7 @@ abstract class _Slider extends StatelessWidget {
 
   FaderLevelPanModel get levelPanModel => _levelPanModel;
 
-  QuThemeData get quTheme => _quTheme;
+  QuThemeData get quTheme => MyApp.quTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +375,7 @@ class _PanSlider extends _Slider {
 
   @override
   BoxDecoration decoration() {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     return BoxDecoration(
       color: quTheme.sliderPanBackgroundColor,
       borderRadius: quTheme.sliderBorderRadius,
@@ -468,6 +468,7 @@ class _LevelSlider extends _Slider {
     }
     if (stereo) {
       return [
+        // TODO : can probably be improved, only use one StreamBuilder
         StreamBuilder<List<double>>(
           initialData: MetersModel.levelsInDb,
           builder: (_, AsyncSnapshot<List<double>> snapshot) {
@@ -512,11 +513,7 @@ class _FaderKnop extends StatelessWidget {
       child: FractionalTranslation(
         translation: Offset(-0.5, 0),
         child: Center(
-          child: Icon(
-            Icons.adjust,
-            color: color,
-            size: 40,
-          ),
+          child: Icon(Icons.adjust, color: color, size: 40),
         ),
       ),
     );
@@ -544,11 +541,10 @@ class _LevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     final radius = quTheme.sliderRadius;
     final levelPos = max((1 - level) * width, radius);
     var yOffset = 0.0;
-    // TODO: proberbly can be simplified because min level is -110 db
     BorderRadius borderRadius;
     switch (type) {
       case LevelType.stereo_left:
@@ -607,7 +603,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = textColor ?? QuThemeData.get().sliderValueLabelColor;
+    final color = textColor ?? MyApp.quTheme.sliderValueLabelColor;
     return Positioned(
       left: left,
       top: top,

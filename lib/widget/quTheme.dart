@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 
 class QuThemeData {
@@ -40,11 +39,6 @@ class QuThemeData {
   final QuColorSwatch sliderIconColor;
   final List<Color> sliderLevelColors;
 
-  // TODO: do better?
-  static QuThemeData get() {
-    return MyApp.quThemeData;
-  }
-
   BorderRadius get borderRadius {
     return BorderRadius.circular(itemRadius);
   }
@@ -81,13 +75,18 @@ class QuThemeData {
   });
 }
 
+///
+/// A ColorSwatch with bool index
+/// true -> active-color
+/// false -> inactive-color
+///
 class QuColorSwatch extends ColorSwatch<bool> {
-  QuColorSwatch.fromColors(Color activeColor, Color basicColor)
-      : super(activeColor.value, {true: activeColor, false: basicColor});
+  QuColorSwatch.fromColors(Color activeColor, Color inActiveColor)
+      : super(activeColor.value, {true: activeColor, false: inActiveColor});
 
   QuColorSwatch(int activeColorValue, int inActiveColorValue)
       : this.fromColors(Color(activeColorValue), Color(inActiveColorValue));
 
-  QuColorSwatch.fromSingleColor(Color activeColor, int basicAlpha)
-      : this.fromColors(activeColor, activeColor.withAlpha(basicAlpha));
+  QuColorSwatch.fromSingleColor(Color activeColor, int inactiveAlpha)
+      : this.fromColors(activeColor, activeColor.withAlpha(inactiveAlpha));
 }

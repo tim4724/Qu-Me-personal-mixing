@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/faderLevelPanModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
@@ -16,7 +17,6 @@ import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
 import 'package:qu_me/widget/pageSends.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
-import 'package:qu_me/widget/quTheme.dart';
 
 class PageHome extends StatefulWidget {
   PageHome({Key key}) : super(key: key);
@@ -208,7 +208,7 @@ class _PageHomeState extends State<PageHome> {
   }
 
   Widget buildMuteButton(FaderInfo info) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     return QuCheckButton.simpleText(
       QuLocalizations.get(Strings.Mute),
       selected: info.explicitMuteOn,

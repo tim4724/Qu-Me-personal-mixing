@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
@@ -34,7 +35,7 @@ class GroupWheel extends StatefulWidget {
         super(key: key);
 
   static ColorSwatch<bool> _colorsForType(SendGroupType type) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     if (type == SendGroupType.Me) {
       return quTheme.meGroupColors;
     }
@@ -128,7 +129,7 @@ class _GroupWheelState extends State<GroupWheel> {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     final bgColor = quTheme.itemBackgroundColor[active];
     final labelColor = colors[active];
 
@@ -190,7 +191,7 @@ class _GroupWheelState extends State<GroupWheel> {
 
   Widget buildWheelArea(BuildContext context, int sendsCount) {
     final theme = Theme.of(context);
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
 
     if (sendsCount > 0) {
       return CustomPaint(
@@ -221,7 +222,7 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = QuThemeData.get();
+    final quTheme = MyApp.quTheme;
     final radius = Radius.circular(quTheme.itemRadius);
     return Container(
       height: 50,
