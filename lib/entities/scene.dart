@@ -29,19 +29,17 @@ Scene buildDemoScene(int mixId) {
     "Drum L",
     "Drum R",
     "Bass",
-    "",
     "E-Git",
     "Git",
     "Key L",
     "Key R",
-    "Pad",
-    "Synth",
+    "Syn",
     "Voc 1",
     "Voc 2",
     "Voc 3",
-    "Voc 4",
     "Mic 1",
-    "Mic 2"
+    "Mic 2",
+    "Click"
   ];
 
   for (int i = 0; i < 32; i++) {
@@ -52,7 +50,7 @@ Scene buildDemoScene(int mixId) {
     scene.sends[i] = Send(
         i, SendType.monoChannel, i + 1, name, null, false, Set<ControlGroup>());
   }
-  final stereoNames = ["PC", "Smartphone", "Atmo"];
+  final stereoNames = ["PC", "Aux", "Atmo"];
   for (int i = 0; i < 3; i++) {
     final name = i < stereoNames.length ? stereoNames[i] : "St ${i + 1}";
     scene.sends[i + 32] = Send(i + 32, SendType.stereoChannel, i + 1, name,

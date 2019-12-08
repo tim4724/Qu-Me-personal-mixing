@@ -24,14 +24,16 @@ class MyApp extends StatelessWidget {
     FaderInfoCategory.Voc:
         QuColorSwatch.fromSingleColor(Color(0xFFC9C9C9), 0x94),
     FaderInfoCategory.Guide:
-        QuColorSwatch.fromSingleColor(Color(0xE0C4C4C4), 0x94),
+        QuColorSwatch.fromSingleColor(Color(0xE0DE991F), 0x94),
     FaderInfoCategory.Speaker:
         QuColorSwatch.fromSingleColor(Color(0xE0D2DE1F), 0x94),
     FaderInfoCategory.Aux:
-        QuColorSwatch.fromSingleColor(Color(0xE0D2DE1F), 0x94),
+        QuColorSwatch.fromSingleColor(Color(0xE043DEB0), 0x94),
     FaderInfoCategory.Unknown:
-        QuColorSwatch.fromSingleColor(Color(0xE0D2DE1F), 0x94)
+        QuColorSwatch.fromSingleColor(Color(0xE043C01F), 0x94)
   };
+  static final _fxReturnColor =
+      QuColorSwatch.fromSingleColor(Color(0xE00000A0), 0x94);
 
   static final theme = ThemeData(
     brightness: Brightness.dark,
@@ -68,7 +70,7 @@ class MyApp extends StatelessWidget {
     // Fader
     faderColors: _faderInfoColors,
     faderMixColors: QuColorSwatch.fromSingleColor(_accentColor, 0x94),
-    faderFxReturnColors: QuColorSwatch.fromSingleColor(Color(0xE00000A0), 0x94),
+    faderFxReturnColors: _fxReturnColor,
     faderMutedBackgroundColor: Color(0x40F44336),
     // Group
     defaultGroupColors: QuColorSwatch.fromSingleColor(Color(0xFF424242), 0x94),
