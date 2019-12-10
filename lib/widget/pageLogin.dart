@@ -69,6 +69,7 @@ class _PageLoginState extends State<PageLogin> {
                     ],
                   ),
                   Stack(
+                    alignment: Alignment.center,
                     children: [
                       Container(
                         padding: EdgeInsets.all(8),
