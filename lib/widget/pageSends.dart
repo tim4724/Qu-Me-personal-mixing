@@ -48,17 +48,21 @@ class _PageSendsState extends State<PageSends> {
 
     Widget titleWidget;
     if (group.sendGroupType == SendGroupType.Custom) {
+      final hintText = QuLocalizations.get(Strings.SendGroupName);
       titleWidget = Container(
         width: 120.0,
         child: PlatformTextField(
           maxLines: 1,
           maxLength: 12,
-          android: (context) => MaterialTextFieldData(
-            decoration: InputDecoration(
-              hintText: QuLocalizations.get(Strings.SendGroupName),
-              counterText: "",
-            ),
-          ),
+          android: (context) =>
+              MaterialTextFieldData(
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  counterText: "",
+                  isDense: true
+                ),
+              ),
+          ios: (context) => CupertinoTextFieldData(placeholder: hintText),
           // Needed because on IOS-Platformwidget hardcodes the color black
           style: theme.textTheme.subhead,
           controller: textController,
@@ -89,21 +93,24 @@ class _PageSendsState extends State<PageSends> {
     }
 
     return OrientationBuilder(
-      builder: (context, orientation) => PlatformScaffold(
-        appBar: PlatformAppBar(
-          title: titleWidget,
-          trailingActions: trailingActions,
-          android: (context) => MaterialAppBarData(),
-          ios: (context) => CupertinoNavigationBarData(),
-        ),
-        body: _buildBody(orientation, group),
-      ),
+      builder: (context, orientation) =>
+          PlatformScaffold(
+            appBar: PlatformAppBar(
+              title: titleWidget,
+              trailingActions: trailingActions,
+              android: (context) => MaterialAppBarData(),
+              ios: (context) => CupertinoNavigationBarData(),
+            ),
+            body: _buildBody(orientation, group),
+          ),
     );
   }
 
   Widget _buildBody(Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
-    final stereoMix = mainSendModel.getCurrentMix()?.mixType == MixType.stereo;
+    final stereoMix = mainSendModel
+        .getCurrentMix()
+        ?.mixType == MixType.stereo;
     const levelPanSwitchInputHeight = 32.0;
 
     EdgeInsets listWidgetPadding;
@@ -194,8 +201,8 @@ class _PageSendsState extends State<PageSends> {
     );
   }
 
-  Widget _buildAnimatedFader(
-      Animation<double> anim, int sendId, bool landscape) {
+  Widget _buildAnimatedFader(Animation<double> anim, int sendId,
+      bool landscape) {
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(
