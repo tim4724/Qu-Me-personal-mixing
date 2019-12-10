@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/io/quFind.dart' as quFind;
@@ -25,6 +25,7 @@ class _PageLoginState extends State<PageLogin> {
     QuLocalizations.get(Strings.Demo): InternetAddress.loopbackIPv4
   };
   var loading = false;
+  String name = "";
 
   @protected
   void initState() {
@@ -42,52 +43,62 @@ class _PageLoginState extends State<PageLogin> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final quTheme = MyApp.quTheme;
 
     return PlatformScaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              width: 100,
-              height: 100,
-              child: Placeholder(),
-            ),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                QuLocalizations.get(Strings.AppName),
+        child: OrientationBuilder(
+          builder: (BuildContext context, Orientation orientation) {
+            final landscape = orientation == Orientation.landscape;
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Flex(
+                    direction: landscape ? Axis.horizontal : Axis.vertical,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      FlutterLogo(size: landscape ? 32 : 64),
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          QuLocalizations.get(Strings.AppName),
+                          textScaleFactor: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Stack(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        height: 200,
+                        width: 200,
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: quTheme.borderRadius,
+                        ),
+                        child: ListView.builder(
+                          itemCount: mixers.length,
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemBuilder: (BuildContext context, int i) {
+                            return _MixerItem(
+                              mixers.keys.elementAt(i),
+                              onMixerSelected,
+                              connectionModel.remoteAddress ==
+                                  mixers.values.elementAt(i),
+                            );
+                          },
+                        ),
+                      ),
+                      if (loading) PlatformCircularProgressIndicator(),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  height: 200,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                  ),
-                  child: ListView.builder(
-                    itemCount: mixers.length,
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemBuilder: (BuildContext context, int i) {
-                      return _MixerItem(
-                        mixers.keys.elementAt(i),
-                        onMixerSelected,
-                        connectionModel.remoteAddress ==
-                            mixers.values.elementAt(i),
-                      );
-                    },
-                  ),
-                ),
-                if (loading) PlatformCircularProgressIndicator(),
-              ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
