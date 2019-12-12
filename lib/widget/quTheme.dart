@@ -9,6 +9,7 @@ class QuThemeData {
   final Color buttonCheckColor;
   final double buttonPressedOpacity;
   final Color mutedButtonColor;
+  final double buttonDisabledOpacity;
 
   // Faderitem/Groupitem
   final double itemRadius;
@@ -52,6 +53,7 @@ class QuThemeData {
     this.buttonColor,
     this.buttonCheckColor,
     this.buttonPressedOpacity,
+    this.buttonDisabledOpacity,
     this.mutedButtonColor,
     this.itemRadius,
     this.itemBorderWidth,

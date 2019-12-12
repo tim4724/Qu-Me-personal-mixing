@@ -63,6 +63,7 @@ class MyApp extends StatelessWidget {
     buttonCheckColor: Colors.green,
     buttonPressedOpacity: 0.3,
     mutedButtonColor: Colors.red,
+    buttonDisabledOpacity: 0.5,
     // Faderitem/ Groupitem
     itemRadius: 4.0,
     itemBorderWidth: 1.0,

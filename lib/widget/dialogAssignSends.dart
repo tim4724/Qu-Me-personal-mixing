@@ -27,7 +27,7 @@ class DialogAssignSends extends StatelessWidget {
         // TODO: Lists are, by default, only equal to themselves.
         // Even if other is also a list,
         // the equality comparison does not compare the elements of the two lists.
-        return List.from(model.availableSendIds);
+        return List<int>.from(model.availableSendIds);
       },
       builder: (BuildContext context, List<int> sendIds, _) {
         if (sendIds.isEmpty) {

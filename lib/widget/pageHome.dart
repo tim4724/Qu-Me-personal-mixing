@@ -48,43 +48,37 @@ class _PageHomeState extends State<PageHome> {
           if (activeWheel != -1) PageSends(activeWheel),
           AnimatedOpacity(
             child: PlatformScaffold(
-              appBar: PlatformAppBar(
-                // TODO: make reactive
-                title: Text(connectionModel.name ?? ""),
-                ios: (context) => CupertinoNavigationBarData(
-                  leading: CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    child: Text(QuLocalizations.get(Strings.Logout)),
-                    onPressed: () => logout(),
+                appBar: PlatformAppBar(
+                  // TODO: make reactive
+                  title: Text(connectionModel.name ?? ""),
+                  ios: (context) => CupertinoNavigationBarData(
+                    leading: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: Text(QuLocalizations.get(Strings.Logout)),
+                      onPressed: () => logout(),
+                    ),
                   ),
-                ),
-                android: (context) => MaterialAppBarData(
-                  leading: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () => logout(),
+                  android: (context) => MaterialAppBarData(
+                    leading: IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => logout(),
+                    ),
                   ),
+                  trailingActions: <Widget>[
+                    PlatformButton(
+                      androidFlat: (context) => MaterialFlatButtonData(),
+                      padding: EdgeInsets.zero,
+                      child: Text(QuLocalizations.get(Strings.MixSelect)),
+                      onPressed: () {
+                        showSelectMixDialog();
+                      },
+                    )
+                  ],
                 ),
-                trailingActions: <Widget>[
-                  PlatformButton(
-                    androidFlat: (context) => MaterialFlatButtonData(),
-                    padding: EdgeInsets.zero,
-                    child: Text(QuLocalizations.get(Strings.MixSelect)),
-                    onPressed: () {
-                      showSelectMixDialog();
-                    },
-                  )
-                ],
-              ),
-              body: OrientationBuilder(
-                builder: (context, orientation) =>
-                    orientation == Orientation.landscape
-                        ? buildBodyLandscape()
-                        : buildBodyPortrait(),
-              ),
-            ),
+                body: buildBody()),
             opacity: activeWheel != -1 ? 0.4 : 1,
             duration: Duration(milliseconds: activeWheel != -1 ? 500 : 0),
-          ),
+          )
         ],
       ),
     );
@@ -120,6 +114,15 @@ class _PageHomeState extends State<PageHome> {
     Navigator.pushReplacement(context, route);
     mainSendMixModel.reset();
     levelPanModel.reset();
+  }
+
+  Widget buildBody() {
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        final isLandscape = orientation == Orientation.landscape;
+        return isLandscape ? buildBodyLandscape() : buildBodyPortrait();
+      },
+    );
   }
 
   Widget buildBodyPortrait() {
@@ -214,14 +217,11 @@ class _PageHomeState extends State<PageHome> {
       selected: info.explicitMuteOn,
       width: 72.0,
       onSelect: () {
-        if (info.id != -1) {
-          mainSendMixModel.changeMute(info.id, !info.explicitMuteOn);
-        }
+        mainSendMixModel.changeMute(info.id, !info.explicitMuteOn);
       },
       margin: EdgeInsets.only(bottom: 8),
       checkColor: quTheme.mutedButtonColor,
-      // TODO: add disabled state to QuCheckButton
-      pressedOpacity: info.id == -1 ? 1.0 : null,
+      disabled: info.id == -1,
     );
   }
 
