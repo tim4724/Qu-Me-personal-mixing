@@ -14,15 +14,6 @@ class DialogSelectMix extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget cancelAction;
-    if (mixModel.getCurrentMix() != null) {
-      cancelAction = PlatformButton(
-        child: Text(QuLocalizations.get(Strings.Cancel)),
-        androidFlat: (context) => MaterialFlatButtonData(),
-        onPressed: () => Navigator.of(context).pop(),
-      );
-    }
-
     return QuDialog(
       title: QuLocalizations.get(Strings.MixSelect),
       body: ValueListenableBuilder<List<int>>(
@@ -37,7 +28,11 @@ class DialogSelectMix extends StatelessWidget {
           );
         },
       ),
-      action: cancelAction,
+      action: PlatformButton(
+        child: Text(QuLocalizations.get(Strings.Cancel)),
+        androidFlat: (context) => MaterialFlatButtonData(),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
     );
   }
 
