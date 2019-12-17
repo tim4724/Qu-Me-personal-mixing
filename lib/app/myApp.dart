@@ -48,12 +48,10 @@ class MyApp extends StatelessWidget {
     cardColor: Color(0xFF161616),
     dialogBackgroundColor:
         Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
-  );
-  static final cupertinoTheme = MaterialBasedCupertinoThemeData(
-    materialTheme: theme.copyWith(
-      cupertinoOverrideTheme: const CupertinoThemeData(
-        barBackgroundColor: Color(0xFF111111),
-      ),
+    cupertinoOverrideTheme: const CupertinoThemeData(
+      barBackgroundColor: Color(0xFF111111),
+      // Needed for correct text colors
+      textTheme: CupertinoTextThemeData(),
     ),
   );
   static final quTheme = QuThemeData(
@@ -109,7 +107,9 @@ class MyApp extends StatelessWidget {
               AppLocalizationsDelegate(),
             ],
             supportedLocales: [const Locale('en'), const Locale('de')],
-            ios: (context) => CupertinoAppData(theme: cupertinoTheme),
+            ios: (context) => CupertinoAppData(
+              theme: MaterialBasedCupertinoThemeData(materialTheme: theme),
+            ),
             home: PageLogin(),
           ),
         ),
