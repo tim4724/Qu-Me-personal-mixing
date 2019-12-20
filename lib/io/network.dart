@@ -101,7 +101,7 @@ void changeMute(int id, bool muteOn) {
 
 void changeSelectedMix(int mixId, int mixIndex) {
   _connectionModel.onLoadingScene();
-
+  _currentMixIndex = mixIndex;
   if (_socket == null) {
     // For demo scene
     // TODO: implement demo mode better?
@@ -111,7 +111,6 @@ void changeSelectedMix(int mixId, int mixIndex) {
     });
     return;
   }
-  _currentMixIndex = -1;
 
   // Listen for future Mix Master Fader changes?
   final magicData = Uint8List(36);
@@ -142,8 +141,6 @@ void changeSelectedMix(int mixId, int mixIndex) {
   // - to receive latest send levels, send pans, assignements for new mix
   // - to receive latest mix master fader level
   _requestSceneState();
-
-  _currentMixIndex = mixIndex;
 }
 
 void close() {
@@ -435,6 +432,7 @@ void _onSceneReceived(Scene scene) {
 
   _levelPanModel.initLinks(scene.sendsLevelLinked, scene.sendsPanLinked);
   _levelPanModel.initLevels(scene.sendLevelsInDb);
+  _levelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
   _levelPanModel.initPans(scene.sendPans);
 
   _connectionModel.onSceneLoaded();

@@ -47,6 +47,8 @@ Scene parse(Uint8List data, int mixId) {
     if (i < 32) {
       type = SendType.monoChannel;
       displayId = i + 1;
+      scene.sendsLevelLinked[i] = linked;
+      scene.sendsPanLinked[i] = panLinked;
     } else if (i >= 32 && i < 35) {
       type = SendType.stereoChannel;
       displayId = i - 31;
@@ -64,8 +66,6 @@ Scene parse(Uint8List data, int mixId) {
         dcaData, muteGroupData, allDcaGroups, allMuteGroups);
     scene.sends[i] =
         Send(i, type, displayId, name, null, muteOn, controlGroups);
-    scene.sendsLevelLinked[i] = linked;
-    scene.sendsPanLinked[i] = panLinked;
   }
 
   // Mono Mix 1 - 4, Stereo Mix 5/6, 7/8, 9/10
