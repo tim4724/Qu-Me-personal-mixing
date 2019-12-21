@@ -61,7 +61,6 @@ void changeFaderLevel(int id, double levelInDb) {
     param2
   ];
   packet.addAll(_fromUint16(value));
-  print("Set level $id $value");
   _socket.add(packet);
 }
 
@@ -107,7 +106,7 @@ void changeSelectedMix(int mixId, int mixIndex) {
     // For demo scene
     // TODO: implement demo mode better?
     _connectionModel.onStartLoadingScene();
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(Duration(milliseconds: 1000), () {
       final mixId = _mainSendMixModel.currentMixIdNotifier.value;
       _onSceneReceived(buildDemoScene(mixId));
     });

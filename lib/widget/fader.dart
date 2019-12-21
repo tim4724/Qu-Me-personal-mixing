@@ -30,7 +30,6 @@ abstract class Fader extends StatefulWidget {
         super(key: key);
 
   static ColorSwatch<bool> _getColorS(FaderInfo faderInfo) {
-    final quTheme = MyApp.quTheme;
     if (faderInfo is Send) {
       if (faderInfo.sendType != SendType.fxReturn) {
         return quTheme.faderColors[faderInfo.category];
@@ -52,7 +51,7 @@ class HorizontalFader extends Fader {
 }
 
 class VerticalFader extends Fader {
-  VerticalFader(FaderInfo faderInfo, pan,
+  VerticalFader(FaderInfo faderInfo, bool pan,
       {bool forceDisplayTechnicalName = false, Function doubleTap, Key key})
       : super(faderInfo, pan, forceDisplayTechnicalName, doubleTap, key);
 
@@ -72,16 +71,8 @@ abstract class _FaderState extends State<Fader> {
 
   _FaderState();
 
-  @override
   void initState() {
     super.initState();
-    if (widget._faderInfo.id != -1) {
-      initGestures();
-    }
-  }
-
-  @mustCallSuper
-  void initGestures() {
     gestures[MultiTapGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
       () => MultiTapGestureRecognizer(),
@@ -107,6 +98,9 @@ abstract class _FaderState extends State<Fader> {
 
   void onDragUpdate(double delta) {
     final id = widget._faderInfo.id;
+    if (id == -1) {
+      return;
+    }
     final sliderWidth = keyFaderSlider.currentContext.size.width - 40;
     final deltaNormalized = (delta / (sliderWidth));
     if (widget._pan) {
@@ -145,7 +139,6 @@ abstract class _FaderState extends State<Fader> {
 
   BoxDecoration decoration(
       BuildContext context, FaderInfo faderInfo, bool horizontal) {
-    final quTheme = MyApp.quTheme;
     final bgColor = quTheme.itemBackgroundColor[active];
 
     Gradient bgGradient;
@@ -198,8 +191,8 @@ abstract class _FaderState extends State<Fader> {
 
 class _HorizontalFaderState extends _FaderState {
   @override
-  void initGestures() {
-    super.initGestures();
+  void initState() {
+    super.initState();
     gestures[HorizontalFaderDragRecognizer] =
         GestureRecognizerFactoryWithHandlers<HorizontalFaderDragRecognizer>(
       () => HorizontalFaderDragRecognizer(),
@@ -230,8 +223,8 @@ class _HorizontalFaderState extends _FaderState {
 
 class _VerticalFaderState extends _FaderState {
   @override
-  void initGestures() {
-    super.initGestures();
+  void initState() {
+    super.initState();
     gestures[VerticalFaderDragRecognizer] =
         GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
       () => VerticalFaderDragRecognizer(),
@@ -317,8 +310,6 @@ abstract class _Slider extends StatelessWidget {
 
   FaderLevelPanModel get levelPanModel => _levelPanModel;
 
-  QuThemeData get quTheme => MyApp.quTheme;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -375,7 +366,6 @@ class _PanSlider extends _Slider {
 
   @override
   BoxDecoration decoration() {
-    final quTheme = MyApp.quTheme;
     return BoxDecoration(
       color: quTheme.sliderPanBackgroundColor,
       borderRadius: quTheme.sliderBorderRadius,
@@ -541,7 +531,6 @@ class _LevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = MyApp.quTheme;
     final radius = quTheme.sliderRadius;
     final levelPos = max((1 - level) * width, radius);
     var yOffset = 0.0;
@@ -603,7 +592,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = textColor ?? MyApp.quTheme.sliderValueLabelColor;
+    final color = textColor ?? quTheme.sliderValueLabelColor;
     return Positioned(
       left: left,
       top: top,

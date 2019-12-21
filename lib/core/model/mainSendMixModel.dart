@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/controlGroup.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -67,9 +68,10 @@ class MainSendMixModel {
     network.changeSelectedMix(id, index);
   }
 
-  void changeMute(int id, bool muteOn) {
+  void toogleMute(int id) {
     final faderInfo = _getFaderInfoNotifierForId(id);
-    if(faderInfo != null && faderInfo.value.explicitMuteOn != muteOn) {
+    if (faderInfo != null) {
+      final muteOn = !faderInfo.value.explicitMuteOn;
       faderInfo.value = faderInfo.value.copyWith(explicitMuteOn: muteOn);
       network.changeMute(id, muteOn);
     }
@@ -138,14 +140,15 @@ class MainSendMixModel {
 
   ValueNotifier<FaderInfo> _getFaderInfoNotifierForId(int id) {
     final isSend = id < _mixNotifiers[0].value.id;
-    return isSend ? getSendNotifierForId(id) : getMixNotifierForId(id);
+    return isSend ? getSendNotifierForId(id) : getMixListenableForId(id);
   }
 
   ValueNotifier<Send> getSendNotifierForId(int sendId) {
     return _sendNotifiers[sendId];
   }
 
-  ValueNotifier<Mix> getMixNotifierForId(int mixId) {
+  ValueListenable<Mix> getMixListenableForId(int mixId) {
+    if (mixId == null) return null;
     return _mixNotifiers[mixId - _mixNotifiers[0].value.id];
   }
 
@@ -157,7 +160,7 @@ class MainSendMixModel {
     if (currentMixIdNotifier.value == null) {
       return null;
     }
-    return getMixNotifierForId(currentMixIdNotifier.value).value;
+    return getMixListenableForId(currentMixIdNotifier.value).value;
   }
 
   int get currentMixId => currentMixIdNotifier.value;

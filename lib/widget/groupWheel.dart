@@ -16,27 +16,25 @@ import 'package:qu_me/io/asset.dart' as asset;
 import 'package:qu_me/widget/pageSends.dart';
 import 'package:qu_me/widget/quTheme.dart';
 
-typedef WheelSelected = void Function(int id);
 typedef WheelDragUpdate = void Function(int id, double delta);
 typedef WheelDragRelease = void Function(int id);
 
 class GroupWheel extends StatefulWidget {
-  final SendGroup _group;
+  final int _groupId;
   final ColorSwatch<bool> _colors;
   final WheelDragUpdate _dragUpdateCallback;
   final WheelDragRelease _dragReleaseCallback;
 
   GroupWheel(
-    this._group,
+    this._groupId,
     this._dragUpdateCallback,
     this._dragReleaseCallback, {
     Key key,
-  })  : _colors = _colorsForType(_group.sendGroupType),
+  })  : _colors = _colorsForType(_groupId),
         super(key: key);
 
-  static ColorSwatch<bool> _colorsForType(SendGroupType type) {
-    final quTheme = MyApp.quTheme;
-    if (type == SendGroupType.Me) {
+  static ColorSwatch<bool> _colorsForType(int id) {
+    if (SendGroupModel().getGroup(id).sendGroupType == SendGroupType.Me) {
       return quTheme.meGroupColors;
     }
     return quTheme.defaultGroupColors;
@@ -49,18 +47,18 @@ class GroupWheel extends StatefulWidget {
 }
 
 class _GroupWheelState extends State<GroupWheel> {
+  static final sendGroupModel = SendGroupModel();
   final keyWheel = GlobalKey();
   Map<Type, GestureRecognizerFactory> gestures;
   ui.Image shadowOverlay;
+  var wheelActive = false;
   var activePointers = 0;
   var wheelDragDelta = 0.0;
   var lastTapTimestamp = 0;
 
-  int get id => widget._group.id;
+  int get id => widget._groupId;
 
   bool get active => activePointers > 0;
-
-  QuColorSwatch get colors => widget._colors;
 
   _GroupWheelState() {
     asset.loadImage("assets/shadow.png").then((image) {
@@ -72,22 +70,23 @@ class _GroupWheelState extends State<GroupWheel> {
   void initState() {
     super.initState();
     if (gestures == null) {
+      final longTapDur = Duration(milliseconds: 100);
       gestures = {
         VerticalFaderDragRecognizer:
             GestureRecognizerFactoryWithHandlers<VerticalFaderDragRecognizer>(
                 () => VerticalFaderDragRecognizer(slop: 2.0), (recognizer) {
-          recognizer
-            ..onDragStart = ((offset) => onPointerStart())
-            ..onDragUpdate = ((details) => onDragUpdate(details.delta.dy))
-            ..onDragStop = onPointerStop;
+          recognizer.onDragStart = (_) => onPointerStart();
+          recognizer.onDragUpdate = (details) => onDragUpdate(details.delta.dy);
+          recognizer.onDragStop = onPointerStop;
         }),
         MultiTapGestureRecognizer:
             GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
-                () => MultiTapGestureRecognizer(), (recognizer) {
-          recognizer
-            ..onTapDown = ((pointer, details) => onPointerStart())
-            ..onTapCancel = ((pointer) => onPointerStop())
-            ..onTapUp = (pointer, details) => onTapUp();
+                () => MultiTapGestureRecognizer(longTapDelay: longTapDur),
+                (recognizer) {
+          recognizer.onTapDown = (_, __) => onPointerStart();
+          recognizer.onTapCancel = (_) => onPointerStop();
+          recognizer.onTapUp = (_, __) => onTapUp();
+          recognizer.onLongTapDown = (_, __) => onDragUpdate(0);
         }),
       };
     }
@@ -98,10 +97,12 @@ class _GroupWheelState extends State<GroupWheel> {
   }
 
   void onDragUpdate(double delta) {
-    final wheelHeight = keyWheel.currentContext.size.height;
-    widget._dragUpdateCallback(id, -delta / wheelHeight / 2);
-    final newWheelDragDelta = (wheelDragDelta - delta);
-    setState(() => wheelDragDelta = newWheelDragDelta);
+    if (wheelActive) {
+      final wheelHeight = keyWheel.currentContext.size.height;
+      widget._dragUpdateCallback(id, -delta / wheelHeight / 2);
+      final newWheelDragDelta = (wheelDragDelta - delta);
+      setState(() => wheelDragDelta = newWheelDragDelta);
+    }
   }
 
   void onTapUp() {
@@ -129,56 +130,36 @@ class _GroupWheelState extends State<GroupWheel> {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = MyApp.quTheme;
-    final bgColor = quTheme.itemBackgroundColor[active];
-    final labelColor = colors[active];
+    final group = sendGroupModel.getGroup(id);
+    String groupName = group.name;
+    if (groupName == null || groupName.isEmpty) {
+      groupName = SendGroupModel.getGroupTechnicalName(group);
+    }
 
-    return Selector<SendGroupModel, MapEntry<SendGroup, int>>(
-      selector: (BuildContext context, SendGroupModel model) {
-        final sendsCount = model.getSendIdsForGroup(id).length;
-        final group = model.getGroup(id);
-        return MapEntry<SendGroup, int>(group, sendsCount);
-      },
-      builder: (BuildContext context, MapEntry<SendGroup, int> pair, _) {
-        final group = pair.key;
-        final sendsCount = pair.value;
-
-        String groupName = group.name;
-        if (groupName == null || groupName.isEmpty) {
-          groupName = SendGroupModel.getGroupTechnicalName(group);
-        }
-
-        Map<Type, GestureRecognizerFactory> currentGestures;
-        if (sendsCount > 0) {
-          currentGestures = gestures;
-        } else {
-          // Only detect taps.
-          // Do not detect drag, because the SendsGroup is empty
-          currentGestures = {
-            MultiTapGestureRecognizer: gestures[MultiTapGestureRecognizer]
-          };
-        }
-
+    return Selector<SendGroupModel, int>(
+      selector: (_, model) => model.getSendIdsForGroup(id).length,
+      builder: (BuildContext context, int sendsCount, _) {
+        wheelActive = sendsCount > 0;
         return Container(
           decoration: BoxDecoration(
-            color: bgColor,
+            color: quTheme.itemBackgroundColor[active],
             borderRadius: quTheme.borderRadius,
             border: Border.all(
-              color: colors,
+              color: widget._colors,
               width: quTheme.itemBorderWidth,
             ),
           ),
           child: RawGestureDetector(
             behavior: HitTestBehavior.opaque,
-            gestures: currentGestures,
+            gestures: gestures,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _GroupLabel(groupName, labelColor),
+                _GroupLabel(groupName, widget._colors[active]),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: buildWheelArea(context, sendsCount),
+                    child: buildWheelArea(context, wheelActive),
                   ),
                 ),
               ],
@@ -189,11 +170,9 @@ class _GroupWheelState extends State<GroupWheel> {
     );
   }
 
-  Widget buildWheelArea(BuildContext context, int sendsCount) {
+  Widget buildWheelArea(BuildContext context, bool wheelActive) {
     final theme = Theme.of(context);
-    final quTheme = MyApp.quTheme;
-
-    if (sendsCount > 0) {
+    if (wheelActive) {
       return CustomPaint(
         painter: _Wheel(
           wheelDragDelta,
@@ -222,7 +201,6 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final quTheme = MyApp.quTheme;
     final radius = Radius.circular(quTheme.itemRadius);
     return Container(
       height: 50,

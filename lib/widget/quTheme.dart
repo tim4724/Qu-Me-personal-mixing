@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 
 class QuThemeData {

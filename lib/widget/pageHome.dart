@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -12,6 +13,7 @@ import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
+import 'package:qu_me/util.dart';
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
@@ -32,96 +34,91 @@ class _PageHomeState extends State<PageHome> {
   final groupModel = SendGroupModel();
   final levelPanModel = FaderLevelPanModel();
 
+  var wheelActive = false;
   var activeWheelGroupId = -1;
 
-  // TODO: show loading when scene is loading
-  // TODO: show something, when mix is not selected
   @override
   Widget build(BuildContext context) {
-    // TODO: fade pagegroup widget
-    print("build pageHome");
-
-    /*
-    final a = AnimatedBuilder(
-      animation: Listenable.merge([
-        connectionModel.connectionStateListenable,
-        mainSendMixModel.currentMixIdNotifier
-      ]),
-      builder: (BuildContext context, Widget body) {
-        final state = connectionModel.connectionState;
-        final loading = state == QuConnectionState.LOADING_SCENE;
-        final currentMixId = mainSendMixModel.currentMixId;
-        final selectedMixIsEmpty = currentMixId != null && currentMixId != -1;
-        return Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            body,
-            Container(
-                constraints: BoxConstraints.expand(),
-                decoration: BoxDecoration(
-                  color: Color(0xD0000000),
-                )),
-            if (loading) PlatformCircularProgressIndicator()
-          ],
-        );
-      },
-      child: buildBody(),
-    );
-    */
-
-    // TODO: avoid rebuilding entire widget on wheel scroll
+    final theme = Theme.of(context);
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(
         children: [
-          if (activeWheelGroupId != -1) PageSends(activeWheelGroupId),
-          AnimatedOpacity(
-            child: PlatformScaffold(
-              appBar: buildAppBar(),
-              body: ValueListenableBuilder(
-                valueListenable: connectionModel.connectionStateListenable,
-                child: buildBody(),
-                builder: (context, QuConnectionState state, Widget body) {
-                  final loading = state == QuConnectionState.LOADING_SCENE;
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      body,
-                      Container(
-                        constraints: BoxConstraints.expand(),
-                        decoration: BoxDecoration(color: Color(0xD0000000)),
+          ValueListenableBuilder2<int, QuConnectionState>(
+            mainSendMixModel.currentMixIdNotifier,
+            connectionModel.connectionStateListenable,
+            builder: (context, currentMixId, state, appBar) {
+              final mixSelected = currentMixId != null;
+              final loading = state == QuConnectionState.LOADING_SCENE;
+              final disabled = loading || !mixSelected;
+              return PlatformScaffold(
+                appBar: appBar,
+                body: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    AnimatedOpacity(
+                      opacity: disabled ? 0.3 : 1,
+                      duration: Duration(milliseconds: 300),
+                      child: IgnorePointer(
+                        ignoring: disabled,
+                        child: buildBody(currentMixId),
                       ),
-                      if (loading) PlatformCircularProgressIndicator()
-                    ],
-                  );
-                },
-              ),
+                    ),
+                    if (loading) PlatformCircularProgressIndicator(),
+                    if (!mixSelected)
+                      Text('Wähle zuerst deinen Mix',
+                          style: theme.textTheme.caption)
+                  ],
+                ),
+              );
+            },
+            child: buildAppBar(),
+          ),
+          if (activeWheelGroupId != -1)
+            AnimatedOpacity(
+              child: IgnorePointer(child: PageSends(activeWheelGroupId)),
+              opacity: wheelActive ? 0.4 : 0,
+              duration: Duration(milliseconds: 500),
             ),
-            opacity: activeWheelGroupId != -1 ? 0.4 : 1,
-            duration:
-                Duration(milliseconds: activeWheelGroupId != -1 ? 500 : 0),
-          )
         ],
       ),
     );
   }
 
   void onWheelChanged(int groupId, double delta) {
-    if (activeWheelGroupId == -1) {
-      setState(() => activeWheelGroupId = groupId);
+    if (wheelActive == false) {
+      setState(() {
+        activeWheelGroupId = groupId;
+        wheelActive = true;
+      });
     }
-    if (activeWheelGroupId == -1 || activeWheelGroupId == groupId) {
+    if (wheelActive && activeWheelGroupId == groupId) {
       final sends = groupModel.getSendIdsForGroup(groupId);
       levelPanModel.onTrim(sends, delta);
     }
   }
 
   void onWheelReleased(int id) {
-    setState(() {
-      if (activeWheelGroupId == id) {
-        activeWheelGroupId = -1;
-      }
-    });
+    if (activeWheelGroupId == id && wheelActive) {
+      setState(() => wheelActive = false);
+    }
+  }
+
+  void showSelectMixDialog() {
+    showPlatformDialog(
+      context: context,
+      androidBarrierDismissible: true,
+      builder: (BuildContext context) => DialogSelectMix(),
+    );
+  }
+
+  void showSendsPage() {
+    Navigator.of(context).push(
+      platformPageRoute<void>(
+        builder: (context) => PageSends(4),
+        context: context,
+      ),
+    );
   }
 
   logout() {
@@ -163,139 +160,75 @@ class _PageHomeState extends State<PageHome> {
           padding: EdgeInsets.zero,
           child: Text(QuLocalizations.get(Strings.MixSelect)),
           onPressed: () => showSelectMixDialog(),
-        )
+        ),
       ],
     );
   }
 
-  Widget buildBody() {
+  Widget buildBody(int mixId) {
+    final group = buildGroup;
+    final mixListenable = mainSendMixModel.getMixListenableForId(mixId);
+
     return OrientationBuilder(
-      builder: (context, orientation) {
-        final isLandscape = orientation == Orientation.landscape;
-        return isLandscape ? buildBodyLandscape() : buildBodyPortrait();
+      builder: (BuildContext context, Orientation orientation) {
+        List<Widget> items;
+        if (orientation == Orientation.landscape) {
+          items = [group(0), group(1), group(2), group(3)];
+        } else {
+          items = [
+            Expanded(child: Column(children: [group(0), group(2)])),
+            Expanded(child: Column(children: [group(1), group(3)])),
+          ];
+        }
+        return Padding(
+          child: Row(
+            children: <Widget>[
+              ...items,
+              ValueListenableBuilder<FaderInfo>(
+                valueListenable: mixListenable ?? ValueNotifier(Mix.empty()),
+                builder: (BuildContext context, FaderInfo info, _) {
+                  return Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Column(
+                      children: [
+                        buildDebugSwitchPlatformButton(),
+                        buildMuteButton(info),
+                        Expanded(
+                          child: VerticalFader(info, false,
+                              forceDisplayTechnicalName: true,
+                              doubleTap: showSendsPage),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              )
+            ],
+          ),
+          padding: const EdgeInsets.all(4),
+        );
       },
     );
   }
 
-  Widget buildBodyPortrait() {
-    return Padding(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup(0), buildGroup(2)],
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [buildGroup(1), buildGroup(3)],
-            ),
-          ),
-          buildFaderWithMuteButton()
-        ],
-      ),
-      padding: EdgeInsets.all(4),
-    );
-  }
-
-  Widget buildBodyLandscape() {
-    return Padding(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          buildGroup(0),
-          buildGroup(1),
-          buildGroup(2),
-          buildGroup(3),
-          buildFaderWithMuteButton(),
-        ],
-      ),
-      padding: EdgeInsets.all(4),
-    );
-  }
-
   Widget buildGroup(int groupId) {
-    final group = groupModel.getGroup(groupId);
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: GroupWheel(group, onWheelChanged, onWheelReleased),
-      ),
-    );
-  }
-
-  Widget buildFaderWithMuteButton() {
-    return Padding(
-      padding: EdgeInsets.all(4.0),
-      child: ValueListenableBuilder<int>(
-        valueListenable: mainSendMixModel.currentMixIdNotifier,
-        builder: (BuildContext context, int mixId, _) {
-          ValueNotifier<Mix> mixNotifier;
-          if (mixId == null) {
-            mixNotifier = ValueNotifier(Mix.empty());
-          } else {
-            mixNotifier = mainSendMixModel.getMixNotifierForId(mixId);
-          }
-          return AnimatedSwitcher(
-            child: Container(
-              child: ValueListenableBuilder<FaderInfo>(
-                valueListenable: mixNotifier,
-                builder: (BuildContext context, FaderInfo info, _) {
-                  return Column(
-                    children: [
-                      buildDebugSwitchPlatformButton(),
-                      buildMuteButton(info),
-                      Expanded(child: buildMixFader(info)),
-                    ],
-                  );
-                },
-              ),
-              key: ValueKey(mixId),
-            ),
-            duration: Duration(milliseconds: 400),
-          );
-        },
+        child: GroupWheel(groupId, onWheelChanged, onWheelReleased),
       ),
     );
   }
 
   Widget buildMuteButton(FaderInfo info) {
-    final quTheme = MyApp.quTheme;
     return QuCheckButton.simpleText(
       QuLocalizations.get(Strings.Mute),
       selected: info.explicitMuteOn,
       width: 72.0,
-      onSelect: () {
-        mainSendMixModel.changeMute(info.id, !info.explicitMuteOn);
-      },
+      onSelect: () => mainSendMixModel.toogleMute(info.id),
       margin: EdgeInsets.only(bottom: 8),
       checkColor: quTheme.mutedButtonColor,
       disabled: info.id == -1,
-    );
-  }
-
-  Widget buildMixFader(FaderInfo info) {
-    return VerticalFader(
-      info,
-      false,
-      forceDisplayTechnicalName: true,
-      doubleTap: () => Navigator.of(context).push(
-        platformPageRoute<void>(
-          builder: (context) => PageSends(4),
-          context: context,
-        ),
-      ),
-    );
-  }
-
-  void showSelectMixDialog() {
-    showPlatformDialog(
-      context: context,
-      androidBarrierDismissible: true,
-      builder: (BuildContext context) => DialogSelectMix(),
     );
   }
 

@@ -41,7 +41,7 @@ class DialogSelectMix extends StatelessWidget {
         .map(
           (id) => AnimatedBuilder(
             animation: Listenable.merge(
-              [mixModel.currentMixIdNotifier, mixModel.getMixNotifierForId(id)],
+              [mixModel.currentMixIdNotifier, mixModel.getMixListenableForId(id)],
             ),
             builder: (context, _) => buildItem(context, id),
           ),
@@ -50,7 +50,7 @@ class DialogSelectMix extends StatelessWidget {
   }
 
   Widget buildItem(BuildContext context, int id) {
-    final mix = mixModel.getMixNotifierForId(id).value;
+    final mix = mixModel.getMixListenableForId(id).value;
     final currentMixId = mixModel.currentMixIdNotifier.value;
     return QuCheckButton(
       onSelect: () {

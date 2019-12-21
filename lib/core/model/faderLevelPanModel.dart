@@ -226,11 +226,11 @@ class FaderLevelPanModel {
   }
 
   bool _isLevelLinked(int id) {
-    return id < _levelLinked.length && _levelLinked[id];
+    return id >= 0 && id < _levelLinked.length && _levelLinked[id];
   }
 
   bool _isPanLinked(int id) {
-    return id < _panLinked.length && _panLinked[id];
+    return id >= 0 && id < _panLinked.length && _panLinked[id];
   }
 
   static bool _isUnEven(int i) {

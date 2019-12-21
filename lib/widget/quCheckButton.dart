@@ -51,8 +51,6 @@ class QuCheckButton extends StatefulWidget {
 class _QuCheckButtonState extends State<QuCheckButton> {
   var down = false;
 
-  QuThemeData get quTheme => MyApp.quTheme;
-
   @override
   Widget build(BuildContext context) {
     print("_QuCheckButtonState: build");

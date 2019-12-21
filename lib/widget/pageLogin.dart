@@ -51,8 +51,6 @@ class _PageLoginState extends State<PageLogin> {
 
   Widget buildBody(BuildContext context, bool landscape) {
     final theme = Theme.of(context);
-    final quTheme = MyApp.quTheme;
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[

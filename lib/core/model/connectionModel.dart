@@ -38,8 +38,6 @@ class ConnectionModel {
     _connectionStateNotifier.value = QuConnectionState.READY;
   }
 
-  InternetAddress get remoteAddress => _mixerNotifier.value?.address;
-
   int get type => _mixerNotifier.value?.mixerType;
 
   ValueListenable<Mixer> get mixerListenable => _mixerNotifier;
