@@ -46,7 +46,7 @@ class QuCupertinoDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final bodyPaddingBot = action != null ? 0.0 : 24.0;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(36, 36, 36, 24),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
@@ -59,7 +59,7 @@ class QuCupertinoDialog extends StatelessWidget {
                 children: <Widget>[
                   if (title != null)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
                       child: Text(title, style: (theme.textTheme.title)),
                     ),
                   Flexible(

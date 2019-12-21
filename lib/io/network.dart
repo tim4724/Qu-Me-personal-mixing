@@ -103,11 +103,10 @@ void changeMute(int id, bool muteOn) {
 
 void changeSelectedMix(int mixId, int mixIndex) {
   _currentMixIndex = mixIndex;
-
   if (_socket == null) {
-    _connectionModel.onStartLoadingScene();
     // For demo scene
     // TODO: implement demo mode better?
+    _connectionModel.onStartLoadingScene();
     Future.delayed(Duration(milliseconds: 500), () {
       final mixId = _mainSendMixModel.currentMixIdNotifier.value;
       _onSceneReceived(buildDemoScene(mixId));
@@ -436,6 +435,7 @@ void _onSceneReceived(Scene scene) {
 
   _levelPanModel.initLinks(scene.sendsLevelLinked, scene.sendsPanLinked);
   _levelPanModel.initLevels(scene.sendLevelsInDb);
+  _levelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
   _levelPanModel.initPans(scene.sendPans);
 
   _connectionModel.onFinishedLoadingScene();
