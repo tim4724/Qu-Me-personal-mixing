@@ -18,17 +18,19 @@ import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/heartbeat.dart' as heartbeat;
 import 'package:qu_me/io/networkMetersListener.dart' as metersListener;
 
-Socket _socket;
-int _currentMixIndex = -1; // TODO is this variable necessary?
 final _connectionModel = ConnectionModel();
 final _mainSendMixModel = MainSendMixModel();
 final _sendGroupModel = SendGroupModel();
 final _levelPanModel = FaderLevelPanModel();
 
+Socket _socket;
+int _currentMixIndex = -1;
+
 void connect(String name, InternetAddress address) async {
   if (address.isLoopback) {
     _socket?.destroy();
     _socket = null;
+    _connectionModel.onStartLoadingScene();
     Future.delayed(Duration(milliseconds: 500), () {
       _connectionModel.onMixerVersion(MixerType.QU_16, "0");
       final mixId = _mainSendMixModel.currentMixIdNotifier.value;
@@ -100,9 +102,10 @@ void changeMute(int id, bool muteOn) {
 }
 
 void changeSelectedMix(int mixId, int mixIndex) {
-  _connectionModel.onLoadingScene();
+  _currentMixIndex = mixIndex;
 
   if (_socket == null) {
+    _connectionModel.onStartLoadingScene();
     // For demo scene
     // TODO: implement demo mode better?
     Future.delayed(Duration(milliseconds: 500), () {
@@ -111,7 +114,6 @@ void changeSelectedMix(int mixId, int mixIndex) {
     });
     return;
   }
-  _currentMixIndex = -1;
 
   // Listen for future Mix Master Fader changes?
   final magicData = Uint8List(36);
@@ -142,8 +144,6 @@ void changeSelectedMix(int mixId, int mixIndex) {
   // - to receive latest send levels, send pans, assignements for new mix
   // - to receive latest mix master fader level
   _requestSceneState();
-
-  _currentMixIndex = mixIndex;
 }
 
 void close() {
@@ -409,6 +409,7 @@ class DspPacket {
 }
 
 void _requestSceneState() {
+  _connectionModel.onStartLoadingScene();
   // request scene state
   _socket.add(_buildSystemPacket(0x04, [0x02, 0x00]));
 }
@@ -437,7 +438,7 @@ void _onSceneReceived(Scene scene) {
   _levelPanModel.initLevels(scene.sendLevelsInDb);
   _levelPanModel.initPans(scene.sendPans);
 
-  _connectionModel.onSceneLoaded();
+  _connectionModel.onFinishedLoadingScene();
 }
 
 void _onError(e) {

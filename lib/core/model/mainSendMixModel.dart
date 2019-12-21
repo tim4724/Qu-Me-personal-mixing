@@ -159,4 +159,6 @@ class MainSendMixModel {
     }
     return getMixNotifierForId(currentMixIdNotifier.value).value;
   }
+
+  int get currentMixId => currentMixIdNotifier.value;
 }

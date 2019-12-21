@@ -1,55 +1,59 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 
-class ConnectionModel extends ChangeNotifier {
+class ConnectionModel {
   static final ConnectionModel _instance = ConnectionModel._internal();
 
   factory ConnectionModel() => _instance;
 
-  Mixer _mixer;
-  bool _initialized = false;
+  final _mixerNotifier = ValueNotifier<Mixer>(null);
+  final _connectionStateNotifier =
+      ValueNotifier<QuConnectionState>(QuConnectionState.NOT_CONNECTED);
 
   ConnectionModel._internal();
 
-  void startConnect(String name, InternetAddress address) {
-    _mixer = Mixer(name, address);
-    _initialized = false;
-    network.connect(name, address);
-    notifyListeners();
+  void connect(String name, InternetAddress address) {
+    if(connectionState == QuConnectionState.NOT_CONNECTED) {
+      _mixerNotifier.value = Mixer(name, address);
+      network.connect(name, address);
+    }
   }
 
   void onMixerVersion(int type, String firmware) {
-    _mixer.mixerType = type;
-    _mixer.firmwareVersion = firmware;
-    notifyListeners();
+    final mixer = _mixerNotifier.value;
+    mixer.mixerType = type;
+    mixer.firmwareVersion = firmware;
+    _mixerNotifier.value = mixer;
   }
 
-  void onLoadingScene() {
-    _initialized = false;
-    notifyListeners();
+  void onStartLoadingScene() {
+    _connectionStateNotifier.value = QuConnectionState.LOADING_SCENE;
   }
 
-  void onSceneLoaded() {
-    _initialized = true;
-    notifyListeners();
+  void onFinishedLoadingScene() {
+    _connectionStateNotifier.value = QuConnectionState.READY;
   }
 
-  InternetAddress get remoteAddress => _mixer?.address;
+  InternetAddress get remoteAddress => _mixerNotifier.value?.address;
 
-  String get name => _mixer?.name;
+  int get type => _mixerNotifier.value?.mixerType;
 
-  int get type => _mixer?.mixerType;
+  ValueListenable<Mixer> get mixerListenable => _mixerNotifier;
 
-  bool get initialized {
-    return _initialized;
+  ValueListenable<QuConnectionState> get connectionStateListenable {
+    return _connectionStateNotifier;
   }
+
+  QuConnectionState get connectionState => connectionStateListenable.value;
 
   void reset() {
-    _mixer = null;
-    _initialized = false;
-    notifyListeners();
+    _mixerNotifier.value = null;
+    _connectionStateNotifier.value = QuConnectionState.NOT_CONNECTED;
   }
 }
+
+enum QuConnectionState { NOT_CONNECTED, LOADING_SCENE, READY }

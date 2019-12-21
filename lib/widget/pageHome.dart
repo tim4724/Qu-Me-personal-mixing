@@ -10,6 +10,7 @@ import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/mix.dart';
+import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
@@ -31,53 +32,74 @@ class _PageHomeState extends State<PageHome> {
   final groupModel = SendGroupModel();
   final levelPanModel = FaderLevelPanModel();
 
-  var activeWheel = -1;
+  var activeWheelGroupId = -1;
 
   // TODO: show loading when scene is loading
   // TODO: show something, when mix is not selected
-
   @override
   Widget build(BuildContext context) {
     // TODO: fade pagegroup widget
     print("build pageHome");
-    // TODO : avoid rebuilding entire widget on wheel scroll
+
+    /*
+    final a = AnimatedBuilder(
+      animation: Listenable.merge([
+        connectionModel.connectionStateListenable,
+        mainSendMixModel.currentMixIdNotifier
+      ]),
+      builder: (BuildContext context, Widget body) {
+        final state = connectionModel.connectionState;
+        final loading = state == QuConnectionState.LOADING_SCENE;
+        final currentMixId = mainSendMixModel.currentMixId;
+        final selectedMixIsEmpty = currentMixId != null && currentMixId != -1;
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            body,
+            Container(
+                constraints: BoxConstraints.expand(),
+                decoration: BoxDecoration(
+                  color: Color(0xD0000000),
+                )),
+            if (loading) PlatformCircularProgressIndicator()
+          ],
+        );
+      },
+      child: buildBody(),
+    );
+    */
+
+    // TODO: avoid rebuilding entire widget on wheel scroll
     return WillPopScope(
       onWillPop: () => logout(),
       child: Stack(
         children: [
-          if (activeWheel != -1) PageSends(activeWheel),
+          if (activeWheelGroupId != -1) PageSends(activeWheelGroupId),
           AnimatedOpacity(
             child: PlatformScaffold(
-                appBar: PlatformAppBar(
-                  // TODO: make reactive
-                  title: Text(connectionModel.name ?? ""),
-                  ios: (context) => CupertinoNavigationBarData(
-                    leading: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text(QuLocalizations.get(Strings.Logout)),
-                      onPressed: () => logout(),
-                    ),
-                  ),
-                  android: (context) => MaterialAppBarData(
-                    leading: IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => logout(),
-                    ),
-                  ),
-                  trailingActions: <Widget>[
-                    PlatformButton(
-                      androidFlat: (context) => MaterialFlatButtonData(),
-                      padding: EdgeInsets.zero,
-                      child: Text(QuLocalizations.get(Strings.MixSelect)),
-                      onPressed: () {
-                        showSelectMixDialog();
-                      },
-                    )
-                  ],
-                ),
-                body: buildBody()),
-            opacity: activeWheel != -1 ? 0.4 : 1,
-            duration: Duration(milliseconds: activeWheel != -1 ? 500 : 0),
+              appBar: buildAppBar(),
+              body: ValueListenableBuilder(
+                valueListenable: connectionModel.connectionStateListenable,
+                child: buildBody(),
+                builder: (context, QuConnectionState state, Widget body) {
+                  final loading = state == QuConnectionState.LOADING_SCENE;
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      body,
+                      Container(
+                        constraints: BoxConstraints.expand(),
+                        decoration: BoxDecoration(color: Color(0xD0000000)),
+                      ),
+                      if (loading) PlatformCircularProgressIndicator()
+                    ],
+                  );
+                },
+              ),
+            ),
+            opacity: activeWheelGroupId != -1 ? 0.4 : 1,
+            duration:
+                Duration(milliseconds: activeWheelGroupId != -1 ? 500 : 0),
           )
         ],
       ),
@@ -85,12 +107,10 @@ class _PageHomeState extends State<PageHome> {
   }
 
   void onWheelChanged(int groupId, double delta) {
-    if (activeWheel == -1) {
-      setState(() {
-        activeWheel = groupId;
-      });
+    if (activeWheelGroupId == -1) {
+      setState(() => activeWheelGroupId = groupId);
     }
-    if (activeWheel == groupId) {
+    if (activeWheelGroupId == -1 || activeWheelGroupId == groupId) {
       final sends = groupModel.getSendIdsForGroup(groupId);
       levelPanModel.onTrim(sends, delta);
     }
@@ -98,8 +118,8 @@ class _PageHomeState extends State<PageHome> {
 
   void onWheelReleased(int id) {
     setState(() {
-      if (activeWheel == id) {
-        activeWheel = -1;
+      if (activeWheelGroupId == id) {
+        activeWheelGroupId = -1;
       }
     });
   }
@@ -114,6 +134,38 @@ class _PageHomeState extends State<PageHome> {
     Navigator.pushReplacement(context, route);
     mainSendMixModel.reset();
     levelPanModel.reset();
+  }
+
+  Widget buildAppBar() {
+    return PlatformAppBar(
+      title: ValueListenableBuilder<Mixer>(
+        valueListenable: connectionModel.mixerListenable,
+        builder: (BuildContext context, Mixer mixer, _) {
+          return Text(mixer?.name ?? "");
+        },
+      ),
+      ios: (context) => CupertinoNavigationBarData(
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Text(QuLocalizations.get(Strings.Logout)),
+          onPressed: () => logout(),
+        ),
+      ),
+      android: (context) => MaterialAppBarData(
+        leading: IconButton(
+          icon: Icon(Icons.close),
+          onPressed: () => logout(),
+        ),
+      ),
+      trailingActions: <Widget>[
+        PlatformButton(
+          androidFlat: (context) => MaterialFlatButtonData(),
+          padding: EdgeInsets.zero,
+          child: Text(QuLocalizations.get(Strings.MixSelect)),
+          onPressed: () => showSelectMixDialog(),
+        )
+      ],
+    );
   }
 
   Widget buildBody() {

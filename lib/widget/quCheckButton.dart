@@ -26,7 +26,8 @@ class QuCheckButton extends StatefulWidget {
     this.checkColor,
     this.pressedOpacity,
     this.disabled = false,
-  });
+    key,
+  }) : super(key: key);
 
   QuCheckButton.simpleText(
     String text, {
@@ -38,11 +39,10 @@ class QuCheckButton extends StatefulWidget {
     this.height,
     this.checkColor,
     this.pressedOpacity,
-        this.disabled = false,
-  })  : child = Text(
-          text,
-          textAlign: TextAlign.center,
-        );
+    this.disabled = false,
+    key,
+  })  : child = Text(text, textAlign: TextAlign.center),
+        super(key: key);
 
   @override
   _QuCheckButtonState createState() => _QuCheckButtonState();
@@ -55,6 +55,7 @@ class _QuCheckButtonState extends State<QuCheckButton> {
 
   @override
   Widget build(BuildContext context) {
+    print("_QuCheckButtonState: build");
     Color buttonColor;
     if (widget.selected) {
       buttonColor = widget.checkColor ?? quTheme.buttonCheckColor;
@@ -90,9 +91,9 @@ class _QuCheckButtonState extends State<QuCheckButton> {
   }
 
   double getOpacity() {
-    if(widget.disabled) {
+    if (widget.disabled) {
       return quTheme.buttonDisabledOpacity;
-    } else if(down) {
+    } else if (down) {
       return widget.pressedOpacity ?? quTheme.buttonDisabledOpacity;
     }
     return 1.0;
