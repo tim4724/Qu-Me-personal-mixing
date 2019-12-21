@@ -66,8 +66,11 @@ class _PageHomeState extends State<PageHome> {
                     ),
                     if (loading) PlatformCircularProgressIndicator(),
                     if (!mixSelected)
-                      Text('Wähle zuerst deinen Mix',
-                          style: theme.textTheme.caption)
+                      Text(
+                        QuLocalizations.get(Strings.MixSelectHint),
+                        textScaleFactor: 1.8,
+                        style: theme.textTheme.caption,
+                      )
                   ],
                 ),
               );

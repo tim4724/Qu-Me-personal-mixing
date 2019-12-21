@@ -23,6 +23,7 @@ enum Strings {
   Me,
   All,
   EmptySends,
+  MixSelectHint,
 }
 
 class QuLocalizations {
@@ -47,6 +48,7 @@ class QuLocalizations {
     Strings.Me: "Me",
     Strings.All: "All",
     Strings.EmptySends: "Nothing available",
+    Strings.MixSelectHint: "Select your mix",
   };
   static const Map<Strings, String> _de = {
     Strings.AppName: "Qu Me",
@@ -69,6 +71,7 @@ class QuLocalizations {
     Strings.Me: "Ich",
     Strings.All: "Alle",
     Strings.EmptySends: "Nichts verfügbar",
+    Strings.MixSelectHint: "Wähle deinen Mix",
   };
 
   QuLocalizations._internal();
