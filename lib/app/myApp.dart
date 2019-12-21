@@ -29,24 +29,26 @@ final _faderInfoColors = {
 };
 final _fxReturnColor = QuColorSwatch.fromSingleColor(Color(0xE00000A0), 0x94);
 
-final theme = ThemeData(
-  brightness: Brightness.dark,
-  // e.g. ios appbar buttons
-  primarySwatch: Colors.blue,
-  // e.g. android AppBar Background Color
-  primaryColor: Color(0xFF111111),
-  scaffoldBackgroundColor: Color(0xFF010101),
-  // e.g. android progress bar
-  accentColor: _accentColor,
-  textSelectionHandleColor: _accentColor,
-  cardColor: Color(0xFF161616),
-  dialogBackgroundColor: Platform.isIOS ? Color(0x80000000) : Color(0xFF161616),
-  cupertinoOverrideTheme: const CupertinoThemeData(
-    barBackgroundColor: Color(0xFF111111),
-    // Needed for correct text colors
-    textTheme: CupertinoTextThemeData(),
-  ),
-);
+ThemeData get theme => ThemeData(
+      brightness: Brightness.dark,
+      // e.g. ios appbar buttons
+      primarySwatch: Colors.blue,
+      // e.g. android AppBar Background Color
+      primaryColor: Color(0xFF111111),
+      scaffoldBackgroundColor: Color(0xFF010101),
+      // e.g. android progress bar
+      accentColor: _accentColor,
+      textSelectionHandleColor: _accentColor,
+      cardColor: Color(0xFF161616),
+      dialogBackgroundColor:
+          Platform.isIOS ? Color(0xBF111111) : Color(0xFF161616),
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        brightness: Brightness.dark,
+        barBackgroundColor: Color(0xF01D1D1D),
+        // Needed for correct text colors
+        textTheme: CupertinoTextThemeData(),
+      ),
+    );
 
 final quTheme = QuThemeData(
   // Button

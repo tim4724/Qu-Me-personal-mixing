@@ -18,8 +18,9 @@ import 'dialogAssignSends.dart';
 
 class PageSends extends StatefulWidget {
   final int groupId;
+  final bool isOverlay;
 
-  PageSends(this.groupId, {Key key}) : super(key: key);
+  PageSends(this.groupId, {this.isOverlay: false, Key key}) : super(key: key);
 
   @override
   _PageSendsState createState() => _PageSendsState();
@@ -54,14 +55,10 @@ class _PageSendsState extends State<PageSends> {
         child: PlatformTextField(
           maxLines: 1,
           maxLength: 12,
-          android: (context) =>
-              MaterialTextFieldData(
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  counterText: "",
-                  isDense: true
-                ),
-              ),
+          android: (context) => MaterialTextFieldData(
+            decoration: InputDecoration(
+                hintText: hintText, counterText: "", isDense: true),
+          ),
           ios: (context) => CupertinoTextFieldData(placeholder: hintText),
           // Needed because on IOS-Platformwidget hardcodes the color black
           style: theme.textTheme.subhead,
@@ -92,66 +89,44 @@ class _PageSendsState extends State<PageSends> {
       ];
     }
 
-    return OrientationBuilder(
-      builder: (context, orientation) =>
-          PlatformScaffold(
-            appBar: PlatformAppBar(
-              title: titleWidget,
-              trailingActions: trailingActions,
-              android: (context) => MaterialAppBarData(),
-              ios: (context) => CupertinoNavigationBarData(),
-            ),
-            body: _buildBody(orientation, group),
-          ),
+    return PlatformScaffold(
+      appBar: PlatformAppBar(
+        title: titleWidget,
+        trailingActions: trailingActions,
+        ios: (context) => CupertinoNavigationBarData(
+          // to avoid flutter exception
+          transitionBetweenRoutes: !widget.isOverlay,
+        ),
+      ),
+      body: OrientationBuilder(
+        builder: (context, orientation) =>
+            buildBody(context, orientation, group),
+      ),
     );
   }
 
-  Widget _buildBody(Orientation orientation, SendGroup group) {
+  Widget buildBody(
+      BuildContext context, Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
-    final stereoMix = mainSendModel
-        .getCurrentMix()
-        ?.mixType == MixType.stereo;
+    final stereoMix = mainSendModel.getCurrentMix()?.mixType == MixType.stereo;
     const levelPanSwitchInputHeight = 32.0;
 
-    EdgeInsets listWidgetPadding;
+    final mediaQuery = MediaQuery.of(context);
+
+    EdgeInsets listWidgetPadding = mediaQuery.padding;
     if (stereoMix) {
       // We need some padding for the button to switch between panning and level
       if (landscape) {
-        listWidgetPadding = EdgeInsets.only(left: levelPanSwitchInputHeight);
+        listWidgetPadding += EdgeInsets.only(left: levelPanSwitchInputHeight);
       } else {
-        listWidgetPadding = EdgeInsets.only(top: levelPanSwitchInputHeight);
+        listWidgetPadding += EdgeInsets.only(top: levelPanSwitchInputHeight);
       }
     }
-    final scrollDirection = landscape ? Axis.horizontal : Axis.vertical;
 
-    Widget Function(List<int>) listBuilder;
-    if (group.sendGroupType != SendGroupType.All) {
-      // Group assignment can change, therefore use this animated list
-      final buildListItem = (context, int sendId, i, Animation<double> anim) {
-        return _buildAnimatedFader(anim, sendId, landscape);
-      };
-      listBuilder = (List<int> sendIds) {
-        return DeclarativeList(
-          padding: listWidgetPadding,
-          items: sendIds,
-          scrollDirection: scrollDirection,
-          itemBuilder: buildListItem,
-          removeBuilder: buildListItem,
-        );
-      };
-    } else {
-      // Use the basic simple list. Changes are not animated
-      listBuilder = (List<int> sendIds) {
-        return ListView.builder(
-          padding: listWidgetPadding,
-          scrollDirection: scrollDirection,
-          itemCount: sendIds.length,
-          itemBuilder: (BuildContext context, int index) {
-            return _buildFader(sendIds[index], landscape);
-          },
-        );
-      };
-    }
+    // Group assignment can change, therefore use this animated list
+    final buildListItem = (context, int sendId, i, Animation<double> anim) {
+      return buildAnimatedFader(anim, sendId, landscape);
+    };
 
     final theme = Theme.of(context);
     return Selector<SendGroupModel, List<int>>(
@@ -161,39 +136,50 @@ class _PageSendsState extends State<PageSends> {
         return List.from(model.getSendIdsForGroup(widget.groupId));
       },
       builder: (BuildContext context, List<int> sendIds, Widget child) {
+        final list = DeclarativeList(
+          padding: listWidgetPadding,
+          items: sendIds,
+          scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
+          itemBuilder: buildListItem,
+          removeBuilder: buildListItem,
+        );
         if (!stereoMix) {
-          return listBuilder(sendIds);
+          return list;
         }
-        final sendsEmpty = sendIds == null || sendIds.length == 0;
+        final sendsEmpty = sendIds == null || sendIds.isEmpty;
         return Stack(
           children: [
-            listBuilder(sendIds),
-            RotatedBox(
-              child: AnimatedOpacity(
-                duration: Duration(milliseconds: 400),
-                opacity: sendsEmpty ? 0 : 1,
-                child: Container(
-                  width: double.maxFinite,
-                  height: levelPanSwitchInputHeight,
-                  color: Color(0xFF111111),
-                  // TODO: make custom segmented control
-                  child: CupertinoSegmentedControl<bool>(
-                    children: {
-                      false: Text(QuLocalizations.get(Strings.Level)),
-                      true: Text(QuLocalizations.get(Strings.Panorama)),
-                    },
-                    groupValue: panMode,
-                    unselectedColor: Color(0xFF111111),
-                    borderColor: theme.accentColor,
-                    selectedColor: theme.accentColor.withAlpha(148),
-                    padding: EdgeInsets.all(2),
-                    onValueChanged: (bool key) {
-                      if (!sendsEmpty) setState(() => panMode = key);
-                    },
+            list,
+            AnimatedOpacity(
+              duration: Duration(milliseconds: 400),
+              opacity: sendsEmpty ? 0 : 1,
+              child: Container(
+                padding: landscape
+                    ? mediaQuery.padding.copyWith(right: 0)
+                    : mediaQuery.padding.copyWith(bottom: 0),
+                color: Color(0xE8000000),
+                child: RotatedBox(
+                  child: Container(
+                    width: double.maxFinite,
+                    height: levelPanSwitchInputHeight,
+                    child: CupertinoSegmentedControl<bool>(
+                      children: {
+                        false: Text(QuLocalizations.get(Strings.Level)),
+                        true: Text(QuLocalizations.get(Strings.Panorama)),
+                      },
+                      groupValue: panMode,
+                      unselectedColor: Color(0xFF111111),
+                      borderColor: theme.accentColor,
+                      selectedColor: theme.accentColor,
+                      padding: EdgeInsets.all(2),
+                      onValueChanged: (bool key) {
+                        if (!sendsEmpty) setState(() => panMode = key);
+                      },
+                    ),
                   ),
+                  quarterTurns: landscape ? 3 : 0,
                 ),
               ),
-              quarterTurns: landscape ? 3 : 0,
             ),
           ],
         );
@@ -201,35 +187,31 @@ class _PageSendsState extends State<PageSends> {
     );
   }
 
-  Widget _buildAnimatedFader(Animation<double> anim, int sendId,
-      bool landscape) {
+  Widget buildAnimatedFader(
+      Animation<double> anim, int sendId, bool landscape) {
+    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
+    final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(
         sizeFactor: anim,
         axis: landscape ? Axis.horizontal : Axis.vertical,
         axisAlignment: 0.0,
-        child: _buildFader(sendId, landscape),
-      ),
-    );
-  }
-
-  Widget _buildFader(int sendId, bool landscape) {
-    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
-    final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
-    return Padding(
-      padding: EdgeInsets.all(2.0),
-      child: ValueListenableBuilder<FaderInfo>(
-        valueListenable: sendNotifier,
-        builder: (BuildContext context, FaderInfo faderInfo, _) {
-          if (landscape) {
-            return VerticalFader(faderInfo, panMode,
-                forceDisplayTechnicalName: showTechnicalName);
-          } else {
-            return HorizontalFader(faderInfo, panMode,
-                forceDisplayTechnicalName: showTechnicalName);
-          }
-        },
+        child: Padding(
+          padding: EdgeInsets.all(2.0),
+          child: ValueListenableBuilder<FaderInfo>(
+            valueListenable: sendNotifier,
+            builder: (BuildContext context, FaderInfo faderInfo, _) {
+              if (landscape) {
+                return VerticalFader(faderInfo, panMode,
+                    forceDisplayTechnicalName: showTechnicalName);
+              } else {
+                return HorizontalFader(faderInfo, panMode,
+                    forceDisplayTechnicalName: showTechnicalName);
+              }
+            },
+          ),
+        ),
       ),
     );
   }

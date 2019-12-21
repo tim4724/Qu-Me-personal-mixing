@@ -34,7 +34,11 @@ class _PageHomeState extends State<PageHome> {
   final groupModel = SendGroupModel();
   final levelPanModel = FaderLevelPanModel();
 
+  // Pointer is on wheel
   var wheelActive = false;
+  // Drag is happening
+  var wheelMoving = false;
+  // Id of group of wheel that user currently interacts with
   var activeWheelGroupId = -1;
 
   @override
@@ -61,7 +65,7 @@ class _PageHomeState extends State<PageHome> {
                       duration: Duration(milliseconds: 300),
                       child: IgnorePointer(
                         ignoring: disabled,
-                        child: buildBody(currentMixId),
+                        child: SafeArea(child: buildBody(currentMixId)),
                       ),
                     ),
                     if (loading) PlatformCircularProgressIndicator(),
@@ -79,8 +83,12 @@ class _PageHomeState extends State<PageHome> {
           ),
           if (activeWheelGroupId != -1)
             AnimatedOpacity(
-              child: IgnorePointer(child: PageSends(activeWheelGroupId)),
-              opacity: wheelActive ? 0.4 : 0,
+              child: IgnorePointer(
+                  child: PageSends(
+                activeWheelGroupId,
+                isOverlay: true,
+              )),
+              opacity: wheelActive ? wheelMoving ? 0.4 : 0.15 : 0,
               duration: Duration(milliseconds: 500),
             ),
         ],
@@ -95,7 +103,10 @@ class _PageHomeState extends State<PageHome> {
         wheelActive = true;
       });
     }
-    if (wheelActive && activeWheelGroupId == groupId) {
+    if (wheelActive && activeWheelGroupId == groupId && delta != 0) {
+      if (wheelMoving == false) {
+        setState(() => wheelMoving = true);
+      }
       final sends = groupModel.getSendIdsForGroup(groupId);
       levelPanModel.onTrim(sends, delta);
     }
@@ -103,7 +114,10 @@ class _PageHomeState extends State<PageHome> {
 
   void onWheelReleased(int id) {
     if (activeWheelGroupId == id && wheelActive) {
-      setState(() => wheelActive = false);
+      setState(() {
+        wheelMoving = false;
+        wheelActive = false;
+      });
     }
   }
 
@@ -115,7 +129,7 @@ class _PageHomeState extends State<PageHome> {
     );
   }
 
-  void showSendsPage() {
+  void showAllSendsPage() {
     Navigator.of(context).push(
       platformPageRoute<void>(
         builder: (context) => PageSends(4),
@@ -199,7 +213,7 @@ class _PageHomeState extends State<PageHome> {
                         Expanded(
                           child: VerticalFader(info, false,
                               forceDisplayTechnicalName: true,
-                              doubleTap: showSendsPage),
+                              doubleTap: showAllSendsPage),
                         ),
                       ],
                     ),

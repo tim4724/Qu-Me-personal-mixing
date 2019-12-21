@@ -53,7 +53,6 @@ class _QuCheckButtonState extends State<QuCheckButton> {
 
   @override
   Widget build(BuildContext context) {
-    print("_QuCheckButtonState: build");
     Color buttonColor;
     if (widget.selected) {
       buttonColor = widget.checkColor ?? quTheme.buttonCheckColor;

@@ -23,7 +23,10 @@ class QuDialog extends StatelessWidget {
   Widget buildMaterialDialog() {
     return AlertDialog(
       title: Text(title),
-      content: SingleChildScrollView(child: body),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 550),
+        child: SingleChildScrollView(child: body),
+      ),
       contentPadding: EdgeInsets.fromLTRB(24, 12, 24, action == null ? 12 : 0),
       actions: <Widget>[action],
       shape: const RoundedRectangleBorder(
@@ -45,31 +48,34 @@ class QuCupertinoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bodyPaddingBot = action != null ? 0.0 : 24.0;
-    return Padding(
+    return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              color: theme.dialogBackgroundColor,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (title != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
-                      child: Text(title, style: (theme.textTheme.title)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 655),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                color: theme.dialogBackgroundColor,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (title != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+                        child: Text(title, style: (theme.textTheme.title)),
+                      ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: body,
+                        padding: EdgeInsets.fromLTRB(24, 8, 24, bodyPaddingBot),
+                      ),
                     ),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: body,
-                      padding: EdgeInsets.fromLTRB(24, 8, 24, bodyPaddingBot),
-                    ),
-                  ),
-                  if (action != null) action
-                ],
+                    if (action != null) action
+                  ],
+                ),
               ),
             ),
           ),
