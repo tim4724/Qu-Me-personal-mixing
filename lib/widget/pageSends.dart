@@ -83,8 +83,9 @@ class _PageSendsState extends State<PageSends> {
             showPlatformDialog(
               context: context,
               androidBarrierDismissible: true,
-              builder: (BuildContext context) =>
-                  DialogAssignSends(widget.groupId),
+              builder: (BuildContext context) {
+                return DialogAssignSends(widget.groupId);
+              },
             );
           },
         ),
@@ -101,8 +102,9 @@ class _PageSendsState extends State<PageSends> {
         ),
       ),
       body: OrientationBuilder(
-        builder: (context, orientation) =>
-            buildBody(context, orientation, group),
+        builder: (context, orientation) {
+          return buildBody(context, orientation, group);
+        },
       ),
     );
   }
