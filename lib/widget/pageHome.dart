@@ -36,8 +36,10 @@ class _PageHomeState extends State<PageHome> {
 
   // Pointer is on wheel
   var wheelActive = false;
+
   // Drag is happening
   var wheelMoving = false;
+
   // Id of group of wheel that user currently interacts with
   var activeWheelGroupId = -1;
 
