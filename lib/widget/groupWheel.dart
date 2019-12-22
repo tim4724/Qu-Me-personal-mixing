@@ -143,7 +143,7 @@ class _GroupWheelState extends State<GroupWheel> {
         return Container(
           decoration: BoxDecoration(
             color: quTheme.itemBackgroundColor[active],
-            borderRadius: quTheme.borderRadius,
+            borderRadius: quTheme.itemBorderRadius,
             border: Border.all(
               color: widget._colors,
               width: quTheme.itemBorderWidth,

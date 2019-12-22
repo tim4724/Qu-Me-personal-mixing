@@ -24,6 +24,33 @@ abstract class Fader extends StatefulWidget {
   final Function _doubleTap;
   final ColorSwatch<bool> _colors;
 
+  /*
+  factory Fader(
+    FaderInfo faderInfo, {
+    bool horizontal,
+    bool pan = false,
+    bool forceDisplayTechnicalName = false,
+    Function doubleTap,
+    Key key,
+  }) {
+    if (horizontal) {
+      return HorizontalFader(
+        faderInfo,
+        pan,
+        forceDisplayTechnicalName: forceDisplayTechnicalName,
+        doubleTap: doubleTap,
+        key: key,
+      );
+    }
+    return VerticalFader(
+      faderInfo,
+      pan,
+      forceDisplayTechnicalName: forceDisplayTechnicalName,
+      doubleTap: doubleTap,
+      key: key,
+    );
+  }*/
+
   Fader(this._faderInfo, this._pan, this._forceDisplayTechnicalName,
       this._doubleTap, Key key)
       : _colors = _getColorS(_faderInfo),
@@ -160,7 +187,7 @@ abstract class _FaderState extends State<Fader> {
     return BoxDecoration(
       color: bgGradient == null ? bgColor : null,
       gradient: bgGradient,
-      borderRadius: quTheme.borderRadius,
+      borderRadius: quTheme.itemBorderRadius,
       border: Border.all(color: widget._colors, width: quTheme.itemBorderWidth),
     );
   }

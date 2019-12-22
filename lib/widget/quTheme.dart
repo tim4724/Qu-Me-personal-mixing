@@ -41,7 +41,11 @@ class QuThemeData {
   final QuColorSwatch sliderIconColor;
   final List<Color> sliderLevelColors;
 
-  BorderRadius get borderRadius {
+  Radius get itemRadiusCircular {
+    return Radius.circular(itemRadius);
+  }
+
+  BorderRadius get itemBorderRadius {
     return BorderRadius.circular(itemRadius);
   }
 

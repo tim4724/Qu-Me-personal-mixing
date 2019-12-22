@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -13,6 +14,7 @@ import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
+import 'package:qu_me/widget/quSegmentedControl.dart';
 
 import 'dialogAssignSends.dart';
 
@@ -109,11 +111,10 @@ class _PageSendsState extends State<PageSends> {
       BuildContext context, Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
     final stereoMix = mainSendModel.getCurrentMix()?.mixType == MixType.stereo;
-    const levelPanSwitchInputHeight = 32.0;
+    const levelPanSwitchInputHeight = 36.0;
 
-    final mediaQuery = MediaQuery.of(context);
-
-    EdgeInsets listWidgetPadding = mediaQuery.padding;
+    final minPadding = MediaQuery.of(context).padding;
+    var listWidgetPadding = minPadding;
     if (stereoMix) {
       // We need some padding for the button to switch between panning and level
       if (landscape) {
@@ -128,7 +129,6 @@ class _PageSendsState extends State<PageSends> {
       return buildAnimatedFader(anim, sendId, landscape);
     };
 
-    final theme = Theme.of(context);
     return Selector<SendGroupModel, List<int>>(
       selector: (_, model) {
         // TODO: Lists are, by default, only equal to themselves. Even if other is also a list,
@@ -146,39 +146,40 @@ class _PageSendsState extends State<PageSends> {
         if (!stereoMix) {
           return list;
         }
-        final sendsEmpty = sendIds == null || sendIds.isEmpty;
         return Stack(
           children: [
             list,
             AnimatedOpacity(
               duration: Duration(milliseconds: 400),
-              opacity: sendsEmpty ? 0 : 1,
-              child: Container(
-                padding: landscape
-                    ? mediaQuery.padding.copyWith(right: 0)
-                    : mediaQuery.padding.copyWith(bottom: 0),
-                color: Color(0xE8000000),
-                child: RotatedBox(
-                  child: Container(
-                    width: double.maxFinite,
-                    height: levelPanSwitchInputHeight,
-                    child: CupertinoSegmentedControl<bool>(
-                      children: {
-                        false: Text(QuLocalizations.get(Strings.Level)),
-                        true: Text(QuLocalizations.get(Strings.Panorama)),
-                      },
-                      groupValue: panMode,
-                      unselectedColor: Color(0xFF111111),
-                      borderColor: theme.accentColor,
-                      selectedColor: theme.accentColor,
-                      padding: EdgeInsets.all(2),
-                      onValueChanged: (bool key) {
-                        if (!sendsEmpty) setState(() => panMode = key);
-                      },
+              opacity: sendIds == null || sendIds.isEmpty ? 0 : 1,
+              child: RotatedBox(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xE8000000),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: quTheme.itemRadiusCircular,
                     ),
                   ),
-                  quarterTurns: landscape ? 3 : 0,
+                  margin: EdgeInsets.only(
+                    top: (landscape ? 0.0 : minPadding.top),
+                    left: (landscape ? minPadding.bottom : minPadding.left) + 2,
+                    right: (landscape ? minPadding.top : minPadding.right) + 2,
+                  ),
+                  padding: EdgeInsets.only(
+                    top: (landscape ? minPadding.left + 2 : 2.0),
+                  ),
+                  width: double.maxFinite,
+                  child: QuSegmentedControl<bool>(
+                    children: {
+                      false: Text(QuLocalizations.get(Strings.Level)),
+                      true: Text(QuLocalizations.get(Strings.Panorama)),
+                    },
+                    selectionIndex: panMode,
+                    childPadding: EdgeInsets.all(8),
+                    onValueChanged: (bool key) => setState(() => panMode = key),
+                  ),
                 ),
+                quarterTurns: landscape ? 3 : 0,
               ),
             ),
           ],

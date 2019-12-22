@@ -79,7 +79,7 @@ class _PageLoginState extends State<PageLogin> {
                   width: 200,
                   decoration: BoxDecoration(
                     color: theme.cardColor,
-                    borderRadius: quTheme.borderRadius,
+                    borderRadius: quTheme.itemBorderRadius,
                   ),
                   child: ValueListenableBuilder(
                     valueListenable: connectionModel.mixerListenable,

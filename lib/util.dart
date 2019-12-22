@@ -31,12 +31,12 @@ UnmodifiableListView<T> unmodifiableList<T>(List<T> list) {
 
 class ValueListenableBuilder2<A, B> extends StatelessWidget {
   ValueListenableBuilder2(
-      this.first,
-      this.second, {
-        Key key,
-        this.builder,
-        this.child,
-      }) : super(key: key);
+    this.first,
+    this.second, {
+    Key key,
+    this.builder,
+    this.child,
+  }) : super(key: key);
 
   final ValueListenable<A> first;
   final ValueListenable<B> second;

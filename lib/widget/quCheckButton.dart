@@ -79,7 +79,7 @@ class _QuCheckButtonState extends State<QuCheckButton> {
             ),
             decoration: BoxDecoration(
               color: buttonColor,
-              borderRadius: quTheme.borderRadius,
+              borderRadius: quTheme.itemBorderRadius,
             ),
           ),
         ),

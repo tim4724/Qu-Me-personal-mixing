@@ -14,7 +14,7 @@ description: Qu Personal mix
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.2.2 <3.0.0"
+  sdk: ">=2.6.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -23,13 +23,14 @@ dependencies:
     sdk: flutter
   flutter_cupertino_localizations: ^1.0.1
   cupertino_icons: ^0.1.2
-  provider: ^3.1.0
+  provider: ^3.2.0
   hex: ^0.1.2
   auto_size_text: ^2.1.0
   quiver: '>=2.0.0 <3.0.0'
   flutter_platform_widgets: ^0.30.1
   declarative_animated_list: ^0.0.2
   collection: ^1.14.11 # for UnmodifiableSetView
+  material_segmented_control: ^2.0.9
 
 dev_dependencies:
   flutter_test:
