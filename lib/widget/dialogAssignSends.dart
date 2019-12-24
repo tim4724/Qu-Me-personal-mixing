@@ -15,8 +15,6 @@ import 'quDialog.dart';
 
 class DialogAssignSends extends StatelessWidget {
   final int currentGroupId;
-  final groupModel = SendGroupModel();
-  final sendModel = MainSendMixModel();
 
   DialogAssignSends(this.currentGroupId, {Key key}) : super(key: key);
 
@@ -56,7 +54,7 @@ class DialogAssignSends extends StatelessWidget {
       onPressed: () => Navigator.of(context).pop(),
     );
 
-    String name = groupModel.getGroupShortNameForId(currentGroupId);
+    String name = sendGroupModel.getGroupShortNameForId(currentGroupId);
     return QuDialog(
       title: QuLocalizations.get(Strings.AssignSendToGroup, [name]),
       body: content,
@@ -70,7 +68,7 @@ class DialogAssignSends extends StatelessWidget {
       builder: (context, group, child) {
         final isInCurrentGroup = group != null && group.id == currentGroupId;
         return ValueListenableBuilder<Send>(
-          valueListenable: sendModel.getSendNotifierForId(sendId),
+          valueListenable: mainSendMixModel.getSendNotifierForId(sendId),
           builder: (BuildContext context, Send send, _) => Stack(
             children: [
               buildButton(isInCurrentGroup, send),
@@ -151,7 +149,9 @@ class DialogAssignSends extends StatelessWidget {
           ),
         ],
       ),
-      onSelect: () => groupModel.toggleSendAssignement(currentGroupId, send.id),
+      onSelect: () {
+        sendGroupModel.toggleSendAssignement(currentGroupId, send.id);
+      },
       margin: EdgeInsets.only(bottom: 6),
       padding: EdgeInsets.all(4),
       width: 64,

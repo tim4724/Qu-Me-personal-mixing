@@ -13,7 +13,6 @@ import 'package:qu_me/entities/faderInfo.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/util.dart';
-import 'package:qu_me/widget/quTheme.dart';
 
 enum LevelType { mono, stereo_left, stereo_right }
 
@@ -23,33 +22,6 @@ abstract class Fader extends StatefulWidget {
   final FaderInfo _faderInfo;
   final Function _doubleTap;
   final ColorSwatch<bool> _colors;
-
-  /*
-  factory Fader(
-    FaderInfo faderInfo, {
-    bool horizontal,
-    bool pan = false,
-    bool forceDisplayTechnicalName = false,
-    Function doubleTap,
-    Key key,
-  }) {
-    if (horizontal) {
-      return HorizontalFader(
-        faderInfo,
-        pan,
-        forceDisplayTechnicalName: forceDisplayTechnicalName,
-        doubleTap: doubleTap,
-        key: key,
-      );
-    }
-    return VerticalFader(
-      faderInfo,
-      pan,
-      forceDisplayTechnicalName: forceDisplayTechnicalName,
-      doubleTap: doubleTap,
-      key: key,
-    );
-  }*/
 
   Fader(this._faderInfo, this._pan, this._forceDisplayTechnicalName,
       this._doubleTap, Key key)
@@ -87,7 +59,6 @@ class VerticalFader extends Fader {
 }
 
 abstract class _FaderState extends State<Fader> {
-  static final levelPanModel = FaderLevelPanModel();
   final keyFaderSlider = GlobalKey();
   final Map<Type, GestureRecognizerFactory> gestures = {};
   var activePointers = 0;
@@ -131,11 +102,12 @@ abstract class _FaderState extends State<Fader> {
     final sliderWidth = keyFaderSlider.currentContext.size.width - 40;
     final deltaNormalized = (delta / (sliderWidth));
     if (widget._pan) {
-      final currentSliderValue = levelPanModel.getPanSlider(id);
-      levelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
+      final currentSliderValue = faderLevelPanModel.getPanSlider(id);
+      faderLevelPanModel.onSliderPan(id, currentSliderValue + deltaNormalized);
     } else {
-      final currentSliderValue = levelPanModel.getLevelSLider(id);
-      levelPanModel.onSliderLevel(id, currentSliderValue + deltaNormalized);
+      final currentSliderValue = faderLevelPanModel.getLevelSLider(id);
+      faderLevelPanModel.onSliderLevel(
+          id, currentSliderValue + deltaNormalized);
     }
   }
 
@@ -328,14 +300,11 @@ class _FaderLabel extends StatelessWidget {
 }
 
 abstract class _Slider extends StatelessWidget {
-  static final _levelPanModel = FaderLevelPanModel();
   final int id;
   final bool muted;
   final bool active;
 
   _Slider(this.id, this.muted, this.active, {key: Key}) : super(key: key);
-
-  FaderLevelPanModel get levelPanModel => _levelPanModel;
 
   @override
   Widget build(BuildContext context) {
@@ -414,8 +383,8 @@ class _PanSlider extends _Slider {
       if (muted) buildMuteLabel(xCenter, height / 2),
       if (id >= 0)
         StreamBuilder(
-          initialData: levelPanModel.getPanSlider(id),
-          stream: levelPanModel.getPanStreamForId(id),
+          initialData: faderLevelPanModel.getPanSlider(id),
+          stream: faderLevelPanModel.getPanStreamForId(id),
           builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
             var fractionalOffset = snapshot.data;
             const stepSize = 1.0 / 74.0;
@@ -470,8 +439,8 @@ class _LevelSlider extends _Slider {
       if (muted) buildMuteLabel(xCenter, yCenter),
       if (id >= 0)
         StreamBuilder(
-          initialData: levelPanModel.getLevelSLider(id),
-          stream: levelPanModel.getLevelStreamForId(id),
+          initialData: faderLevelPanModel.getLevelSLider(id),
+          stream: faderLevelPanModel.getLevelStreamForId(id),
           builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
             return _FaderKnop(snapshot.data * width, knobColor);
           },

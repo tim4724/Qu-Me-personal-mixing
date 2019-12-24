@@ -8,16 +8,12 @@ import 'package:qu_me/widget/quCheckButton.dart';
 import 'package:qu_me/widget/quDialog.dart';
 
 class DialogSelectMix extends StatelessWidget {
-  final mixModel = MainSendMixModel();
-
-  DialogSelectMix();
-
   @override
   Widget build(BuildContext context) {
     return QuDialog(
       title: QuLocalizations.get(Strings.MixSelect),
       body: ValueListenableBuilder<List<int>>(
-        valueListenable: mixModel.availableMixIdsNotifier,
+        valueListenable: mainSendMixModel.availableMixIdsNotifier,
         builder: (context, availableMixIds, child) {
           return SizedBox(
             width: 300,
@@ -41,7 +37,10 @@ class DialogSelectMix extends StatelessWidget {
         .map(
           (id) => AnimatedBuilder(
             animation: Listenable.merge(
-              [mixModel.currentMixIdNotifier, mixModel.getMixListenableForId(id)],
+              [
+                mainSendMixModel.currentMixIdNotifier,
+                mainSendMixModel.getMixListenableForId(id)
+              ],
             ),
             builder: (context, _) => buildItem(context, id),
           ),
@@ -50,11 +49,11 @@ class DialogSelectMix extends StatelessWidget {
   }
 
   Widget buildItem(BuildContext context, int id) {
-    final mix = mixModel.getMixListenableForId(id).value;
-    final currentMixId = mixModel.currentMixIdNotifier.value;
+    final mix = mainSendMixModel.getMixListenableForId(id).value;
+    final currentMixId = mainSendMixModel.currentMixIdNotifier.value;
     return QuCheckButton(
       onSelect: () {
-        mixModel.selectMix(mix.id);
+        mainSendMixModel.selectMix(mix.id);
         Navigator.of(context).pop();
       },
       selected: currentMixId == mix.id,

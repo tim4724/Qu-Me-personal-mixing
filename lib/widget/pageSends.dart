@@ -29,14 +29,12 @@ class PageSends extends StatefulWidget {
 }
 
 class _PageSendsState extends State<PageSends> {
-  final groupModel = SendGroupModel();
-  final mainSendModel = MainSendMixModel();
   bool panMode = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final group = groupModel.getGroup(widget.groupId);
+    final group = sendGroupModel.getGroup(widget.groupId);
 
     String groupName = group.name;
     if (groupName == null || groupName.isEmpty) {
@@ -65,7 +63,8 @@ class _PageSendsState extends State<PageSends> {
           // Needed because on IOS-Platformwidget hardcodes the color black
           style: theme.textTheme.subhead,
           controller: textController,
-          onChanged: (name) => groupModel.setGroupName(widget.groupId, name),
+          onChanged: (name) =>
+              sendGroupModel.setGroupName(widget.groupId, name),
         ),
       );
     } else {
@@ -112,7 +111,8 @@ class _PageSendsState extends State<PageSends> {
   Widget buildBody(
       BuildContext context, Orientation orientation, SendGroup group) {
     final landscape = orientation == Orientation.landscape;
-    final stereoMix = mainSendModel.getCurrentMix()?.mixType == MixType.stereo;
+    final stereoMix =
+        mainSendMixModel.getCurrentMix()?.mixType == MixType.stereo;
 
     final mediaQuery = MediaQuery.of(context);
     var listWidgetPadding = mediaQuery.padding;
@@ -198,7 +198,7 @@ class _PageSendsState extends State<PageSends> {
 
   Widget buildAnimatedFader(
       Animation<double> anim, int sendId, bool landscape) {
-    final sendNotifier = mainSendModel.getSendNotifierForId(sendId);
+    final sendNotifier = mainSendMixModel.getSendNotifierForId(sendId);
     final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
     return FadeTransition(
       opacity: anim,

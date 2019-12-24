@@ -5,11 +5,9 @@ import 'package:qu_me/app/localizations.dart';
 import 'package:qu_me/entities/group.dart';
 import 'package:quiver/collection.dart';
 
+final sendGroupModel = SendGroupModel._internal();
+
 class SendGroupModel extends ChangeNotifier {
-  static final SendGroupModel _instance = SendGroupModel._internal();
-
-  factory SendGroupModel() => _instance;
-
   final _groups = [
     SendGroup(0, SendGroupType.Custom),
     SendGroup(1, SendGroupType.Custom),

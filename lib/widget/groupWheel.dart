@@ -14,7 +14,6 @@ import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/gestures/dragFader.dart';
 import 'package:qu_me/io/asset.dart' as asset;
 import 'package:qu_me/widget/pageSends.dart';
-import 'package:qu_me/widget/quTheme.dart';
 
 typedef WheelDragUpdate = void Function(int id, double delta);
 typedef WheelDragRelease = void Function(int id);
@@ -34,7 +33,7 @@ class GroupWheel extends StatefulWidget {
         super(key: key);
 
   static ColorSwatch<bool> _colorsForType(int id) {
-    if (SendGroupModel().getGroup(id).sendGroupType == SendGroupType.Me) {
+    if (sendGroupModel.getGroup(id).sendGroupType == SendGroupType.Me) {
       return quTheme.meGroupColors;
     }
     return quTheme.defaultGroupColors;
@@ -47,7 +46,6 @@ class GroupWheel extends StatefulWidget {
 }
 
 class _GroupWheelState extends State<GroupWheel> {
-  static final sendGroupModel = SendGroupModel();
   final keyWheel = GlobalKey();
   Map<Type, GestureRecognizerFactory> gestures;
   ui.Image shadowOverlay;

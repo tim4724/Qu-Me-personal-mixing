@@ -4,11 +4,9 @@ import 'package:collection/collection.dart';
 import 'package:qu_me/core/levelAndPanConverter.dart';
 import 'package:qu_me/io/network.dart' as network;
 
+final faderLevelPanModel = FaderLevelPanModel._internal();
+
 class FaderLevelPanModel {
-  static final FaderLevelPanModel _instance = FaderLevelPanModel._internal();
-
-  factory FaderLevelPanModel() => _instance;
-
   // These are in range from -inf to +10.0
   // -128.0 equals "-inf" as far as the qu mixer is concerned
   // However the level in this model can go lower than -128.0

@@ -29,10 +29,6 @@ class PageHome extends StatefulWidget {
 }
 
 class _PageHomeState extends State<PageHome> {
-  final mainSendMixModel = MainSendMixModel();
-  final groupModel = SendGroupModel();
-  final levelPanModel = FaderLevelPanModel();
-
   // Pointer is on wheel
   var wheelActive = false;
 
@@ -108,8 +104,8 @@ class _PageHomeState extends State<PageHome> {
       if (wheelMoving == false) {
         setState(() => wheelMoving = true);
       }
-      final sends = groupModel.getSendIdsForGroup(groupId);
-      levelPanModel.onTrim(sends, delta);
+      final sends = sendGroupModel.getSendIdsForGroup(groupId);
+      faderLevelPanModel.onTrim(sends, delta);
     }
   }
 
@@ -148,7 +144,7 @@ class _PageHomeState extends State<PageHome> {
     );
     Navigator.pushReplacement(context, route);
     mainSendMixModel.reset();
-    levelPanModel.reset();
+    faderLevelPanModel.reset();
   }
 
   Widget buildAppBar() {

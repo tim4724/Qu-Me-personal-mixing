@@ -17,10 +17,6 @@ import 'package:qu_me/entities/scene.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/networkMetersListener.dart' as metersListener;
 
-final _mainSendMixModel = MainSendMixModel();
-final _sendGroupModel = SendGroupModel();
-final _levelPanModel = FaderLevelPanModel();
-
 Socket _socket;
 int _currentMixIndex = -1;
 
@@ -31,7 +27,7 @@ void connect(String name, InternetAddress address) async {
     connectionModel.onStartLoadingScene();
     Future.delayed(Duration(milliseconds: 500), () {
       connectionModel.onMixerVersion(MixerType.QU_16, "0");
-      final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+      final mixId = mainSendMixModel.currentMixIdNotifier.value;
       _onSceneParsed(buildDemoScene(mixId));
     });
   } else {
@@ -98,7 +94,7 @@ void changeSelectedMix(int mixId, int mixIndex) {
     // TODO: implement demo mode better?
     connectionModel.onStartLoadingScene();
     Future.delayed(Duration(milliseconds: 1000), () {
-      final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+      final mixId = mainSendMixModel.currentMixIdNotifier.value;
       _onSceneParsed(buildDemoScene(mixId));
     });
     return;
@@ -156,7 +152,7 @@ void _connect(InternetAddress address) async {
       metersListener.stop();
       byteStreamController.close();
       connectionModel.reset();
-      _mainSendMixModel.reset();
+      mainSendMixModel.reset();
     },
     onError: _onError,
     cancelOnError: false,
@@ -221,7 +217,7 @@ void _onSystemPacketReceived(int groupId, List<int> data) {
       break;
     case 0x06:
       print("Received scene");
-      final mixId = _mainSendMixModel.currentMixIdNotifier.value;
+      final mixId = mainSendMixModel.currentMixIdNotifier.value;
       final scene = sceneParser.parse(Uint8List.fromList(data), mixId);
       _onSceneParsed(scene);
       break;
@@ -233,14 +229,14 @@ void _onSystemPacketReceived(int groupId, List<int> data) {
       final faderId = data[1];
       final name = ascii.decode(data.sublist(2, data.indexOf(0x00, 2)));
       print("Rename faderinfo: $faderId new name: $name");
-      _mainSendMixModel.updateFaderInfo(faderId, name: name);
+      mainSendMixModel.updateFaderInfo(faderId, name: name);
       break;
     case 0x09:
       final faderId = data[1];
       final linkOn = data[2] == 1;
       final linkPan = linkOn && (data[7] >> 3) & 0x01 == 1;
       print("Update Channel $faderId Link: $linkOn PanLink: $linkPan");
-      _levelPanModel.onLink(faderId, linkOn, linkPan);
+      faderLevelPanModel.onLink(faderId, linkOn, linkPan);
       // TODO: Test this case
       break;
     default:
@@ -265,38 +261,38 @@ void _onDspPacketReceived(DspPacket dspPacket) {
     case 0x07:
       final valueInDb = (dspPacket.value / 256.0 - 128.0);
       print("Fader value: ${dspPacket.value}");
-      _levelPanModel.onLevel(faderId, valueInDb);
+      faderLevelPanModel.onLevel(faderId, valueInDb);
       //TODO on "link" level needs to change maybe
       break;
     case 0x06:
       final muteOn = dspPacket.value == 1;
       print("Mute fader $faderId: $muteOn");
-      _mainSendMixModel.updateFaderInfo(faderId, explicitMuteOn: muteOn);
+      mainSendMixModel.updateFaderInfo(faderId, explicitMuteOn: muteOn);
       break;
     case 0x09:
       final assignOn = dspPacket.value == 1;
       print("Assign send $faderId to current Mix: $assignOn");
-      _sendGroupModel.updateAvailabilitySend(faderId, assignOn);
+      sendGroupModel.updateAvailabilitySend(faderId, assignOn);
       break;
     case 0x0C:
       // Pan changed 0 => left, 74 => right, 38 => center
       print("Pan Fader ${dspPacket.param1 + 1} ${dspPacket.value}");
       //TODO on "link pan" pan needs to change maybe
-      _levelPanModel.onPan(faderId, dspPacket.value);
+      faderLevelPanModel.onPan(faderId, dspPacket.value);
       break;
     case 0x0F:
       print("Update mute state of mutegroups");
       for (int muteGroupId = 0; muteGroupId < 4; muteGroupId++) {
         final muteOn = (dspPacket.value >> muteGroupId) & 0x01 == 0x01;
         final type = ControlGroupType.muteGroup;
-        _mainSendMixModel.updateControlGroup(muteGroupId, type, muteOn);
+        mainSendMixModel.updateControlGroup(muteGroupId, type, muteOn);
       }
       break;
     case 0x0D:
       final muteGroupId = dspPacket.param2;
       final assignOn = dspPacket.value == 1;
       print("Mutegroup $muteGroupId Fader $faderId Assignment $assignOn");
-      _mainSendMixModel.updateControlGroupAssignment(
+      mainSendMixModel.updateControlGroupAssignment(
           muteGroupId, ControlGroupType.muteGroup, faderId, assignOn);
       break;
     case 0x16:
@@ -304,14 +300,14 @@ void _onDspPacketReceived(DspPacket dspPacket) {
       final type = ControlGroupType.dca;
       final muteOn = dspPacket.value != 0;
       print("Upate DCA Group: $dcaGroupId MuteOn: $muteOn");
-      _mainSendMixModel.updateControlGroup(dcaGroupId, type, muteOn);
+      mainSendMixModel.updateControlGroup(dcaGroupId, type, muteOn);
       break;
     case 0x17:
       final dcaGroupId = dspPacket.param2;
       final type = ControlGroupType.dca;
       final assignOn = dspPacket.value == 1;
       print("DCA Group $dcaGroupId Fader $faderId Assignment $assignOn");
-      _mainSendMixModel.updateControlGroupAssignment(
+      mainSendMixModel.updateControlGroupAssignment(
           dcaGroupId, type, faderId, assignOn);
       break;
     default:
@@ -356,9 +352,9 @@ void _requestSceneState() {
 }
 
 void _onSceneParsed(Scene scene) {
-  _mainSendMixModel.initControlGroups(scene.controlGroups);
-  _mainSendMixModel.initMixes(scene.mixes);
-  _mainSendMixModel.initSends(scene.sends);
+  mainSendMixModel.initControlGroups(scene.controlGroups);
+  mainSendMixModel.initMixes(scene.mixes);
+  mainSendMixModel.initSends(scene.sends);
 
   int maxMonoChannels = 32;
   // TODO: What if ConnectionModel is not initialized
@@ -367,17 +363,17 @@ void _onSceneParsed(Scene scene) {
   }
   // TODO add selection for QU-24, Qu-32 ...
   // Maybe move logic to sceneparser
-  _sendGroupModel.initAvailableSends(scene.sends
+  sendGroupModel.initAvailableSends(scene.sends
       .where((send) =>
           scene.sendAssigns[send.id] &&
           (send.sendType != SendType.monoChannel || send.id < maxMonoChannels))
       .map((send) => send.id)
       .toList());
 
-  _levelPanModel.initLinks(scene.sendsLevelLinked, scene.sendsPanLinked);
-  _levelPanModel.initLevels(scene.sendLevelsInDb);
-  _levelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
-  _levelPanModel.initPans(scene.sendPans);
+  faderLevelPanModel.initLinks(scene.sendsLevelLinked, scene.sendsPanLinked);
+  faderLevelPanModel.initLevels(scene.sendLevelsInDb);
+  faderLevelPanModel.initLevels(scene.mixesLevelInDb, scene.mixes[0].id);
+  faderLevelPanModel.initPans(scene.sendPans);
 
   connectionModel.onFinishedLoadingScene();
 }

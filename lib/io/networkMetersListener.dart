@@ -9,6 +9,7 @@ RawDatagramSocket _datagramSocket;
 Future<int> getPort() async {
   if (_datagramSocket == null) {
     _datagramSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+    // TODO: maybe should start listening here?
   }
   return _datagramSocket.port;
 }
@@ -76,9 +77,11 @@ void _listen(RawDatagramSocket socket) {
       }
     },
     onError: (e) {
+      // TODO: do something
       print(e);
     },
     onDone: () {
+      // TODO: do something
       print("Meter socket closed");
     },
     cancelOnError: false,

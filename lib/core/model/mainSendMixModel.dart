@@ -7,11 +7,9 @@ import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/io/network.dart' as network;
 import 'package:quiver/collection.dart';
 
+final mainSendMixModel = MainSendMixModel._internal();
+
 class MainSendMixModel {
-  static final MainSendMixModel _instance = MainSendMixModel._internal();
-
-  factory MainSendMixModel() => _instance;
-
   // Not so sure if the list of available mix-ids can change??
   final availableMixIdsNotifier = ValueNotifier(List<int>());
 
