@@ -19,7 +19,6 @@ class PageLogin extends StatefulWidget {
 }
 
 class _PageLoginState extends State<PageLogin> {
-  final connectionModel = ConnectionModel();
   final mixers = {
     QuLocalizations.get(Strings.Demo): InternetAddress.loopbackIPv4
   };

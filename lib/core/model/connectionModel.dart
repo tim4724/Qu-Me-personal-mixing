@@ -5,11 +5,9 @@ import 'package:flutter/widgets.dart';
 import 'package:qu_me/entities/mixer.dart';
 import 'package:qu_me/io/network.dart' as network;
 
+final connectionModel = ConnectionModel._internal();
+
 class ConnectionModel {
-  static final ConnectionModel _instance = ConnectionModel._internal();
-
-  factory ConnectionModel() => _instance;
-
   final _mixerNotifier = ValueNotifier<Mixer>(null);
   final _connectionStateNotifier =
       ValueNotifier<QuConnectionState>(QuConnectionState.NOT_CONNECTED);

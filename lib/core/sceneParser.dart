@@ -14,7 +14,7 @@ Scene parse(Uint8List data, int mixId) {
 
   final sceneId = data[3];
   final sceneName = _readString(data, 12);
-  print("Parsing scene \"$sceneName\" ($sceneId)");
+  print("Parsing scene \"$sceneName\" ($sceneId) for mixId $mixId");
 
   final scene = Scene();
 
@@ -32,6 +32,7 @@ Scene parse(Uint8List data, int mixId) {
 
   // Mono input channels 1 - 32, Stereo input channels 1 - 3, Fx Return 1 - 4
   // TODO: Group?
+  // TODO: only parse the number of channels based on the console variant
   for (int i = 0, offset = 48;
       i < scene.sends.length;
       i++, offset += _blockLen) {

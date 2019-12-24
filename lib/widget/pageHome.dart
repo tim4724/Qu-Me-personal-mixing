@@ -29,7 +29,6 @@ class PageHome extends StatefulWidget {
 }
 
 class _PageHomeState extends State<PageHome> {
-  final connectionModel = ConnectionModel();
   final mainSendMixModel = MainSendMixModel();
   final groupModel = SendGroupModel();
   final levelPanModel = FaderLevelPanModel();
@@ -256,7 +255,7 @@ class _PageHomeState extends State<PageHome> {
       "Switch Platform",
       width: 72.0,
       onSelect: () {
-        ConnectionModel().reset();
+        connectionModel.reset();
         final platformProvider = PlatformProvider.of(context);
         if (platformProvider.platform != TargetPlatform.iOS) {
           platformProvider.changeToCupertinoPlatform();

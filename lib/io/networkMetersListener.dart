@@ -1,8 +1,39 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:qu_me/core/model/metersModel.dart';
 
-void listen(RawDatagramSocket socket) {
+Timer _timer;
+RawDatagramSocket _datagramSocket;
+
+Future<int> getPort() async {
+  if (_datagramSocket == null) {
+    _datagramSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+  }
+  return _datagramSocket.port;
+}
+
+void start(InternetAddress address, int port) async {
+  _timer?.cancel();
+  _timer = Timer.periodic(Duration(seconds: 1), (t) {
+    _datagramSocket.send([0x7f, 0x25, 0x00, 0x00], address, port);
+    // TODO: listen for close...
+  });
+  _listen(_datagramSocket);
+}
+
+bool isRunning() {
+  return _timer?.isActive;
+}
+
+void stop() {
+  _datagramSocket.close();
+  _datagramSocket = null;
+  _timer?.cancel();
+  _timer = null;
+}
+
+void _listen(RawDatagramSocket socket) {
   socket.listen(
     (e) {
       final dg = socket.receive();
