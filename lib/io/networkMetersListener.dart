@@ -9,7 +9,7 @@ RawDatagramSocket _datagramSocket;
 Future<int> getPort() async {
   if (_datagramSocket == null) {
     _datagramSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    // TODO: maybe should start listening here?
+    _listen(_datagramSocket);
   }
   return _datagramSocket.port;
 }
@@ -18,9 +18,7 @@ void start(InternetAddress address, int port) async {
   _timer?.cancel();
   _timer = Timer.periodic(Duration(seconds: 1), (t) {
     _datagramSocket.send([0x7f, 0x25, 0x00, 0x00], address, port);
-    // TODO: listen for close...
   });
-  _listen(_datagramSocket);
 }
 
 bool isRunning() {
@@ -28,10 +26,10 @@ bool isRunning() {
 }
 
 void stop() {
-  _datagramSocket.close();
-  _datagramSocket = null;
   _timer?.cancel();
   _timer = null;
+  _datagramSocket?.close();
+  _datagramSocket = null;
 }
 
 void _listen(RawDatagramSocket socket) {
@@ -62,7 +60,7 @@ void _listen(RawDatagramSocket socket) {
           return;
         }
 
-        // TODO use correct meter source (post-preamp, post-eq, post-comp, ...)
+        // TODO: use correct meter source (post-preamp, post-eq, post-comp, ...)
 
         final data = packet.sublist(4);
         for (var offset = 10;
@@ -77,16 +75,14 @@ void _listen(RawDatagramSocket socket) {
       }
     },
     onError: (e) {
-      // TODO: do something
       print(e);
     },
     onDone: () {
-      // TODO: do something
-      print("Meter socket closed");
+      print("Meter socket was closed");
     },
     cancelOnError: false,
   );
-  // todo update last contact of mixer object
+  // TODO: update last contact of mixer object
 }
 
 int _getUint16(List<int> data, [int index = 0]) {

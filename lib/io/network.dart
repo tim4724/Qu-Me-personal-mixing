@@ -134,7 +134,9 @@ void close() {
 }
 
 void _connect(InternetAddress address) async {
-  _socket = await Socket.connect(address, 51326);
+  const int remotePort = 51326;
+  print("Connect to $address : $remotePort");
+  _socket = await Socket.connect(address, remotePort);
   _socket.setOption(SocketOption.tcpNoDelay, true);
 
   final byteStreamController = StreamController<int>();
@@ -151,11 +153,17 @@ void _connect(InternetAddress address) async {
       _socket?.destroy();
       metersListener.stop();
       byteStreamController.close();
-      connectionModel.reset();
-      mainSendMixModel.reset();
+      // connectionModel.reset();
+      // mainSendMixModel.reset();
     },
-    onError: _onError,
-    cancelOnError: false,
+    onError: () {
+      print("TCP Connection lost");
+      connectionModel.onConnectionLost();
+      metersListener.stop();
+      _socket?.destroy();
+      _connect(address);
+    },
+    cancelOnError: true,
   );
   // TODO: init timeout?!
 
@@ -380,10 +388,6 @@ void _onSceneParsed(Scene scene) {
 
 void print(String data) {
   print("NETWORK: " + data);
-}
-
-void _onError(e) {
-  print(e);
 }
 
 Uint8List _buildSystemPacket(int groupId, List<int> value) {

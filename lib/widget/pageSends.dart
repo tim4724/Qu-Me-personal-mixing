@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
+import 'package:qu_me/core/model/connectionModel.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -15,6 +16,7 @@ import 'package:qu_me/entities/group.dart';
 import 'package:qu_me/entities/mix.dart';
 import 'package:qu_me/entities/send.dart';
 import 'package:qu_me/widget/fader.dart';
+import 'package:qu_me/widget/pageOverlayLoading.dart';
 import 'package:qu_me/widget/quSegmentedControl.dart';
 
 import 'dialogAssignSends.dart';
@@ -105,10 +107,29 @@ class _PageSendsState extends State<PageSends> {
         ),
         android: (context) => MaterialAppBarData(elevation: 0.0),
       ),
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          final landscape = orientation == Orientation.landscape;
-          return buildBody(context, landscape, group);
+      body: ValueListenableBuilder(
+        valueListenable: connectionModel.connectionStateListenable,
+        builder: (BuildContext context, QuConnectionState state, child) {
+          final loading = state != QuConnectionState.READY;
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              AnimatedOpacity(
+                opacity: loading ? 0.3 : 1,
+                duration: Duration(milliseconds: 300),
+                child: IgnorePointer(
+                  ignoring: loading,
+                  child: OrientationBuilder(
+                    builder: (context, orientation) {
+                      final landscape = orientation == Orientation.landscape;
+                      return buildBody(context, landscape, group);
+                    },
+                  ),
+                ),
+              ),
+              if (loading) buildLoadingOverlay(context, state),
+            ],
+          );
         },
       ),
     );

@@ -15,7 +15,7 @@ class ConnectionModel {
   ConnectionModel._internal();
 
   void connect(String name, InternetAddress address) {
-    if(connectionState == QuConnectionState.NOT_CONNECTED) {
+    if (connectionState == QuConnectionState.NOT_CONNECTED) {
       _mixerNotifier.value = Mixer(name, address);
       network.connect(name, address);
     }
@@ -26,6 +26,10 @@ class ConnectionModel {
     mixer.mixerType = type;
     mixer.firmwareVersion = firmware;
     _mixerNotifier.value = mixer;
+  }
+
+  void onConnectionLost() {
+    _connectionStateNotifier.value = QuConnectionState.NOT_CONNECTED;
   }
 
   void onStartLoadingScene() {

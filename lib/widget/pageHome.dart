@@ -18,6 +18,7 @@ import 'package:qu_me/widget/dialogSelectMix.dart';
 import 'package:qu_me/widget/fader.dart';
 import 'package:qu_me/widget/groupWheel.dart';
 import 'package:qu_me/widget/pageLogin.dart';
+import 'package:qu_me/widget/pageOverlayLoading.dart';
 import 'package:qu_me/widget/pageSends.dart';
 import 'package:qu_me/widget/quCheckButton.dart';
 
@@ -50,7 +51,7 @@ class _PageHomeState extends State<PageHome> {
             connectionModel.connectionStateListenable,
             builder: (context, currentMixId, state, appBar) {
               final mixSelected = currentMixId != null;
-              final loading = state == QuConnectionState.LOADING_SCENE;
+              final loading = state != QuConnectionState.READY;
               final disabled = loading || !mixSelected;
               return PlatformScaffold(
                 appBar: appBar,
@@ -65,8 +66,8 @@ class _PageHomeState extends State<PageHome> {
                         child: SafeArea(child: buildBody(currentMixId)),
                       ),
                     ),
-                    if (loading) PlatformCircularProgressIndicator(),
-                    if (!mixSelected)
+                    if (loading) buildLoadingOverlay(context, state),
+                    if (!loading && !mixSelected)
                       Text(
                         QuLocalizations.get(Strings.MixSelectHint),
                         textScaleFactor: 1.8,

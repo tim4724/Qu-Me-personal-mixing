@@ -25,6 +25,8 @@ enum Strings {
   EmptySends,
   MixSelectHint,
   SendsEmptyHint,
+  LoadingScene,
+  Connecting,
 }
 
 class QuLocalizations {
@@ -50,7 +52,9 @@ class QuLocalizations {
     Strings.All: "All",
     Strings.EmptySends: "Nothing available",
     Strings.MixSelectHint: "Select your mix",
-    Strings.SendsEmptyHint: "Nothing assigned"
+    Strings.SendsEmptyHint: "Nothing assigned",
+    Strings.LoadingScene: "Loading...",
+    Strings.Connecting: "Connecting...",
   };
   static const Map<Strings, String> _de = {
     Strings.AppName: "Qu Me",
@@ -74,7 +78,9 @@ class QuLocalizations {
     Strings.All: "Alle",
     Strings.EmptySends: "Nichts verfügbar",
     Strings.MixSelectHint: "Wähle deinen Mix",
-    Strings.SendsEmptyHint: "Nichts zugewiesen"
+    Strings.SendsEmptyHint: "Nichts zugewiesen",
+    Strings.LoadingScene: "Laden...",
+    Strings.Connecting: "Verbinden...",
   };
 
   QuLocalizations._internal();

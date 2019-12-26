@@ -59,6 +59,7 @@ QuThemeData get quTheme => QuThemeData(
       mutedButtonColor: Colors.red,
       buttonDisabledOpacity: 0.5,
       // Faderitem/ Groupitem
+      // TODO: Fix clipping bug with a too large radius
       itemRadius: 4.0,
       itemBorderWidth: 1.0,
       itemBackgroundColor: QuColorSwatch(0xFF010101, 0xFF070707),
