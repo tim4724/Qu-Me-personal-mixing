@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:declarative_animated_list/declarative_animated_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:qu_me/app/localizations.dart';
-import 'package:qu_me/app/myApp.dart';
 import 'package:qu_me/core/model/mainSendMixModel.dart';
 import 'package:qu_me/core/model/sendGroupModel.dart';
 import 'package:qu_me/entities/faderInfo.dart';
@@ -63,8 +64,9 @@ class _PageSendsState extends State<PageSends> {
           // Needed because on IOS-Platformwidget hardcodes the color black
           style: theme.textTheme.subhead,
           controller: textController,
-          onChanged: (name) =>
-              sendGroupModel.setGroupName(widget.groupId, name),
+          onChanged: (name) {
+            sendGroupModel.setGroupName(widget.groupId, name);
+          },
         ),
       );
     } else {
@@ -98,30 +100,33 @@ class _PageSendsState extends State<PageSends> {
         ios: (context) => CupertinoNavigationBarData(
           // to avoid flutter exception
           transitionBetweenRoutes: !widget.isOverlay,
+          // Hide the nearly invisible border because of the pancontrol widget
+          border: Border.all(width: 0.0, color: Colors.transparent),
         ),
+        android: (context) => MaterialAppBarData(elevation: 0.0),
       ),
       body: OrientationBuilder(
         builder: (context, orientation) {
-          return buildBody(context, orientation, group);
+          final landscape = orientation == Orientation.landscape;
+          return buildBody(context, landscape, group);
         },
       ),
     );
   }
 
-  Widget buildBody(
-      BuildContext context, Orientation orientation, SendGroup group) {
-    final landscape = orientation == Orientation.landscape;
-    final stereoMix =
-        mainSendMixModel.getCurrentMix()?.mixType == MixType.stereo;
+  Widget buildBody(BuildContext context, bool landscape, SendGroup group) {
+    final currentMix = mainSendMixModel.getCurrentMix();
+    final stereoMix = currentMix?.mixType == MixType.stereo;
 
+    final panControlHeight = landscape ? 48.0 : 36.0;
     final mediaQuery = MediaQuery.of(context);
     var listWidgetPadding = mediaQuery.padding;
     if (stereoMix) {
       // We need some padding for the button to switch between panning and level
       if (landscape) {
-        listWidgetPadding += EdgeInsets.only(left: 36);
+        listWidgetPadding += EdgeInsets.only(left: panControlHeight);
       } else {
-        listWidgetPadding += EdgeInsets.only(top: 36);
+        listWidgetPadding += EdgeInsets.only(top: panControlHeight);
       }
     }
 
@@ -149,17 +154,18 @@ class _PageSendsState extends State<PageSends> {
                 ),
               ),
             DeclarativeList(
-              padding: listWidgetPadding,
-              items: sendIds,
-              scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
-              itemBuilder: buildListItem,
-              removeBuilder: buildListItem,
-            ),
+                padding: listWidgetPadding,
+                items: sendIds,
+                scrollDirection: landscape ? Axis.horizontal : Axis.vertical,
+                itemBuilder: buildListItem,
+                removeBuilder: buildListItem,
+                key: ValueKey(widget.groupId)),
             if (stereoMix)
               AnimatedOpacity(
                 duration: Duration(milliseconds: 500),
                 opacity: sendsEmpty ? 0 : 1,
-                child: buildPanControl(landscape, mediaQuery.padding),
+                child: buildPanControl(
+                    landscape, panControlHeight, mediaQuery.padding),
               ),
           ],
         );
@@ -167,60 +173,82 @@ class _PageSendsState extends State<PageSends> {
     );
   }
 
-  RotatedBox buildPanControl(bool landscape, EdgeInsets padding) {
-    return RotatedBox(
+  Widget buildPanControl(bool landscape, double height, EdgeInsets padding) {
+    final controlWidget = RotatedBox(
       child: Container(
-        decoration: BoxDecoration(
-          color: Color(0xE8000000),
-          borderRadius:
-              BorderRadius.vertical(bottom: quTheme.itemRadiusCircular),
-        ),
+        alignment: Alignment.center,
         margin: EdgeInsets.only(
-          top: (landscape ? 0.0 : padding.top),
-          left: (landscape ? padding.bottom : padding.left) + 2,
-          right: (landscape ? padding.top : padding.right) + 2,
+          top: landscape ? 0.0 : padding.top,
+          left: landscape ? padding.bottom : padding.left,
+          right: landscape ? padding.top : padding.right,
         ),
-        padding: EdgeInsets.only(top: (landscape ? padding.left + 2 : 2.0)),
+        height: height + (landscape ? padding.left : 0.0),
+        padding: EdgeInsets.only(top: landscape ? padding.left : 0.0),
         width: double.maxFinite,
         child: QuSegmentedControl<bool>(
-          children: {
-            false: Text(QuLocalizations.get(Strings.Level)),
-            true: Text(QuLocalizations.get(Strings.Panorama)),
+          items: {
+            false: QuLocalizations.get(Strings.Level),
+            true: QuLocalizations.get(Strings.Panorama),
           },
           selectionIndex: panMode,
-          childPadding: EdgeInsets.all(8),
           onValueChanged: (bool key) => setState(() => panMode = key),
         ),
       ),
       quarterTurns: landscape ? 3 : 0,
     );
+
+    return PlatformWidget(
+      ios: (context) {
+        final cupertinoTheme = CupertinoTheme.of(context);
+        return ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+              color: cupertinoTheme.barBackgroundColor.withAlpha(0xE8),
+              child: controlWidget,
+            ),
+          ),
+        );
+      },
+      android: (context) {
+        final theme = Theme.of(context);
+        final color = theme.appBarTheme.color ?? theme.primaryColor;
+        return Container(
+          color: color.withAlpha(0xE8),
+          child: controlWidget,
+        );
+      },
+    );
   }
 
-  Widget buildAnimatedFader(
-      Animation<double> anim, int sendId, bool landscape) {
-    final sendNotifier = mainSendMixModel.getSendNotifierForId(sendId);
-    final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
+  Widget buildAnimatedFader(Animation<double> anim, int sendId, bool vertical) {
     return FadeTransition(
       opacity: anim,
       child: SizeTransition(
         sizeFactor: anim,
-        axis: landscape ? Axis.horizontal : Axis.vertical,
+        axis: vertical ? Axis.horizontal : Axis.vertical,
         axisAlignment: 0.0,
-        child: Padding(
-          padding: EdgeInsets.all(2.0),
-          child: ValueListenableBuilder<FaderInfo>(
-            valueListenable: sendNotifier,
-            builder: (BuildContext context, FaderInfo faderInfo, _) {
-              if (landscape) {
-                return VerticalFader(faderInfo, panMode,
-                    forceDisplayTechnicalName: showTechnicalName);
-              } else {
-                return HorizontalFader(faderInfo, panMode,
-                    forceDisplayTechnicalName: showTechnicalName);
-              }
-            },
-          ),
-        ),
+        child: buildFader(sendId, vertical),
+      ),
+    );
+  }
+
+  Widget buildFader(int sendId, bool vertical) {
+    final sendNotifier = mainSendMixModel.getSendNotifierForId(sendId);
+    final showTechnicalName = sendNotifier.value.sendType == SendType.fxReturn;
+    return Padding(
+      padding: EdgeInsets.all(2.0),
+      child: ValueListenableBuilder<FaderInfo>(
+        valueListenable: sendNotifier,
+        builder: (BuildContext context, FaderInfo faderInfo, _) {
+          if (vertical) {
+            return VerticalFader(faderInfo, panMode,
+                forceDisplayTechnicalName: showTechnicalName);
+          } else {
+            return HorizontalFader(faderInfo, panMode,
+                forceDisplayTechnicalName: showTechnicalName);
+          }
+        },
       ),
     );
   }

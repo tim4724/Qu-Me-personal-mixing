@@ -25,7 +25,7 @@ class QuThemeData {
 
   // Group
   final QuColorSwatch defaultGroupColors;
-  final QuColorSwatch meGroupColors;
+  final QuColorSwatch accentQuColors;
 
   // GroupWheel
   final Color wheelCarveColor;
@@ -68,7 +68,7 @@ class QuThemeData {
     this.faderFxReturnColors,
     this.faderMutedBackgroundColor,
     this.defaultGroupColors,
-    this.meGroupColors,
+    this.accentQuColors,
     this.wheelCarveColor,
     this.wheelColor,
     this.sliderRadius,

@@ -70,7 +70,7 @@ QuThemeData get quTheme => QuThemeData(
       // Group
       defaultGroupColors:
           QuColorSwatch.fromSingleColor(Color(0xFF424242), 0x94),
-      meGroupColors: QuColorSwatch.fromSingleColor(_accentColor, 0x94),
+      accentQuColors: QuColorSwatch.fromSingleColor(_accentColor, 0x94),
       // GroupWheel
       wheelColor: QuColorSwatch(0xFF9A9A9A, 0xC9A9A9A9),
       wheelCarveColor: Color(0xFF212121),

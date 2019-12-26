@@ -36,7 +36,7 @@ void stop() {
 
 void _listen(RawDatagramSocket socket) {
   socket.listen(
-    (e) {
+    (RawSocketEvent e) {
       final dg = socket.receive();
       if (dg == null) {
         return;

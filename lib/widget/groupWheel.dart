@@ -34,7 +34,7 @@ class GroupWheel extends StatefulWidget {
 
   static ColorSwatch<bool> _colorsForType(int id) {
     if (sendGroupModel.getGroup(id).sendGroupType == SendGroupType.Me) {
-      return quTheme.meGroupColors;
+      return quTheme.accentQuColors;
     }
     return quTheme.defaultGroupColors;
   }
@@ -199,13 +199,9 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = Radius.circular(quTheme.itemRadius);
     return Container(
       height: 50,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(topLeft: radius, topRight: radius),
-        color: color,
-      ),
+      color: color,
       child: Center(
         child: Text(
           text,

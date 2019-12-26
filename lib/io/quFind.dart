@@ -20,7 +20,6 @@ void findQuMixers(FoundCallback foundCallback) async {
     socket.send(data, broadcastAddress, port);
   });
 
-
   socket.listen(
     (e) {
       final dg = socket.receive();
@@ -34,7 +33,7 @@ void findQuMixers(FoundCallback foundCallback) async {
     },
     onDone: () {
       t.cancel();
-      print("QU Find _socket closed");
+      print("QU Find socket closed");
     },
     cancelOnError: false,
   );

@@ -208,9 +208,12 @@ class _PageHomeState extends State<PageHome> {
                         buildDebugSwitchPlatformButton(),
                         buildMuteButton(info),
                         Expanded(
-                          child: VerticalFader(info, false,
-                              forceDisplayTechnicalName: true,
-                              doubleTap: showAllSendsPage),
+                          child: VerticalFader(
+                            info,
+                            false,
+                            forceDisplayTechnicalName: true,
+                            doubleTap: showAllSendsPage,
+                          ),
                         ),
                       ],
                     ),

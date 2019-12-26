@@ -75,10 +75,9 @@ abstract class _FaderState extends State<Fader> {
         GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
       () => MultiTapGestureRecognizer(),
       (recognizer) {
-        recognizer
-          ..onTapDown = ((pointer, details) => onPointerStart())
-          ..onTapCancel = ((pointer) => onPointerStop())
-          ..onTapUp = ((pointer, details) => onPointerStop());
+        recognizer.onTapDown = (pointer, details) => onPointerStart();
+        recognizer.onTapCancel = (pointer) => onPointerStop();
+        recognizer.onTapUp = (pointer, details) => onPointerStop();
       },
     );
     if (widget._doubleTap != null) {

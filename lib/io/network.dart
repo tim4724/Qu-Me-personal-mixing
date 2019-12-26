@@ -139,8 +139,8 @@ void _connect(InternetAddress address) async {
 
   final byteStreamController = StreamController<int>();
   _socket.listen(
-    (dataEvent) {
-      for (final byte in dataEvent) {
+    (Uint8List data) {
+      for (final byte in data) {
         // TODO better way?
         byteStreamController.add(byte);
       }
