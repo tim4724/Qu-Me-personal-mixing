@@ -58,7 +58,7 @@ class DialogAssignSends extends StatelessWidget {
     return QuDialog(
       title: QuLocalizations.get(Strings.AssignSendToGroup, [name]),
       body: content,
-      action: doneAction,
+      actions: [doneAction],
     );
   }
 

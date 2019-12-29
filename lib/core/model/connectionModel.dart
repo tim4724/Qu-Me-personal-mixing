@@ -28,16 +28,20 @@ class ConnectionModel {
     _mixerNotifier.value = mixer;
   }
 
-  void onConnectionLost() {
-    _connectionStateNotifier.value = QuConnectionState.NOT_CONNECTED;
+  void onConnecting() {
+    _connectionStateNotifier.value = QuConnectionState.CONNECTING;
   }
 
-  void onStartLoadingScene() {
+  void onLoadingScene() {
     _connectionStateNotifier.value = QuConnectionState.LOADING_SCENE;
   }
 
-  void onFinishedLoadingScene() {
+  void onReady() {
     _connectionStateNotifier.value = QuConnectionState.READY;
+  }
+
+  void onConnectionLost() {
+    _connectionStateNotifier.value = QuConnectionState.NOT_CONNECTED;
   }
 
   int get type => _mixerNotifier.value?.mixerType;
@@ -48,6 +52,8 @@ class ConnectionModel {
     return _connectionStateNotifier;
   }
 
+  Mixer get mixer => _mixerNotifier.value;
+
   QuConnectionState get connectionState => connectionStateListenable.value;
 
   void reset() {
@@ -56,4 +62,4 @@ class ConnectionModel {
   }
 }
 
-enum QuConnectionState { NOT_CONNECTED, LOADING_SCENE, READY }
+enum QuConnectionState { NOT_CONNECTED, CONNECTING, LOADING_SCENE, READY }

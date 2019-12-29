@@ -24,11 +24,13 @@ class DialogSelectMix extends StatelessWidget {
           );
         },
       ),
-      action: PlatformButton(
-        child: Text(QuLocalizations.get(Strings.Cancel)),
-        androidFlat: (context) => MaterialFlatButtonData(),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
+      actions: [
+        PlatformButton(
+          child: Text(QuLocalizations.get(Strings.Cancel)),
+          androidFlat: (context) => MaterialFlatButtonData(),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 
@@ -77,7 +79,7 @@ class DialogSelectMix extends StatelessWidget {
           SizedBox(
             width: 75,
             child: Text(
-              "Tim",
+              "",
               textAlign: TextAlign.end,
               maxLines: 1,
               textScaleFactor: 1,
